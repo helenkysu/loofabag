@@ -69,6 +69,23 @@ nav {
   color: #FF6B6B;
 }
 
+.nav-sign-out {
+  background: none;
+  border: none;
+  font: inherit;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: inherit;
+}
+
+.nav-sign-out:hover {
+  background-color: #f0f0f0;
+  color: #FF6B6B;
+}
+
 .hero {
   display: flex;
   align-items: center;

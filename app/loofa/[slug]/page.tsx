@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import NavBar from '@/app/components/NavBar';
 
 const templates = {
   dating: {
@@ -64,13 +65,7 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
 
   return (
     <main>
-      <nav>
-        <Link href="/" className="logo">👜 myloofabag</Link>
-        <div className="nav-links">
-          <Link href="/">Home</Link>
-          <Link href="/my-loofas">My Loofas</Link>
-        </div>
-      </nav>
+      <NavBar />
 
       <section className="loofa-page-section">
         <div className="loofa-page-container">

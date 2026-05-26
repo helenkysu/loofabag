@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import NavBar from '@/app/components/NavBar';
 
 interface Loofa {
   id: string;
@@ -52,13 +53,7 @@ export default function MyLoofas() {
 
   return (
     <main>
-      <nav>
-        <Link href="/" className="logo">👜 myloofabag</Link>
-        <div className="nav-links">
-          <Link href="/">Home</Link>
-          <Link href="/my-loofas">My Loofas</Link>
-        </div>
-      </nav>
+      <NavBar />
 
       <section className="my-loofas-section">
         <div className="my-loofas-container">

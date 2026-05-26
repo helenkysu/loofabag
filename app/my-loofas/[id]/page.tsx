@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import NavBar from '@/app/components/NavBar';
 
 interface Loofa {
   id: string;
@@ -54,20 +55,10 @@ export default function LoofaManagementPage() {
     router.push('/my-loofas');
   };
 
-  const Nav = () => (
-    <nav>
-      <Link href="/" className="logo">👜 myloofabag</Link>
-      <div className="nav-links">
-        <Link href="/">Home</Link>
-        <Link href="/my-loofas">My Loofas</Link>
-      </div>
-    </nav>
-  );
-
   if (notFound) {
     return (
       <main>
-        <Nav />
+        <NavBar />
         <section className="my-loofas-section">
           <div className="my-loofas-container">
             <p>Loofa not found.</p>
@@ -84,7 +75,7 @@ export default function LoofaManagementPage() {
 
   return (
     <main>
-      <Nav />
+      <NavBar />
       <section className="my-loofas-section">
         <div className="my-loofas-container">
           <Link href="/my-loofas" className="back-link">← My Loofas</Link>

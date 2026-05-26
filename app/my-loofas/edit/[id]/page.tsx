@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import NavBar from '@/app/components/NavBar';
 
 const designs = [
   { id: '1', name: 'Classic Red', color: '#FF6B6B', image: '🎨' },
@@ -91,13 +92,7 @@ export default function EditLoofaPage() {
   if (notFound) {
     return (
       <main>
-        <nav>
-          <Link href="/" className="logo">👜 myloofabag</Link>
-          <div className="nav-links">
-            <Link href="/">Home</Link>
-            <Link href="/my-loofas">My Loofas</Link>
-          </div>
-        </nav>
+        <NavBar />
         <section className="my-loofas-section">
           <div className="my-loofas-container">
             <p>Loofa not found.</p>

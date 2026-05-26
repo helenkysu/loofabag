@@ -1,15 +1,13 @@
+import NavBar from './components/NavBar';
+
 export default function Home() {
   return (
     <main>
-      <nav>
-        <div className="logo">👜 myloofabag</div>
-        <div className="nav-links">
-          <a href="#what">What is Loofa?</a>
-          <a href="#usecases">Use Cases</a>
-          <a href="#how">How it Works</a>
-          <a href="/my-loofas">My Loofas</a>
-        </div>
-      </nav>
+      <NavBar>
+        <a href="#what">What is Loofa?</a>
+        <a href="#usecases">Use Cases</a>
+        <a href="#how">How it Works</a>
+      </NavBar>
 
       <section className="hero">
         <div className="hero-content">
