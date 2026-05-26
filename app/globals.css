@@ -1509,6 +1509,21 @@ footer p {
   font-weight: 600;
 }
 
+.qr-generated-img {
+  width: 180px;
+  height: 180px;
+  border-radius: 12px;
+  margin: 16px auto;
+  display: block;
+  border: 3px solid #f0f0f0;
+}
+
+.qr-generating {
+  margin: 16px auto;
+  font-size: 14px;
+  color: #aaa;
+}
+
 .modal-footer {
   display: flex;
   justify-content: space-between;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
@@ -100,6 +100,8 @@ export default function CreateLoofaPage() {
   const [fieldsSaved, setFieldsSaved] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const didSave = useRef(false);
 
   const selectTemplate = (template: typeof templateDefs[0]) => {
     setSelectedTemplate(template);
@@ -152,21 +154,34 @@ export default function CreateLoofaPage() {
     .slice(0, 50);
 
   useEffect(() => {
-    if (finished) {
-      const stored = localStorage.getItem('myLoofas');
-      const current = stored ? JSON.parse(stored) : [];
-      const newLoofa = {
-        id: Date.now().toString(),
-        name: name || `Loofa ${current.length + 1}`,
-        slug,
-        design: selectedDesign.id,
-        template: selectedTemplate.id,
-        emoji: selectedTemplate.emoji,
-        fields: customFields.filter((f) => f.label.trim()),
-      };
-      localStorage.setItem('myLoofas', JSON.stringify([...current, newLoofa]));
-    }
-  }, [finished, name, selectedDesign.id, selectedTemplate.id, selectedTemplate.emoji, slug, customFields]);
+    if (!finished || didSave.current) return;
+    didSave.current = true;
+
+    const stored = localStorage.getItem('myLoofas');
+    const current = stored ? JSON.parse(stored) : [];
+    const loofaId = Date.now().toString();
+    const newLoofa = {
+      id: loofaId,
+      name: name || `Loofa ${current.length + 1}`,
+      slug,
+      design: selectedDesign.id,
+      template: selectedTemplate.id,
+      emoji: selectedTemplate.emoji,
+      fields: customFields.filter((f) => f.label.trim()),
+    };
+    localStorage.setItem('myLoofas', JSON.stringify([...current, newLoofa]));
+
+    const qrUrl = `${window.location.origin}/loofa/${slug}`;
+    fetch('/api/upload/qr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ loofa_id: loofaId, url: qrUrl }),
+    })
+      .then((r) => r.json())
+      .then((data) => { if (data.dataUrl) setQrDataUrl(data.dataUrl); })
+      .catch(console.error);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finished]);
 
   const handleNext = () => {
     if (step < 5) {
@@ -193,7 +208,12 @@ export default function CreateLoofaPage() {
               <div className="success-icon">✓</div>
               <h2>Loofa Created!</h2>
               <p>Your new loofa is ready and saved.</p>
-              <p className="url-preview">
+              {qrDataUrl ? (
+                <img src={qrDataUrl} alt="QR code" className="qr-generated-img" />
+              ) : (
+                <div className="qr-generating">Generating QR code…</div>
+              )}
+              <p className="url-preview" style={{ marginTop: 12 }}>
                 URL: <strong>loofabag.com/{slug}</strong>
               </p>
               <div className="form-actions">
