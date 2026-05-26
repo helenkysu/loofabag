@@ -48,7 +48,7 @@ export default function ProfileSetupPage() {
         <form onSubmit={handleSubmit} className="auth-form">
           <input
             type="text"
-            placeholder="e.g. Helen, Peachie…"
+            placeholder="Your name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="name-input"
