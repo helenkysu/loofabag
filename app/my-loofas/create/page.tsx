@@ -297,7 +297,7 @@ export default function CreateLoofaPage() {
                   </div>
 
                   <div className="question-editor">
-                    <p className="question-editor-label">Your Fields</p>
+                    <p className="question-editor-label">Your Fields <span className="drag-hint">drag and drop to reorder</span></p>
                     {customFields.map((field, idx) => (
                       <div
                         key={field.id}
