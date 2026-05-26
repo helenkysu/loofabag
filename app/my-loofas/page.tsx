@@ -86,7 +86,7 @@ export default function MyLoofas() {
                     <Link href={`/my-loofas/edit/${loofa.id}`} className="edit-btn">
                       Edit
                     </Link>
-                    <Link href={`/loofa/${loofa.slug}`} className="view-btn">
+                    <Link href={`/${loofa.slug}`} className="view-btn">
                       View
                     </Link>
                     <button

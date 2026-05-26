@@ -171,7 +171,7 @@ export default function CreateLoofaPage() {
     };
     localStorage.setItem('myLoofas', JSON.stringify([...current, newLoofa]));
 
-    const qrUrl = `${window.location.origin}/loofa/${slug}`;
+    const qrUrl = `${window.location.origin}/${slug}`;
     fetch('/api/upload/qr', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

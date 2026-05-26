@@ -109,7 +109,7 @@ export default function LoofaManagementPage() {
           )}
 
           <div className="mgmt-grid">
-            <Link href={`/loofa/${loofa.slug}`} className="mgmt-tile mgmt-tile-blue">
+            <Link href={`/${loofa.slug}`} className="mgmt-tile mgmt-tile-blue">
               <div className="mgmt-tile-icon">👁</div>
               <h3>View QR Page</h3>
               <p>See your public display page</p>
