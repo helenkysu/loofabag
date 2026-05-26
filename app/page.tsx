@@ -1,4 +1,5 @@
 import NavBar from './components/NavBar';
+import CyclingText from './components/CyclingText';
 
 export default function Home() {
   return (
@@ -11,6 +12,7 @@ export default function Home() {
 
       <section className="hero">
         <div className="hero-content">
+          <CyclingText />
           <h1 className="bubble-text">
             my loofah bag 👜
           </h1>

@@ -101,6 +101,34 @@ nav {
   z-index: 10;
 }
 
+.cycling-block {
+  margin-bottom: 32px;
+}
+
+.cycling-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #aaa;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+
+.cycling-phrase {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.3;
+  background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 60%, #FF6B9D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@media (max-width: 768px) {
+  .cycling-phrase {
+    font-size: 22px;
+  }
+}
+
 .bubble-text {
   font-size: 72px;
   font-weight: 900;
