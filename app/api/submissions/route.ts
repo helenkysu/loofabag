@@ -10,12 +10,20 @@ export async function GET(request: NextRequest) {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from(TABLE)
-    .select('*')
-    .eq('slug', slug)
-    .order('submitted_at', { ascending: false });
+    .select('id, data, created_at')
+    .contains('data', { slug })
+    .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ submissions: data });
+
+  const submissions = (data ?? []).map((row) => ({
+    id: row.id,
+    submitted_at: row.created_at,
+    responses: row.data?.responses ?? {},
+    file_paths: row.data?.file_paths ?? [],
+  }));
+
+  return NextResponse.json({ submissions });
 }
 
 export async function POST(request: NextRequest) {
@@ -31,9 +39,11 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from(TABLE)
     .insert({
-      slug: body.slug,
-      responses: body.responses ?? {},
-      file_paths: body.file_paths ?? [],
+      data: {
+        slug: body.slug,
+        responses: body.responses ?? {},
+        file_paths: body.file_paths ?? [],
+      },
     })
     .select()
     .single();
