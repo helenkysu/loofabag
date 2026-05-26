@@ -26,8 +26,12 @@ export async function proxy(request: NextRequest) {
   // Refresh session — do not add logic between createServerClient and getUser
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Protect /my-loofas routes
-  if (request.nextUrl.pathname.startsWith('/my-loofas') && !user) {
+  // Protect /my-loofas and /profile routes
+  if (
+    (request.nextUrl.pathname.startsWith('/my-loofas') ||
+      request.nextUrl.pathname.startsWith('/profile')) &&
+    !user
+  ) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/auth/sign-in';
     redirectUrl.searchParams.set('next', request.nextUrl.pathname);

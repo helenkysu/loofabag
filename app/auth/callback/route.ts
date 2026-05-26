@@ -29,10 +29,23 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
-      // Ensure a profile row exists (preferred_name can be set later)
+      // Ensure a profile row exists
       await supabase
         .from('loofabag_profiles')
         .upsert({ id: data.user.id }, { onConflict: 'id' });
+
+      // If no preferred_name yet, send to setup (skip if next is already setup)
+      if (next !== '/profile/setup') {
+        const { data: profile } = await supabase
+          .from('loofabag_profiles')
+          .select('preferred_name')
+          .eq('id', data.user.id)
+          .single();
+
+        if (!profile?.preferred_name) {
+          return NextResponse.redirect(`${origin}/profile/setup`);
+        }
+      }
 
       return NextResponse.redirect(`${origin}${next}`);
     }

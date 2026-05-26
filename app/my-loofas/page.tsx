@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 interface Loofa {
   id: string;
@@ -15,6 +16,22 @@ interface Loofa {
 
 export default function MyLoofas() {
   const [loofas, setLoofas] = useState<Loofa[]>([]);
+  const [preferredName, setPreferredName] = useState('');
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase
+        .from('loofabag_profiles')
+        .select('preferred_name')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.preferred_name) setPreferredName(data.preferred_name);
+        });
+    });
+  }, []);
 
   useEffect(() => {
     const stored = typeof window !== 'undefined' ? localStorage.getItem('myLoofas') : null;
@@ -45,6 +62,9 @@ export default function MyLoofas() {
 
       <section className="my-loofas-section">
         <div className="my-loofas-container">
+          {preferredName && (
+            <p className="loofas-greeting">Hi {preferredName}! 👋</p>
+          )}
           <h1>My Loofas</h1>
           
           <Link href="/my-loofas/create" className="add-loofa-btn">

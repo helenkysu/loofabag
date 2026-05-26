@@ -676,6 +676,13 @@ footer p {
 }
 
 /* My Loofas Page */
+.loofas-greeting {
+  font-size: 22px;
+  font-weight: 700;
+  color: #888;
+  margin-bottom: 6px;
+}
+
 .my-loofas-section {
   padding: 80px 40px;
   min-height: 100vh;
