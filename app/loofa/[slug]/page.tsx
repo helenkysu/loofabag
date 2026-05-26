@@ -5,7 +5,7 @@ import NavBar from '@/app/components/NavBar';
 
 interface FormField {
   id: string;
-  type: 'text' | 'number' | 'paragraph' | 'photo';
+  type: 'text' | 'number' | 'paragraph' | 'photo' | 'url' | 'file';
   label: string;
   optional: boolean;
 }
@@ -142,6 +142,16 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
                           />
                         )}
 
+                        {field.type === 'url' && (
+                          <input
+                            type="url"
+                            placeholder="https://"
+                            value={formData[field.id] ?? ''}
+                            onChange={(e) => handleInputChange(field.id, e.target.value)}
+                            required={!field.optional}
+                          />
+                        )}
+
                         {field.type === 'photo' && (
                           <div className="photo-upload-field">
                             <input
@@ -154,6 +164,22 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
                             {photoFiles[field.id]?.length > 0 && (
                               <p className="photo-count">
                                 {photoFiles[field.id].length} photo{photoFiles[field.id].length !== 1 ? 's' : ''} selected (max 5)
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {field.type === 'file' && (
+                          <div className="photo-upload-field">
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx"
+                              onChange={(e) => handlePhotoChange(field.id, e.target.files)}
+                              className="photo-input"
+                            />
+                            {photoFiles[field.id]?.length > 0 && (
+                              <p className="photo-count">
+                                {photoFiles[field.id][0].name}
                               </p>
                             )}
                           </div>

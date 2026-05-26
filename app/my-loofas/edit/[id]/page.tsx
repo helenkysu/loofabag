@@ -16,7 +16,7 @@ const designs = [
 
 export interface FormField {
   id: string;
-  type: 'text' | 'number' | 'paragraph' | 'photo';
+  type: 'text' | 'number' | 'paragraph' | 'photo' | 'url' | 'file';
   label: string;
   optional: boolean;
 }
@@ -53,13 +53,28 @@ const templateDefs: Array<{ id: string; name: string; emoji: string; fields: Fie
   },
   {
     id: 'friends',
-    name: 'Friends',
+    name: 'Friendship',
     emoji: '👯',
     fields: [
       { type: 'text', label: 'Name / Nickname', optional: false },
-      { type: 'paragraph', label: 'Tell us about yourself', optional: true },
-      { type: 'text', label: 'Hobbies & interests', optional: true },
-      { type: 'text', label: 'Best way to reach you', optional: false },
+      { type: 'photo', label: 'Photos (up to 5)', optional: true },
+      { type: 'text', label: 'Location', optional: true },
+      { type: 'paragraph', label: 'Hobbies & interests', optional: true },
+      { type: 'paragraph', label: 'Looking for', optional: true },
+    ],
+  },
+  {
+    id: 'networking',
+    name: 'Networking',
+    emoji: '🤝',
+    fields: [
+      { type: 'text', label: 'Name', optional: false },
+      { type: 'text', label: 'Role / What you do', optional: false },
+      { type: 'text', label: 'School', optional: true },
+      { type: 'url', label: 'LinkedIn', optional: true },
+      { type: 'file', label: 'Resume', optional: true },
+      { type: 'photo', label: 'Photo / Headshot', optional: true },
+      { type: 'paragraph', label: 'Looking for', optional: true },
     ],
   },
   {
@@ -299,7 +314,9 @@ export default function EditLoofaPage() {
                     <option value="text">Short text</option>
                     <option value="number">Number</option>
                     <option value="paragraph">Paragraph</option>
+                    <option value="url">URL / Link</option>
                     <option value="photo">Photo</option>
+                    <option value="file">File upload</option>
                   </select>
                   <label className="field-optional-label">
                     <input
