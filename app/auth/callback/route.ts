@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
       {
         cookies: {
           getAll() {
@@ -29,14 +30,15 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
-      // Ensure a profile row exists
-      await supabase
+      // Use admin client (secret key) for the profile upsert so it bypasses RLS
+      const admin = createAdminClient();
+      await admin
         .from('loofabag_profiles')
         .upsert({ id: data.user.id }, { onConflict: 'id' });
 
       // If no preferred_name yet, send to setup (skip if next is already setup)
       if (next !== '/profile/setup') {
-        const { data: profile } = await supabase
+        const { data: profile } = await admin
           .from('loofabag_profiles')
           .select('preferred_name')
           .eq('id', data.user.id)
