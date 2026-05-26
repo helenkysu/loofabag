@@ -18,57 +18,50 @@ function isHeicFile(file: File) {
   );
 }
 
-async function toPreviewUrl(file: File): Promise<string> {
-  if (isHeicFile(file)) {
-    try {
-      const heic2any = (await import('heic2any')).default;
-      const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
-      const blob = Array.isArray(result) ? result[0] : result;
-      return URL.createObjectURL(blob);
-    } catch {
-      return '';
-    }
-  }
-  return URL.createObjectURL(file);
-}
-
 export default function DropZone({ accept, multiple, maxFiles, onFiles }: DropZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const urlsRef = useRef<string[]>([]);
 
   const isImage = accept?.includes('image');
 
+  // Revoke all object URLs on unmount
   useEffect(() => {
-    if (!isImage || files.length === 0) {
-      setPreviews([]);
-      return;
-    }
-
-    let cancelled = false;
-    const generated: string[] = [];
-
-    Promise.all(files.map(toPreviewUrl)).then((urls) => {
-      if (cancelled) {
-        urls.forEach((u) => u && URL.revokeObjectURL(u));
-        return;
-      }
-      generated.push(...urls);
-      setPreviews(urls);
-    });
-
-    return () => {
-      cancelled = true;
-      generated.forEach((u) => u && URL.revokeObjectURL(u));
-    };
-  }, [files, isImage]);
+    return () => { urlsRef.current.forEach((u) => u && URL.revokeObjectURL(u)); };
+  }, []);
 
   const handleFiles = (incoming: FileList | null) => {
     if (!incoming) return;
     const arr = Array.from(incoming).slice(0, maxFiles ?? Infinity);
     setFiles(arr);
     onFiles?.(arr);
+
+    if (!isImage) return;
+
+    // Revoke previous preview URLs
+    urlsRef.current.forEach((u) => u && URL.revokeObjectURL(u));
+
+    // Synchronous previews for standard image formats
+    const urls: string[] = arr.map((f) => isHeicFile(f) ? '' : URL.createObjectURL(f));
+    urlsRef.current = urls.filter(Boolean);
+    setPreviews([...urls]);
+
+    // Async conversion for HEIC files — updates individual slots
+    arr.forEach(async (f, i) => {
+      if (!isHeicFile(f)) return;
+      try {
+        const heic2any = (await import('heic2any')).default;
+        const result = await heic2any({ blob: f, toType: 'image/jpeg', quality: 0.8 });
+        const blob = Array.isArray(result) ? result[0] : result;
+        const url = URL.createObjectURL(blob);
+        urlsRef.current.push(url);
+        setPreviews((prev) => { const next = [...prev]; next[i] = url; return next; });
+      } catch {
+        // leave slot as empty string — will render filename fallback
+      }
+    });
   };
 
   const handleDrop = (e: DragEvent) => {
@@ -79,14 +72,19 @@ export default function DropZone({ accept, multiple, maxFiles, onFiles }: DropZo
 
   const removeFile = (idx: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    const updated = files.filter((_, i) => i !== idx);
-    setFiles(updated);
-    onFiles?.(updated);
+    const url = previews[idx];
+    if (url) URL.revokeObjectURL(url);
+    const updatedFiles = files.filter((_, i) => i !== idx);
+    const updatedPreviews = previews.filter((_, i) => i !== idx);
+    urlsRef.current = updatedPreviews.filter(Boolean);
+    setFiles(updatedFiles);
+    setPreviews(updatedPreviews);
+    onFiles?.(updatedFiles);
   };
 
   return (
     <div className={`dropzone${isDragOver ? ' dropzone-over' : ''}`}>
-      {previews.length > 0 && (
+      {previews.length > 0 ? (
         <div className="dropzone-previews" onClick={(e) => e.stopPropagation()}>
           {previews.map((url, idx) => (
             <div key={idx} className="dropzone-preview-item">
@@ -112,9 +110,7 @@ export default function DropZone({ accept, multiple, maxFiles, onFiles }: DropZo
             >+</button>
           )}
         </div>
-      )}
-
-      {previews.length === 0 && (
+      ) : (
         <div
           className="dropzone-empty"
           onClick={() => inputRef.current?.click()}
