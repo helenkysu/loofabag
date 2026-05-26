@@ -1631,58 +1631,158 @@ footer p {
 
 /* Loofa Page */
 .loofa-page-section {
-  padding: 80px 40px;
+  padding: 60px 40px;
   min-height: 100vh;
   background: linear-gradient(180deg, #ffffff 0%, #f8f8f8 100%);
 }
 
 .loofa-page-container {
-  max-width: 1200px;
+  max-width: 640px;
   margin: 0 auto;
-  display: flex;
-  justify-content: center;
 }
 
-.qr-section {
+/* Profile header */
+.loofa-profile-header {
   text-align: center;
-  background: white;
-  padding: 60px 40px;
-  border-radius: 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  max-width: 500px;
+  margin-bottom: 32px;
 }
 
-.qr-section h1 {
-  font-size: 48px;
+.loofa-profile-emoji {
+  font-size: 56px;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.loofa-profile-name {
+  font-size: 36px;
   font-weight: 900;
-  margin-bottom: 40px;
   background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.qr-code-display {
-  margin-bottom: 30px;
+/* Tabs */
+.loofa-tabs {
+  display: flex;
+  border-bottom: 2px solid #eee;
+  margin-bottom: 32px;
+  gap: 4px;
 }
 
-.qr-placeholder {
-  background: linear-gradient(135deg, #FFE5E5 0%, #E5F3FF 100%);
-  border-radius: 15px;
-  padding: 30px;
-  font-family: monospace;
-  font-size: 22px;
-  line-height: 1.8;
-  color: #333;
-  margin-bottom: 20px;
-  letter-spacing: 2px;
-}
-
-.template-type {
-  font-size: 18px;
-  color: #666;
-  margin-bottom: 30px;
+.loofa-tab {
+  background: none;
+  border: none;
+  padding: 10px 24px;
+  font-size: 15px;
   font-weight: 600;
+  color: #aaa;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+  font-family: inherit;
+}
+
+.loofa-tab:hover {
+  color: #666;
+}
+
+.loofa-tab.active {
+  color: #FF6B6B;
+  border-bottom-color: #FF6B6B;
+}
+
+/* Tab content */
+.loofa-tab-content {
+  padding-bottom: 60px;
+}
+
+/* Inline form */
+.loofa-inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loofa-form-intro {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.form-optional {
+  font-size: 11px;
+  font-weight: 400;
+  color: #bbb;
+  margin-left: 8px;
+  background: #f5f5f5;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+.loofa-submit-btn {
+  margin-top: 8px;
+}
+
+/* Submissions */
+.submissions-empty {
+  color: #bbb;
+  font-size: 15px;
+  text-align: center;
+  padding: 40px 0;
+}
+
+.submissions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.submission-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px 24px;
+  border: 2px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.submission-date {
+  font-size: 12px;
+  color: #bbb;
+  font-weight: 600;
+}
+
+.submission-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.submission-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.submission-value {
+  font-size: 15px;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.submission-files {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .loofa-slug {
