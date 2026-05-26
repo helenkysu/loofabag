@@ -1,0 +1,93 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+
+interface Loofa {
+  id: string;
+  name: string;
+  slug: string;
+  design: string;
+  template: string;
+  emoji: string;
+  isActive?: boolean;
+}
+
+export default function MyLoofas() {
+  const [loofas, setLoofas] = useState<Loofa[]>([]);
+
+  useEffect(() => {
+    const stored = typeof window !== 'undefined' ? localStorage.getItem('myLoofas') : null;
+    if (stored) {
+      setLoofas(JSON.parse(stored));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loofas.length > 0) {
+      localStorage.setItem('myLoofas', JSON.stringify(loofas));
+    }
+  }, [loofas]);
+
+  const deleteLoofa = (id: string) => {
+    setLoofas(loofas.filter((loofa) => loofa.id !== id));
+  };
+
+  return (
+    <main>
+      <nav>
+        <Link href="/" className="logo">👜 myloofabag</Link>
+        <div className="nav-links">
+          <Link href="/">Home</Link>
+          <Link href="/my-loofas">My Loofas</Link>
+        </div>
+      </nav>
+
+      <section className="my-loofas-section">
+        <div className="my-loofas-container">
+          <h1>My Loofas</h1>
+          
+          <Link href="/my-loofas/create" className="add-loofa-btn">
+            <span className="plus-icon">+</span>
+          </Link>
+
+          {loofas.length === 0 ? (
+            <div className="empty-state">
+              <p>You currently have no loofas created</p>
+            </div>
+          ) : (
+            <div className="loofa-grid">
+              {loofas.map((loofa) => (
+                <article key={loofa.id} className="loofa-card">
+                  <Link href={`/my-loofas/${loofa.id}`} className="loofa-card-body">
+                    <div className="loofa-emoji">{loofa.emoji}</div>
+                    <h3>{loofa.name}</h3>
+                    <p className="loofa-slug">loofabag.com/{loofa.slug}</p>
+                    <span className={`loofa-status-dot ${(loofa.isActive ?? true) ? 'status-active' : 'status-off'}`}>
+                      {(loofa.isActive ?? true) ? '● Active' : '○ Off'}
+                    </span>
+                  </Link>
+                  <div className="loofa-actions">
+                    <Link href={`/my-loofas/edit/${loofa.id}`} className="edit-btn">
+                      Edit
+                    </Link>
+                    <Link href={`/loofa/${loofa.slug}`} className="view-btn">
+                      View
+                    </Link>
+                    <button
+                      className="delete-btn"
+                      onClick={() => deleteLoofa(loofa.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+    </main>
+  );
+}
