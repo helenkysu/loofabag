@@ -297,40 +297,54 @@ export default function EditLoofaPage() {
                   onDrop={(e) => handleDrop(e, idx)}
                   onDragEnd={handleDragEnd}
                 >
-                  <span className="field-drag-handle" aria-label="Drag to reorder">⠿</span>
-                  <input
-                    type="text"
-                    value={field.label}
-                    onChange={(e) => updateField(idx, { label: e.target.value })}
-                    className="question-edit-input"
-                    placeholder={`Field ${idx + 1} label`}
-                  />
-                  <select
-                    value={field.type}
-                    onChange={(e) => updateField(idx, { type: e.target.value as FormField['type'] })}
-                    className="field-type-select"
-                  >
-                    <option value="text">Short text</option>
-                    <option value="number">Number</option>
-                    <option value="paragraph">Paragraph</option>
-                    <option value="url">URL / Link</option>
-                    <option value="photo">Photo</option>
-                    <option value="file">File upload</option>
-                  </select>
-                  <label className="field-optional-label">
+                  <div className="field-config-row">
+                    <span className="field-drag-handle" aria-label="Drag to reorder">⠿</span>
                     <input
-                      type="checkbox"
-                      checked={field.optional}
-                      onChange={(e) => updateField(idx, { optional: e.target.checked })}
+                      type="text"
+                      value={field.label}
+                      onChange={(e) => updateField(idx, { label: e.target.value })}
+                      className="question-edit-input"
+                      placeholder={`Field ${idx + 1} label`}
                     />
-                    Optional
-                  </label>
-                  <button
-                    type="button"
-                    className="question-delete-btn"
-                    onClick={() => removeField(idx)}
-                    aria-label="Remove field"
-                  >×</button>
+                    <select
+                      value={field.type}
+                      onChange={(e) => updateField(idx, { type: e.target.value as FormField['type'] })}
+                      className="field-type-select"
+                    >
+                      <option value="text">Short text</option>
+                      <option value="number">Number</option>
+                      <option value="paragraph">Paragraph</option>
+                      <option value="url">URL / Link</option>
+                      <option value="photo">Photo</option>
+                      <option value="file">File upload</option>
+                    </select>
+                    <button
+                      type="button"
+                      className="question-delete-btn"
+                      onClick={() => removeField(idx)}
+                      aria-label="Remove field"
+                    >×</button>
+                  </div>
+                  <div className="field-preview">
+                    {field.type === 'text' && (
+                      <input type="text" className="field-preview-input" placeholder={field.label || `Field ${idx + 1}`} />
+                    )}
+                    {field.type === 'number' && (
+                      <input type="number" className="field-preview-input" placeholder="0" />
+                    )}
+                    {field.type === 'paragraph' && (
+                      <textarea className="field-preview-textarea" placeholder={field.label || `Field ${idx + 1}`} rows={3} />
+                    )}
+                    {field.type === 'url' && (
+                      <input type="url" className="field-preview-input" placeholder="https://" />
+                    )}
+                    {field.type === 'photo' && (
+                      <div className="field-preview-upload">📷 Upload photos (up to 5)</div>
+                    )}
+                    {field.type === 'file' && (
+                      <div className="field-preview-upload">📎 Upload file (.pdf, .doc)</div>
+                    )}
+                  </div>
                 </div>
               ))}
               <div className="field-editor-actions">

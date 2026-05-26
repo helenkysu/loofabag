@@ -1259,13 +1259,13 @@ footer p {
 
 .field-edit-row {
   display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  border-radius: 10px;
-  transition: background 0.15s, opacity 0.15s, border 0.15s;
-  border: 2px solid transparent;
-  padding: 2px 0;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 12px;
+  border: 2px solid #f0f0f0;
+  padding: 12px 14px;
+  background: #fafafa;
+  transition: background 0.15s, opacity 0.15s, border-color 0.15s;
 }
 
 .field-edit-row.dragging {
@@ -1275,6 +1275,61 @@ footer p {
 .field-edit-row.drag-over {
   border-color: #FF6B6B;
   background: #fff5f5;
+}
+
+.field-config-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.field-preview {
+  padding-left: 26px;
+}
+
+.field-preview-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  background: white;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.field-preview-input:focus {
+  outline: none;
+  border-color: #FF6B6B;
+}
+
+.field-preview-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  background: white;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.field-preview-textarea:focus {
+  outline: none;
+  border-color: #FF6B6B;
+}
+
+.field-preview-upload {
+  padding: 10px 14px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #bbb;
+  background: white;
 }
 
 .field-drag-handle {
