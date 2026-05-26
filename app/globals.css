@@ -1323,13 +1323,50 @@ footer p {
   border-color: #FF6B6B;
 }
 
-.field-preview-upload {
-  padding: 10px 14px;
+.dropzone {
   border: 2px dashed #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #bbb;
+  border-radius: 10px;
+  padding: 22px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
   background: white;
+  user-select: none;
+}
+
+.dropzone:hover,
+.dropzone.dropzone-over {
+  border-color: #FF6B6B;
+  background: #fff5f5;
+}
+
+.dropzone-plus {
+  font-size: 28px;
+  line-height: 1;
+  color: #ccc;
+  transition: color 0.2s;
+}
+
+.dropzone:hover .dropzone-plus,
+.dropzone.dropzone-over .dropzone-plus {
+  color: #FF6B6B;
+}
+
+.dropzone-plus-done {
+  color: #6BCB77 !important;
+}
+
+.dropzone-hint {
+  font-size: 13px;
+  color: #bbb;
+}
+
+.dropzone-hint-done {
+  color: #6BCB77;
+  font-weight: 600;
 }
 
 .field-drag-handle {

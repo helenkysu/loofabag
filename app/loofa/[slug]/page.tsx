@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import NavBar from '@/app/components/NavBar';
+import DropZone from '@/app/components/DropZone';
 
 interface FormField {
   id: string;
@@ -51,10 +52,8 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
     setFormData((prev) => ({ ...prev, [fieldId]: value }));
   };
 
-  const handlePhotoChange = (fieldId: string, files: FileList | null) => {
-    if (!files) return;
-    const limited = Array.from(files).slice(0, 5);
-    setPhotoFiles((prev) => ({ ...prev, [fieldId]: limited }));
+  const handlePhotoChange = (fieldId: string, files: File[]) => {
+    setPhotoFiles((prev) => ({ ...prev, [fieldId]: files }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -153,36 +152,19 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
                         )}
 
                         {field.type === 'photo' && (
-                          <div className="photo-upload-field">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              multiple
-                              onChange={(e) => handlePhotoChange(field.id, e.target.files)}
-                              className="photo-input"
-                            />
-                            {photoFiles[field.id]?.length > 0 && (
-                              <p className="photo-count">
-                                {photoFiles[field.id].length} photo{photoFiles[field.id].length !== 1 ? 's' : ''} selected (max 5)
-                              </p>
-                            )}
-                          </div>
+                          <DropZone
+                            accept="image/*"
+                            multiple
+                            maxFiles={5}
+                            onFiles={(files) => handlePhotoChange(field.id, files)}
+                          />
                         )}
 
                         {field.type === 'file' && (
-                          <div className="photo-upload-field">
-                            <input
-                              type="file"
-                              accept=".pdf,.doc,.docx"
-                              onChange={(e) => handlePhotoChange(field.id, e.target.files)}
-                              className="photo-input"
-                            />
-                            {photoFiles[field.id]?.length > 0 && (
-                              <p className="photo-count">
-                                {photoFiles[field.id][0].name}
-                              </p>
-                            )}
-                          </div>
+                          <DropZone
+                            accept=".pdf,.doc,.docx"
+                            onFiles={(files) => handlePhotoChange(field.id, files)}
+                          />
                         )}
                       </div>
                     ))}

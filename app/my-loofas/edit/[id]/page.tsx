@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
+import DropZone from '@/app/components/DropZone';
 
 const designs = [
   { id: '1', name: 'Classic Red', color: '#FF6B6B', image: '🎨' },
@@ -339,10 +340,10 @@ export default function EditLoofaPage() {
                       <input type="url" className="field-preview-input" placeholder="https://" />
                     )}
                     {field.type === 'photo' && (
-                      <div className="field-preview-upload">📷 Upload photos (up to 5)</div>
+                      <DropZone accept="image/*" multiple maxFiles={5} />
                     )}
                     {field.type === 'file' && (
-                      <div className="field-preview-upload">📎 Upload file (.pdf, .doc)</div>
+                      <DropZone accept=".pdf,.doc,.docx" />
                     )}
                   </div>
                 </div>
