@@ -340,7 +340,7 @@ export default function EditLoofaPage() {
                       <input type="url" className="field-preview-input" placeholder="https://" />
                     )}
                     {field.type === 'photo' && (
-                      <DropZone accept="image/*" multiple maxFiles={5} />
+                      <DropZone accept="image/*,.heic,.HEIC,.heif,.HEIF" multiple maxFiles={5} />
                     )}
                     {field.type === 'file' && (
                       <DropZone accept=".pdf,.doc,.docx" />

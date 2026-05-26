@@ -170,7 +170,7 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
 
                         {field.type === 'photo' && (
                           <DropZone
-                            accept="image/*"
+                            accept="image/*,.heic,.HEIC,.heif,.HEIF"
                             multiple
                             maxFiles={5}
                             onFiles={(files) => handlePhotoChange(field.id, files)}

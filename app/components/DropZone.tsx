@@ -9,6 +9,29 @@ interface DropZoneProps {
   onFiles?: (files: File[]) => void;
 }
 
+function isHeicFile(file: File) {
+  return (
+    file.type === 'image/heic' ||
+    file.type === 'image/heif' ||
+    file.name.toLowerCase().endsWith('.heic') ||
+    file.name.toLowerCase().endsWith('.heif')
+  );
+}
+
+async function toPreviewUrl(file: File): Promise<string> {
+  if (isHeicFile(file)) {
+    try {
+      const heic2any = (await import('heic2any')).default;
+      const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
+      const blob = Array.isArray(result) ? result[0] : result;
+      return URL.createObjectURL(blob);
+    } catch {
+      return '';
+    }
+  }
+  return URL.createObjectURL(file);
+}
+
 export default function DropZone({ accept, multiple, maxFiles, onFiles }: DropZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
@@ -18,10 +41,27 @@ export default function DropZone({ accept, multiple, maxFiles, onFiles }: DropZo
   const isImage = accept?.includes('image');
 
   useEffect(() => {
-    if (!isImage || files.length === 0) return;
-    const urls = files.map((f) => URL.createObjectURL(f));
-    setPreviews(urls);
-    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+    if (!isImage || files.length === 0) {
+      setPreviews([]);
+      return;
+    }
+
+    let cancelled = false;
+    const generated: string[] = [];
+
+    Promise.all(files.map(toPreviewUrl)).then((urls) => {
+      if (cancelled) {
+        urls.forEach((u) => u && URL.revokeObjectURL(u));
+        return;
+      }
+      generated.push(...urls);
+      setPreviews(urls);
+    });
+
+    return () => {
+      cancelled = true;
+      generated.forEach((u) => u && URL.revokeObjectURL(u));
+    };
   }, [files, isImage]);
 
   const handleFiles = (incoming: FileList | null) => {
@@ -50,7 +90,11 @@ export default function DropZone({ accept, multiple, maxFiles, onFiles }: DropZo
         <div className="dropzone-previews" onClick={(e) => e.stopPropagation()}>
           {previews.map((url, idx) => (
             <div key={idx} className="dropzone-preview-item">
-              <img src={url} alt={files[idx]?.name} className="dropzone-preview-img" />
+              {url ? (
+                <img src={url} alt={files[idx]?.name} className="dropzone-preview-img" />
+              ) : (
+                <div className="dropzone-preview-placeholder">{files[idx]?.name ?? '📷'}</div>
+              )}
               <button
                 type="button"
                 className="dropzone-preview-remove"
