@@ -1257,6 +1257,165 @@ footer p {
   color: #FF6B6B;
 }
 
+.field-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.field-move-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.field-move-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  width: 28px;
+  height: 22px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  color: #999;
+  padding: 0;
+}
+
+.field-move-btn:hover:not(:disabled) {
+  border-color: #FF6B6B;
+  color: #FF6B6B;
+}
+
+.field-move-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.field-type-select {
+  padding: 10px 10px;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  background: white;
+  color: #555;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.field-type-select:focus {
+  outline: none;
+  border-color: #FF6B6B;
+}
+
+.field-optional-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #777;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.field-optional-label input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: #FF6B6B;
+}
+
+.field-editor-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.field-editor-actions .add-question-btn {
+  flex: 1;
+}
+
+.save-fields-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 2px solid #6BCB77;
+  background: none;
+  color: #6BCB77;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.save-fields-btn:hover {
+  background: #6BCB77;
+  color: white;
+}
+
+.save-fields-btn.saved {
+  background: #6BCB77;
+  color: white;
+  border-color: #6BCB77;
+}
+
+.field-type-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f0f0f0;
+  color: #888;
+}
+
+.field-optional-badge {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #fff3e0;
+  color: #e6840a;
+}
+
+.photo-upload-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.photo-input {
+  padding: 10px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.photo-input:hover {
+  border-color: #FF6B6B;
+}
+
+.photo-count {
+  font-size: 13px;
+  color: #6BCB77;
+  font-weight: 600;
+}
+
 .modal-footer {
   display: flex;
   justify-content: space-between;

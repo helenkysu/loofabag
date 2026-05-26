@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
 
@@ -14,45 +13,71 @@ const designs = [
   { id: '6', name: 'Purple Dreams', color: '#B19CD9', image: '✨' },
 ];
 
-const templates = [
+export interface FormField {
+  id: string;
+  type: 'text' | 'number' | 'paragraph' | 'photo';
+  label: string;
+  optional: boolean;
+}
+
+interface FieldDef {
+  type: FormField['type'];
+  label: string;
+  optional: boolean;
+}
+
+function makeId() {
+  return Math.random().toString(36).slice(2, 9);
+}
+
+function toFormFields(defs: FieldDef[]): FormField[] {
+  return defs.map((f) => ({ ...f, id: makeId() }));
+}
+
+const templateDefs: Array<{ id: string; name: string; emoji: string; fields: FieldDef[] }> = [
   {
     id: 'dating',
     name: 'Dating',
     emoji: '💕',
-    questions: [
-      'What are you looking for?',
-      'Tell us about yourself',
-      'What are your interests?',
-      'How would you contact you?',
+    fields: [
+      { type: 'text', label: 'Name / Nickname', optional: false },
+      { type: 'number', label: 'Age', optional: true },
+      { type: 'text', label: 'Gender', optional: true },
+      { type: 'text', label: 'Ethnicity', optional: true },
+      { type: 'text', label: 'MBTI', optional: true },
+      { type: 'paragraph', label: 'Looking for', optional: true },
+      { type: 'paragraph', label: 'Preferred contact method', optional: false },
+      { type: 'photo', label: 'Photos (up to 5)', optional: true },
     ],
   },
   {
     id: 'friends',
     name: 'Friends',
     emoji: '👯',
-    questions: [
-      'What kind of friends are you looking for?',
-      'Tell us about yourself',
-      'What are your hobbies?',
-      'Best way to reach you?',
+    fields: [
+      { type: 'text', label: 'Name / Nickname', optional: false },
+      { type: 'paragraph', label: 'Tell us about yourself', optional: true },
+      { type: 'text', label: 'Hobbies & interests', optional: true },
+      { type: 'text', label: 'Best way to reach you', optional: false },
     ],
   },
   {
     id: 'job',
     name: 'Job',
     emoji: '💼',
-    questions: [
-      'What position are you looking for?',
-      'Tell us about your experience',
-      'What are your skills?',
-      'How should they contact you?',
+    fields: [
+      { type: 'text', label: 'Your name', optional: false },
+      { type: 'text', label: 'Position you\'re looking for', optional: false },
+      { type: 'paragraph', label: 'About your experience', optional: true },
+      { type: 'text', label: 'Key skills', optional: true },
+      { type: 'text', label: 'How should they contact you', optional: false },
     ],
   },
   {
     id: 'blank',
     name: 'Blank',
     emoji: '📝',
-    questions: [],
+    fields: [],
   },
 ];
 
@@ -61,27 +86,41 @@ export default function CreateLoofaPage() {
   const [step, setStep] = useState(1);
   const [selectedDesign, setSelectedDesign] = useState(designs[0]);
   const [name, setName] = useState('');
-  const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
-  const [customQuestions, setCustomQuestions] = useState<string[]>(templates[0].questions);
+  const [selectedTemplate, setSelectedTemplate] = useState(templateDefs[0]);
+  const [customFields, setCustomFields] = useState<FormField[]>(() => toFormFields(templateDefs[0].fields));
   const [finished, setFinished] = useState(false);
+  const [fieldsSaved, setFieldsSaved] = useState(false);
 
-  const selectTemplate = (template: typeof templates[0]) => {
+  const selectTemplate = (template: typeof templateDefs[0]) => {
     setSelectedTemplate(template);
-    setCustomQuestions([...template.questions]);
+    setCustomFields(toFormFields(template.fields));
   };
 
-  const updateQuestion = (idx: number, value: string) => {
-    const updated = [...customQuestions];
-    updated[idx] = value;
-    setCustomQuestions(updated);
+  const updateField = (idx: number, updates: Partial<FormField>) => {
+    setCustomFields((prev) => prev.map((f, i) => (i === idx ? { ...f, ...updates } : f)));
   };
 
-  const removeQuestion = (idx: number) => {
-    setCustomQuestions(customQuestions.filter((_, i) => i !== idx));
+  const removeField = (idx: number) => {
+    setCustomFields((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const addQuestion = () => {
-    setCustomQuestions([...customQuestions, '']);
+  const addField = () => {
+    setCustomFields((prev) => [...prev, { id: makeId(), type: 'text', label: '', optional: true }]);
+  };
+
+  const moveField = (idx: number, direction: 'up' | 'down') => {
+    setCustomFields((prev) => {
+      const next = [...prev];
+      const target = direction === 'up' ? idx - 1 : idx + 1;
+      if (target < 0 || target >= next.length) return prev;
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  };
+
+  const handleSaveFields = () => {
+    setFieldsSaved(true);
+    setTimeout(() => setFieldsSaved(false), 2000);
   };
 
   const slug = name
@@ -101,25 +140,22 @@ export default function CreateLoofaPage() {
         design: selectedDesign.id,
         template: selectedTemplate.id,
         emoji: selectedTemplate.emoji,
-        questions: customQuestions.filter((q) => q.trim()),
+        fields: customFields.filter((f) => f.label.trim()),
       };
       localStorage.setItem('myLoofas', JSON.stringify([...current, newLoofa]));
     }
-  }, [finished, name, selectedDesign.id, selectedTemplate.id, selectedTemplate.emoji, slug, customQuestions]);
+  }, [finished, name, selectedDesign.id, selectedTemplate.id, selectedTemplate.emoji, slug, customFields]);
 
   const handleNext = () => {
     if (step < 5) {
       setStep(step + 1);
       return;
     }
-
     setFinished(true);
   };
 
   const handlePrev = () => {
-    if (step > 1) {
-      setStep(step - 1);
-    }
+    if (step > 1) setStep(step - 1);
   };
 
   return (
@@ -215,9 +251,9 @@ export default function CreateLoofaPage() {
               {step === 4 && (
                 <div className="step-content">
                   <h2>Choose Your Starter Template</h2>
-                  <p className="step-subtitle">All templates are fully customizable — add, edit, or remove any question.</p>
+                  <p className="step-subtitle">All templates are fully customizable — add, edit, or remove any field.</p>
                   <div className="template-grid">
-                    {templates.map((template) => (
+                    {templateDefs.map((template) => (
                       <button
                         key={template.id}
                         type="button"
@@ -226,43 +262,84 @@ export default function CreateLoofaPage() {
                       >
                         <div className="template-icon">{template.emoji}</div>
                         <h3>{template.name}</h3>
-                        {template.questions.length > 0 ? (
+                        {template.fields.length > 0 ? (
                           <ul className="template-questions">
-                            {template.questions.map((q, idx) => (
-                              <li key={idx}>{q}</li>
+                            {template.fields.map((f, i) => (
+                              <li key={i}>{f.label}</li>
                             ))}
                           </ul>
                         ) : (
-                          <p className="template-blank-hint">Pick your own questions</p>
+                          <p className="template-blank-hint">Pick your own fields</p>
                         )}
                       </button>
                     ))}
                   </div>
 
                   <div className="question-editor">
-                    <p className="question-editor-label">Your Questions</p>
-                    {customQuestions.map((q, idx) => (
-                      <div key={idx} className="question-edit-row">
+                    <p className="question-editor-label">Your Fields</p>
+                    {customFields.map((field, idx) => (
+                      <div key={field.id} className="field-edit-row">
+                        <div className="field-move-buttons">
+                          <button
+                            type="button"
+                            className="field-move-btn"
+                            onClick={() => moveField(idx, 'up')}
+                            disabled={idx === 0}
+                            aria-label="Move up"
+                          >↑</button>
+                          <button
+                            type="button"
+                            className="field-move-btn"
+                            onClick={() => moveField(idx, 'down')}
+                            disabled={idx === customFields.length - 1}
+                            aria-label="Move down"
+                          >↓</button>
+                        </div>
                         <input
                           type="text"
-                          value={q}
-                          onChange={(e) => updateQuestion(idx, e.target.value)}
+                          value={field.label}
+                          onChange={(e) => updateField(idx, { label: e.target.value })}
                           className="question-edit-input"
-                          placeholder={`Question ${idx + 1}`}
+                          placeholder={`Field ${idx + 1} label`}
                         />
+                        <select
+                          value={field.type}
+                          onChange={(e) => updateField(idx, { type: e.target.value as FormField['type'] })}
+                          className="field-type-select"
+                        >
+                          <option value="text">Short text</option>
+                          <option value="number">Number</option>
+                          <option value="paragraph">Paragraph</option>
+                          <option value="photo">Photo</option>
+                        </select>
+                        <label className="field-optional-label">
+                          <input
+                            type="checkbox"
+                            checked={field.optional}
+                            onChange={(e) => updateField(idx, { optional: e.target.checked })}
+                          />
+                          Optional
+                        </label>
                         <button
                           type="button"
                           className="question-delete-btn"
-                          onClick={() => removeQuestion(idx)}
-                          aria-label="Remove question"
-                        >
-                          ×
-                        </button>
+                          onClick={() => removeField(idx)}
+                          aria-label="Remove field"
+                        >×</button>
                       </div>
                     ))}
-                    <button type="button" className="add-question-btn" onClick={addQuestion}>
-                      + Add question
-                    </button>
+                    <div className="field-editor-actions">
+                      <button type="button" className="add-question-btn" onClick={addField}>
+                        + Add field
+                      </button>
+                      <button
+                        type="button"
+                        className={`save-fields-btn${fieldsSaved ? ' saved' : ''}`}
+                        onClick={handleSaveFields}
+                      >
+                        {fieldsSaved ? 'Saved ✓' : 'Save fields'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -281,14 +358,18 @@ export default function CreateLoofaPage() {
                   <div className="template-preview">
                     <p className="template-label">Template: <strong>{selectedTemplate.name} {selectedTemplate.emoji}</strong></p>
                     <div className="preview-questions">
-                      {customQuestions.filter((q) => q.trim()).length > 0 ? (
-                        customQuestions.filter((q) => q.trim()).map((q, idx) => (
-                          <div key={idx} className="question-item">
-                            <p>{idx + 1}. {q}</p>
+                      {customFields.filter((f) => f.label.trim()).length > 0 ? (
+                        customFields.filter((f) => f.label.trim()).map((f, idx) => (
+                          <div key={f.id} className="question-item">
+                            <p>
+                              {idx + 1}. {f.label}
+                              <span className="field-type-badge">{f.type}</span>
+                              {f.optional && <span className="field-optional-badge">optional</span>}
+                            </p>
                           </div>
                         ))
                       ) : (
-                        <p style={{ color: '#aaa', fontSize: 14 }}>No questions added yet.</p>
+                        <p style={{ color: '#aaa', fontSize: 14 }}>No fields added yet.</p>
                       )}
                     </div>
                   </div>

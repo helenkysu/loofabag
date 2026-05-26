@@ -1,60 +1,60 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import NavBar from '@/app/components/NavBar';
 
-const templates = {
-  dating: {
-    name: 'Dating',
-    emoji: '💕',
-    questions: [
-      'What are you looking for?',
-      'Tell us about yourself',
-      'What are your interests?',
-      'How would you contact you?',
-    ],
-  },
-  friends: {
-    name: 'Friends',
-    emoji: '👯',
-    questions: [
-      'What kind of friends are you looking for?',
-      'Tell us about yourself',
-      'What are your hobbies?',
-      'Best way to reach you?',
-    ],
-  },
-  job: {
-    name: 'Job',
-    emoji: '💼',
-    questions: [
-      'What position are you looking for?',
-      'Tell us about your experience',
-      'What are your skills?',
-      'How should they contact you?',
-    ],
-  },
-};
+interface FormField {
+  id: string;
+  type: 'text' | 'number' | 'paragraph' | 'photo';
+  label: string;
+  optional: boolean;
+}
+
+interface StoredLoofa {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  template: string;
+  isActive?: boolean;
+  fields?: FormField[];
+  questions?: string[];
+}
 
 export default function LoofahPage({ params }: { params: { slug: string } }) {
   const [showForm, setShowForm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [photoFiles, setPhotoFiles] = useState<Record<string, File[]>>({});
   const [isActive, setIsActive] = useState(true);
+  const [loofa, setLoofa] = useState<StoredLoofa | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('myLoofas');
     if (!stored) return;
-    const loofas = JSON.parse(stored);
-    const found = loofas.find((l: { slug: string; isActive?: boolean }) => l.slug === params.slug);
-    if (found) setIsActive(found.isActive ?? true);
+    const loofas: StoredLoofa[] = JSON.parse(stored);
+    const found = loofas.find((l) => l.slug === params.slug);
+    if (found) {
+      setLoofa(found);
+      setIsActive(found.isActive ?? true);
+    }
   }, [params.slug]);
 
-  const template = templates.dating as typeof templates.dating;
+  const fields: FormField[] = loofa?.fields ?? (loofa?.questions ?? []).map((q, i) => ({
+    id: `q${i}`,
+    type: 'paragraph' as const,
+    label: q,
+    optional: false,
+  }));
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
+  const handleInputChange = (fieldId: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [fieldId]: value }));
+  };
+
+  const handlePhotoChange = (fieldId: string, files: FileList | null) => {
+    if (!files) return;
+    const limited = Array.from(files).slice(0, 5);
+    setPhotoFiles((prev) => ({ ...prev, [fieldId]: limited }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -63,6 +63,9 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
     setTimeout(() => setShowForm(false), 2000);
   };
 
+  const displayName = loofa?.name ?? params.slug;
+  const displayEmoji = loofa?.emoji ?? '👜';
+
   return (
     <main>
       <NavBar />
@@ -70,11 +73,10 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
       <section className="loofa-page-section">
         <div className="loofa-page-container">
           <div className="qr-section">
-            <h1>{params.slug}</h1>
+            <h1>{displayEmoji} {displayName}</h1>
             <div className="qr-code-display">
-              <div className="qr-placeholder">█████████████<br/>█ {params.slug} █<br/>█████████████</div>
+              <div className="qr-placeholder">█████████████<br />█ {params.slug} █<br />█████████████</div>
             </div>
-            <p className="template-type">{template.emoji} {template.name}</p>
             {isActive ? (
               <button className="btn btn-primary" onClick={() => setShowForm(true)}>
                 Fill Out Form
@@ -93,28 +95,72 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
 
                 {!submitted ? (
                   <form onSubmit={handleSubmit}>
-                    <h2>Connect with {params.slug}</h2>
-                    {template.questions.map((question, idx) => (
-                      <div key={idx} className="form-group">
-                        <label>{question}</label>
-                        {idx === template.questions.length - 1 ? (
+                    <h2>Connect with {displayName}</h2>
+
+                    {fields.length === 0 && (
+                      <p style={{ color: '#aaa', fontSize: 14, marginBottom: 16 }}>
+                        No fields configured for this loofa yet.
+                      </p>
+                    )}
+
+                    {fields.map((field) => (
+                      <div key={field.id} className="form-group">
+                        <label>
+                          {field.label}
+                          {field.optional && (
+                            <span style={{ color: '#aaa', fontWeight: 400, marginLeft: 6 }}>(optional)</span>
+                          )}
+                        </label>
+
+                        {field.type === 'text' && (
                           <input
-                            type="email"
-                            placeholder="your@email.com"
-                            value={formData[`q${idx}`] || ''}
-                            onChange={(e) => handleInputChange(`q${idx}`, e.target.value)}
-                            required
+                            type="text"
+                            placeholder="Your answer"
+                            value={formData[field.id] ?? ''}
+                            onChange={(e) => handleInputChange(field.id, e.target.value)}
+                            required={!field.optional}
                           />
-                        ) : (
+                        )}
+
+                        {field.type === 'number' && (
+                          <input
+                            type="number"
+                            placeholder="0"
+                            value={formData[field.id] ?? ''}
+                            onChange={(e) => handleInputChange(field.id, e.target.value)}
+                            required={!field.optional}
+                            min={0}
+                          />
+                        )}
+
+                        {field.type === 'paragraph' && (
                           <textarea
                             placeholder="Your answer..."
-                            value={formData[`q${idx}`] || ''}
-                            onChange={(e) => handleInputChange(`q${idx}`, e.target.value)}
-                            required
+                            value={formData[field.id] ?? ''}
+                            onChange={(e) => handleInputChange(field.id, e.target.value)}
+                            required={!field.optional}
                           />
+                        )}
+
+                        {field.type === 'photo' && (
+                          <div className="photo-upload-field">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={(e) => handlePhotoChange(field.id, e.target.files)}
+                              className="photo-input"
+                            />
+                            {photoFiles[field.id]?.length > 0 && (
+                              <p className="photo-count">
+                                {photoFiles[field.id].length} photo{photoFiles[field.id].length !== 1 ? 's' : ''} selected (max 5)
+                              </p>
+                            )}
+                          </div>
                         )}
                       </div>
                     ))}
+
                     <div className="form-actions">
                       <button type="submit" className="btn btn-primary">
                         Submit
