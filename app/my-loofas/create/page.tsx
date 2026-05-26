@@ -69,23 +69,15 @@ const templateDefs: Array<{ id: string; name: string; emoji: string; fields: Fie
     fields: [
       { type: 'text', label: 'Name', optional: false },
       { type: 'text', label: 'Role / What you do', optional: false },
+      { type: 'text', label: 'Position you\'re looking for', optional: true },
       { type: 'text', label: 'School', optional: true },
+      { type: 'paragraph', label: 'About your experience', optional: true },
+      { type: 'text', label: 'Key skills', optional: true },
       { type: 'url', label: 'LinkedIn', optional: true },
       { type: 'file', label: 'Resume', optional: true },
       { type: 'photo', label: 'Photo / Headshot', optional: true },
-      { type: 'paragraph', label: 'Looking for', optional: true },
-    ],
-  },
-  {
-    id: 'job',
-    name: 'Job',
-    emoji: '💼',
-    fields: [
-      { type: 'text', label: 'Your name', optional: false },
-      { type: 'text', label: 'Position you\'re looking for', optional: false },
-      { type: 'paragraph', label: 'About your experience', optional: true },
-      { type: 'text', label: 'Key skills', optional: true },
       { type: 'text', label: 'How should they contact you', optional: false },
+      { type: 'paragraph', label: 'Looking for', optional: true },
     ],
   },
   {
@@ -105,6 +97,8 @@ export default function CreateLoofaPage() {
   const [customFields, setCustomFields] = useState<FormField[]>(() => toFormFields(templateDefs[0].fields));
   const [finished, setFinished] = useState(false);
   const [fieldsSaved, setFieldsSaved] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const selectTemplate = (template: typeof templateDefs[0]) => {
     setSelectedTemplate(template);
@@ -123,15 +117,27 @@ export default function CreateLoofaPage() {
     setCustomFields((prev) => [...prev, { id: makeId(), type: 'text', label: '', optional: true }]);
   };
 
-  const moveField = (idx: number, direction: 'up' | 'down') => {
+  const handleDragStart = (idx: number) => setDragIndex(idx);
+
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    setDragOverIndex(idx);
+  };
+
+  const handleDrop = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === idx) { setDragIndex(null); setDragOverIndex(null); return; }
     setCustomFields((prev) => {
       const next = [...prev];
-      const target = direction === 'up' ? idx - 1 : idx + 1;
-      if (target < 0 || target >= next.length) return prev;
-      [next[idx], next[target]] = [next[target], next[idx]];
+      const [removed] = next.splice(dragIndex, 1);
+      next.splice(idx, 0, removed);
       return next;
     });
+    setDragIndex(null);
+    setDragOverIndex(null);
   };
+
+  const handleDragEnd = () => { setDragIndex(null); setDragOverIndex(null); };
 
   const handleSaveFields = () => {
     setFieldsSaved(true);
@@ -293,23 +299,16 @@ export default function CreateLoofaPage() {
                   <div className="question-editor">
                     <p className="question-editor-label">Your Fields</p>
                     {customFields.map((field, idx) => (
-                      <div key={field.id} className="field-edit-row">
-                        <div className="field-move-buttons">
-                          <button
-                            type="button"
-                            className="field-move-btn"
-                            onClick={() => moveField(idx, 'up')}
-                            disabled={idx === 0}
-                            aria-label="Move up"
-                          >↑</button>
-                          <button
-                            type="button"
-                            className="field-move-btn"
-                            onClick={() => moveField(idx, 'down')}
-                            disabled={idx === customFields.length - 1}
-                            aria-label="Move down"
-                          >↓</button>
-                        </div>
+                      <div
+                        key={field.id}
+                        className={`field-edit-row${dragIndex === idx ? ' dragging' : ''}${dragOverIndex === idx && dragIndex !== idx ? ' drag-over' : ''}`}
+                        draggable
+                        onDragStart={() => handleDragStart(idx)}
+                        onDragOver={(e) => handleDragOver(e, idx)}
+                        onDrop={(e) => handleDrop(e, idx)}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <span className="field-drag-handle" aria-label="Drag to reorder">⠿</span>
                         <input
                           type="text"
                           value={field.label}

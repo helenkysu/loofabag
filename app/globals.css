@@ -1262,39 +1262,33 @@ footer p {
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
+  border-radius: 10px;
+  transition: background 0.15s, opacity 0.15s, border 0.15s;
+  border: 2px solid transparent;
+  padding: 2px 0;
 }
 
-.field-move-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex-shrink: 0;
+.field-edit-row.dragging {
+  opacity: 0.4;
 }
 
-.field-move-btn {
-  background: none;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  width: 28px;
-  height: 22px;
-  font-size: 11px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-  color: #999;
-  padding: 0;
-}
-
-.field-move-btn:hover:not(:disabled) {
+.field-edit-row.drag-over {
   border-color: #FF6B6B;
-  color: #FF6B6B;
+  background: #fff5f5;
 }
 
-.field-move-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
+.field-drag-handle {
+  font-size: 18px;
+  color: #ccc;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.field-drag-handle:active {
+  cursor: grabbing;
 }
 
 .field-type-select {
