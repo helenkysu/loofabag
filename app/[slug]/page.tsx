@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
 
@@ -19,6 +20,8 @@ interface StoredLoofa {
   template: string;
   isActive?: boolean;
   fields?: FormField[];
+  profileFields?: FormField[];
+  profileData?: Record<string, string>;
   questions?: string[];
 }
 
@@ -37,7 +40,8 @@ function formatDate(iso: string) {
   });
 }
 
-export default function LoofahPage({ params }: { params: { slug: string } }) {
+export default function LoofahPage() {
+  const { slug: slugParam } = useParams<{ slug: string }>();
   const [activeTab, setActiveTab] = useState<'profile' | 'submissions'>('profile');
   const [loofa, setLoofa] = useState<StoredLoofa | null>(null);
   const [isActive, setIsActive] = useState(true);
@@ -52,38 +56,45 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
     const stored = localStorage.getItem('myLoofas');
     if (!stored) return;
     const loofas: StoredLoofa[] = JSON.parse(stored);
-    const found = loofas.find((l) => l.slug === params.slug);
+    const found = loofas.find((l) => l.slug === slugParam);
     if (found) {
       setLoofa(found);
       setIsActive(found.isActive ?? true);
     }
-  }, [params.slug]);
+  }, [slugParam]);
 
   useEffect(() => {
     if (activeTab !== 'submissions') return;
     setLoadingSubmissions(true);
-    fetch(`/api/submissions?slug=${encodeURIComponent(params.slug)}`)
+    fetch(`/api/submissions?slug=${encodeURIComponent(slugParam)}`)
       .then((r) => r.json())
       .then((data) => setSubmissions(data.submissions ?? []))
       .catch(console.error)
       .finally(() => setLoadingSubmissions(false));
-  }, [activeTab, params.slug]);
+  }, [activeTab, slugParam]);
 
-  const fields: FormField[] = loofa?.fields ??
+  // Profile tab: owner's filled-in info
+  const profileFields: FormField[] =
+    loofa?.profileFields ??
+    loofa?.fields ??
     (loofa?.questions ?? []).map((q, i) => ({
-      id: `q${i}`,
-      type: 'paragraph' as const,
-      label: q,
-      optional: false,
+      id: `q${i}`, type: 'paragraph' as const, label: q, optional: false,
     }));
 
-  const handleInputChange = (fieldId: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [fieldId]: value }));
-  };
+  // Submissions tab: form visitors fill in.
+  // If profileFields exists the loofa was created with the new wizard,
+  // so fields is the submission form. Otherwise fields is old profile data — ignore it.
+  const submissionFields: FormField[] = loofa?.profileFields
+    ? (loofa.fields ?? [])
+    : (loofa?.questions ?? []).map((q, i) => ({
+        id: `q${i}`, type: 'paragraph' as const, label: q, optional: false,
+      }));
 
-  const handlePhotoChange = (fieldId: string, files: File[]) => {
+  const handleInputChange = (fieldId: string, value: string) =>
+    setFormData((prev) => ({ ...prev, [fieldId]: value }));
+
+  const handlePhotoChange = (fieldId: string, files: File[]) =>
     setPhotoFiles((prev) => ({ ...prev, [fieldId]: files }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,38 +103,42 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
     const uploadedPaths: string[] = [];
 
     if (loofa?.id) {
-      const uploadPromises = fields
-        .filter((f) => (f.type === 'photo' || f.type === 'file') && photoFiles[f.id]?.length)
-        .map(async (f) => {
-          const fd = new FormData();
-          fd.append('loofa_id', loofa.id);
-          fd.append('type', f.type === 'photo' ? 'photos' : 'files');
-          photoFiles[f.id].forEach((file) => fd.append('files', file));
-          const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
-          const data = await res.json();
-          if (data.paths) uploadedPaths.push(...data.paths);
-        });
-      await Promise.all(uploadPromises).catch(console.error);
+      await Promise.all(
+        submissionFields
+          .filter((f) => (f.type === 'photo' || f.type === 'file') && photoFiles[f.id]?.length)
+          .map(async (f) => {
+            const fd = new FormData();
+            fd.append('loofa_id', loofa.id);
+            fd.append('type', f.type === 'photo' ? 'photos' : 'files');
+            photoFiles[f.id].forEach((file) => fd.append('files', file));
+            const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.paths) uploadedPaths.push(...data.paths);
+          }),
+      ).catch(console.error);
     }
 
-    // Build responses keyed by field label for readability
     const responses: Record<string, string> = {};
-    fields.forEach((f) => {
+    submissionFields.forEach((f) => {
       if (formData[f.id] != null) responses[f.label] = formData[f.id];
     });
 
     await fetch('/api/submissions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: params.slug, responses, file_paths: uploadedPaths }),
+      body: JSON.stringify({ slug: slugParam, responses, file_paths: uploadedPaths }),
     }).catch(console.error);
 
     setSubmitting(false);
     setSubmitted(true);
   };
 
-  const displayName = loofa?.name ?? params.slug;
+  const displayName = loofa?.name ?? slugParam;
   const displayEmoji = loofa?.emoji ?? '👜';
+
+  // Find the owner's name from their profile data (first field labeled "name" or "nickname")
+  const ownerNameField = loofa?.profileFields?.find((f) => /name/i.test(f.label));
+  const ownerName = (ownerNameField ? loofa?.profileData?.[ownerNameField.id] : null) || displayName;
 
   return (
     <main>
@@ -145,10 +160,95 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
             <button
               className={`loofa-tab${activeTab === 'submissions' ? ' active' : ''}`}
               onClick={() => setActiveTab('submissions')}
-            >Submissions</button>
+            >Connect</button>
           </div>
 
           {activeTab === 'profile' && (
+            <div className="loofa-tab-content">
+              {!isActive && (
+                <div className="inactive-banner">
+                  This loofa is not currently accepting new submissions.
+                </div>
+              )}
+              {profileFields.length === 0 ? (
+                <p style={{ color: '#aaa', fontSize: 14 }}>No profile info yet.</p>
+              ) : (
+                <div className="profile-fields">
+                  {profileFields.map((field) => {
+                    const raw = loofa?.profileData?.[field.id];
+
+                    if (field.type === 'photo') {
+                      let paths: string[] = [];
+                      try { paths = raw ? JSON.parse(raw) : []; } catch { paths = []; }
+                      return (
+                        <div key={field.id} className="profile-field-row profile-field-col">
+                          <span className="profile-field-label">{field.label}</span>
+                          {paths.length > 0 ? (
+                            <div className="profile-photo-grid">
+                              {paths.map((path) => (
+                                <img
+                                  key={path}
+                                  src={`/api/files/proxy?path=${encodeURIComponent(path)}`}
+                                  alt={field.label}
+                                  className="profile-photo-thumb"
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="profile-field-value profile-field-blank">—</span>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    if (field.type === 'file') {
+                      let paths: string[] = [];
+                      try { paths = raw ? JSON.parse(raw) : []; } catch { paths = []; }
+                      return (
+                        <div key={field.id} className="profile-field-row profile-field-col">
+                          <span className="profile-field-label">{field.label}</span>
+                          {paths.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {paths.map((path) => (
+                                <a
+                                  key={path}
+                                  href={`/api/files/proxy?path=${encodeURIComponent(path)}`}
+                                  className="profile-field-link"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  {path.split('/').pop()}
+                                </a>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="profile-field-value profile-field-blank">—</span>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={field.id} className="profile-field-row">
+                        <span className="profile-field-label">{field.label}</span>
+                        {field.type === 'url' && raw ? (
+                          <a href={raw} className="profile-field-value profile-field-link" target="_blank" rel="noopener noreferrer">
+                            {raw}
+                          </a>
+                        ) : (
+                          <span className={`profile-field-value${!raw ? ' profile-field-blank' : ''}`}>
+                            {raw || '—'}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'submissions' && (
             <div className="loofa-tab-content">
               {!isActive ? (
                 <div className="inactive-banner">
@@ -157,26 +257,23 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
               ) : submitted ? (
                 <div className="success-message">
                   <div className="success-icon">✓</div>
-                  <h2>Thank you!</h2>
-                  <p>Your response has been submitted.</p>
+                  <h2>Sent!</h2>
+                  <p>Your info has been submitted to {ownerName}.</p>
                 </div>
               ) : (
                 <form className="loofa-inline-form" onSubmit={handleSubmit}>
                   <p className="loofa-form-intro">Connect with {displayName}</p>
 
-                  {fields.length === 0 && (
+                  {submissionFields.length === 0 && (
                     <p style={{ color: '#aaa', fontSize: 14 }}>No fields configured yet.</p>
                   )}
 
-                  {fields.map((field) => (
+                  {submissionFields.map((field) => (
                     <div key={field.id} className="form-group">
                       <label>
                         {field.label}
-                        {field.optional && (
-                          <span className="form-optional">optional</span>
-                        )}
+                        {field.optional && <span className="form-optional">optional</span>}
                       </label>
-
                       {field.type === 'text' && (
                         <input
                           type="text"
@@ -198,7 +295,7 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
                       )}
                       {field.type === 'paragraph' && (
                         <textarea
-                          placeholder="Your answer..."
+                          placeholder="Your answer…"
                           value={formData[field.id] ?? ''}
                           onChange={(e) => handleInputChange(field.id, e.target.value)}
                           required={!field.optional}
@@ -230,42 +327,44 @@ export default function LoofahPage({ params }: { params: { slug: string } }) {
                     </div>
                   ))}
 
-                  <button type="submit" className="btn btn-primary loofa-submit-btn" disabled={submitting}>
-                    {submitting ? 'Submitting…' : 'Submit'}
-                  </button>
+                  {submissionFields.length > 0 && (
+                    <button type="submit" className="btn btn-primary loofa-submit-btn" disabled={submitting}>
+                      {submitting ? 'Submitting…' : 'Submit'}
+                    </button>
+                  )}
                 </form>
               )}
-            </div>
-          )}
 
-          {activeTab === 'submissions' && (
-            <div className="loofa-tab-content">
-              {loadingSubmissions ? (
-                <p className="submissions-empty">Loading…</p>
-              ) : submissions.length === 0 ? (
-                <p className="submissions-empty">No submissions yet.</p>
-              ) : (
-                <div className="submissions-list">
-                  {submissions.map((sub) => (
-                    <div key={sub.id} className="submission-card">
-                      <p className="submission-date">{formatDate(sub.submitted_at)}</p>
-                      {Object.entries(sub.responses).map(([label, value]) => (
-                        <div key={label} className="submission-field">
-                          <span className="submission-label">{label}</span>
-                          <span className="submission-value">{value}</span>
+              {/* Received submissions list */}
+              {submitted || !isActive ? null : (
+                <>
+                  {loadingSubmissions ? (
+                    <p className="submissions-empty">Loading…</p>
+                  ) : submissions.length > 0 ? (
+                    <div className="submissions-list" style={{ marginTop: 32 }}>
+                      <p className="question-editor-label">Received</p>
+                      {submissions.map((sub) => (
+                        <div key={sub.id} className="submission-card">
+                          <p className="submission-date">{formatDate(sub.submitted_at)}</p>
+                          {Object.entries(sub.responses).map(([label, value]) => (
+                            <div key={label} className="submission-field">
+                              <span className="submission-label">{label}</span>
+                              <span className="submission-value">{value}</span>
+                            </div>
+                          ))}
+                          {sub.file_paths.length > 0 && (
+                            <div className="submission-files">
+                              <span className="submission-label">Attachments</span>
+                              <span className="submission-value">
+                                {sub.file_paths.length} file{sub.file_paths.length !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       ))}
-                      {sub.file_paths.length > 0 && (
-                        <div className="submission-files">
-                          <span className="submission-label">Attachments</span>
-                          <span className="submission-value">
-                            {sub.file_paths.length} file{sub.file_paths.length !== 1 ? 's' : ''}
-                          </span>
-                        </div>
-                      )}
                     </div>
-                  ))}
-                </div>
+                  ) : null}
+                </>
               )}
             </div>
           )}

@@ -32,36 +32,48 @@ export default function DropZone({ accept, multiple, maxFiles, onFiles }: DropZo
     return () => { urlsRef.current.forEach((u) => u && URL.revokeObjectURL(u)); };
   }, []);
 
-  const handleFiles = (incoming: FileList | null) => {
+  const handleFiles = async (incoming: FileList | null) => {
     if (!incoming) return;
     const arr = Array.from(incoming).slice(0, maxFiles ?? Infinity);
+
+    // Show filenames immediately while HEIC conversion runs
     setFiles(arr);
-    onFiles?.(arr);
 
-    if (!isImage) return;
+    // Convert HEIC → JPEG so uploads receive a browser-displayable format
+    const initialUrls: string[] = isImage ? arr.map((f) => isHeicFile(f) ? '' : URL.createObjectURL(f)) : [];
+    if (isImage) {
+      urlsRef.current.forEach((u) => u && URL.revokeObjectURL(u));
+      urlsRef.current = initialUrls.filter(Boolean);
+      setPreviews([...initialUrls]);
+    }
 
-    // Revoke previous preview URLs
-    urlsRef.current.forEach((u) => u && URL.revokeObjectURL(u));
+    const converted = await Promise.all(
+      arr.map(async (f, i) => {
+        if (!isHeicFile(f)) return { file: f, preview: initialUrls[i] ?? '' };
+        try {
+          const heic2any = (await import('heic2any')).default;
+          const result = await heic2any({ blob: f, toType: 'image/jpeg', quality: 0.8 });
+          const blob = Array.isArray(result) ? result[0] : result;
+          const newName = f.name.replace(/\.(heic|heif)$/i, '.jpg');
+          const jpegFile = new File([blob], newName, { type: 'image/jpeg' });
+          const preview = isImage ? URL.createObjectURL(blob) : '';
+          return { file: jpegFile, preview };
+        } catch {
+          return { file: f, preview: '' };
+        }
+      }),
+    );
 
-    // Synchronous previews for standard image formats
-    const urls: string[] = arr.map((f) => isHeicFile(f) ? '' : URL.createObjectURL(f));
-    urlsRef.current = urls.filter(Boolean);
-    setPreviews([...urls]);
-
-    // Async conversion for HEIC files — updates individual slots
-    arr.forEach(async (f, i) => {
-      if (!isHeicFile(f)) return;
-      try {
-        const heic2any = (await import('heic2any')).default;
-        const result = await heic2any({ blob: f, toType: 'image/jpeg', quality: 0.8 });
-        const blob = Array.isArray(result) ? result[0] : result;
-        const url = URL.createObjectURL(blob);
-        urlsRef.current.push(url);
-        setPreviews((prev) => { const next = [...prev]; next[i] = url; return next; });
-      } catch {
-        // leave slot as empty string — will render filename fallback
-      }
-    });
+    const convertedFiles = converted.map((c) => c.file);
+    if (isImage) {
+      // revoke only the initial HEIC placeholder slots (non-HEIC URLs are reused)
+      const finalUrls = converted.map((c) => c.preview);
+      const newUrls = finalUrls.filter((u, i) => u && u !== initialUrls[i]);
+      urlsRef.current = [...initialUrls.filter(Boolean), ...newUrls];
+      setPreviews(finalUrls);
+    }
+    setFiles(convertedFiles);
+    onFiles?.(convertedFiles);
   };
 
   const handleDrop = (e: DragEvent) => {

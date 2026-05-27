@@ -41,14 +41,10 @@ export default function MyLoofas() {
     }
   }, []);
 
-  useEffect(() => {
-    if (loofas.length > 0) {
-      localStorage.setItem('myLoofas', JSON.stringify(loofas));
-    }
-  }, [loofas]);
-
   const deleteLoofa = (id: string) => {
-    setLoofas(loofas.filter((loofa) => loofa.id !== id));
+    const updated = loofas.filter((loofa) => loofa.id !== id);
+    setLoofas(updated);
+    localStorage.setItem('myLoofas', JSON.stringify(updated));
   };
 
   return (

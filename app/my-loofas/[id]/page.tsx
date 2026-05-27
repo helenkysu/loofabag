@@ -15,12 +15,20 @@ interface Loofa {
   isActive?: boolean;
 }
 
+interface Submission {
+  id: string;
+  submitted_at: string;
+  responses: Record<string, string>;
+  file_paths: string[];
+}
+
 export default function LoofaManagementPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const [loofa, setLoofa] = useState<Loofa | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [submissionCount, setSubmissionCount] = useState<number | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('myLoofas');
@@ -29,6 +37,11 @@ export default function LoofaManagementPage() {
     const found = loofas.find((l) => l.id === id);
     if (!found) { setNotFound(true); return; }
     setLoofa({ isActive: true, ...found });
+
+    fetch(`/api/submissions?slug=${encodeURIComponent(found.slug)}`)
+      .then((r) => r.json())
+      .then((data) => setSubmissionCount((data.submissions as Submission[])?.length ?? 0))
+      .catch(() => setSubmissionCount(0));
   }, [id]);
 
   const isActive = loofa?.isActive ?? true;
@@ -115,26 +128,26 @@ export default function LoofaManagementPage() {
               <p>See your public display page</p>
             </Link>
 
-            <button type="button" className="mgmt-tile mgmt-tile-green">
+            <Link href={`/my-loofas/${id}/profile`} className="mgmt-tile mgmt-tile-purple">
+              <div className="mgmt-tile-icon">🎨</div>
+              <h3>QR Page Editor</h3>
+              <p>Fill in your profile info</p>
+            </Link>
+
+            <Link href={`/my-loofas/${id}/submissions`} className="mgmt-tile mgmt-tile-green">
               <div className="mgmt-tile-icon">📋</div>
               <h3>View Submissions</h3>
               <p>See who filled out your form</p>
-              <span className="tile-badge">0 responses</span>
-            </button>
+              {submissionCount !== null && (
+                <span className="tile-badge">{submissionCount} response{submissionCount !== 1 ? 's' : ''}</span>
+              )}
+            </Link>
 
-            <button type="button" className="mgmt-tile">
-              <div className="mgmt-tile-icon">🎨</div>
-              <h3>QR Page Editor</h3>
-              <p>Customize your display page</p>
-              <span className="tile-badge tile-badge-soon">Coming soon</span>
-            </button>
-
-            <button type="button" className="mgmt-tile">
+            <Link href={`/my-loofas/edit/${id}`} className="mgmt-tile mgmt-tile-orange">
               <div className="mgmt-tile-icon">✏️</div>
               <h3>Submission Editor</h3>
-              <p>Edit the questions people see</p>
-              <span className="tile-badge tile-badge-soon">Coming soon</span>
-            </button>
+              <p>Edit the fields visitors fill in</p>
+            </Link>
 
             <button type="button" className="mgmt-tile">
               <div className="mgmt-tile-icon">📦</div>
