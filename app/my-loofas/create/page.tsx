@@ -211,6 +211,7 @@ export default function CreateLoofaPage() {
   const [subDragIndex, setSubDragIndex] = useState<number | null>(null);
   const [subDragOverIndex, setSubDragOverIndex] = useState<number | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState('');
+  const [qrToken, setQrToken] = useState('');
   const didSave = useRef(false);
   const loofaIdRef = useRef(Date.now().toString());
   const qrDesignRef = useRef<QRDesignOptions | null>(null);
@@ -231,27 +232,40 @@ export default function CreateLoofaPage() {
     setSlugTaken(loofas.some((l) => l.slug === slug));
   }, [slug]);
 
-  // Restore state after Stripe redirect
+  // Initialize QR token on mount (fresh session) or restore after Stripe redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const resume = params.get('resume');
-    if (!resume) return;
-    const sessionId = params.get('session_id');
-    if (sessionId) setStripeSessionId(sessionId);
-    const saved = sessionStorage.getItem('loofabag_checkout_draft');
-    if (saved) {
-      try {
-        const draft = JSON.parse(saved);
-        if (draft.name) setName(draft.name);
-        if (draft.selectedProductId) setSelectedProductId(draft.selectedProductId);
-        if (draft.bagText) setBagText(draft.bagText);
-        if (draft.address) setAddress(draft.address);
-        if (draft.qrDesign) setRestoredQrDesign(draft.qrDesign);
-      } catch {}
+
+    if (resume) {
+      // Post-Stripe restore path
+      const sessionId = params.get('session_id');
+      if (sessionId) setStripeSessionId(sessionId);
+      const saved = sessionStorage.getItem('loofabag_checkout_draft');
+      if (saved) {
+        try {
+          const draft = JSON.parse(saved);
+          if (draft.name) setName(draft.name);
+          if (draft.selectedProductId) setSelectedProductId(draft.selectedProductId);
+          if (draft.bagText) setBagText(draft.bagText);
+          if (draft.address) setAddress(draft.address);
+          if (draft.qrDesign) setRestoredQrDesign(draft.qrDesign);
+          if (draft.qrToken) setQrToken(draft.qrToken);
+        } catch {}
+      }
+      setStep(Number(resume));
+      window.history.replaceState({}, '', '/my-loofas/create');
+    } else {
+      // Fresh session — generate or reuse token
+      const savedToken = sessionStorage.getItem('loofabag_qr_token');
+      if (savedToken) {
+        setQrToken(savedToken);
+      } else {
+        const newToken = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+        sessionStorage.setItem('loofabag_qr_token', newToken);
+        setQrToken(newToken);
+      }
     }
-    setStep(Number(resume));
-    // Clean up URL without reloading
-    window.history.replaceState({}, '', '/my-loofas/create');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -357,6 +371,7 @@ export default function CreateLoofaPage() {
       id: loofaId,
       name: name || `Loofa ${current.length + 1}`,
       slug,
+      qrToken: qrToken || null,
       product: selectedProductId,
       template: selectedTemplate.id,
       emoji: selectedTemplate.emoji,
@@ -366,6 +381,15 @@ export default function CreateLoofaPage() {
       bagText: bagText || null,
     };
     localStorage.setItem('myLoofas', JSON.stringify([...current, newLoofa]));
+
+    // Register the QR token → slug mapping
+    if (qrToken) {
+      fetch('/api/qr-redirect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: qrToken, loofa_id: loofaId, slug }),
+      }).catch(console.error);
+    }
 
     // Use pre-rendered design if available, otherwise fall back to server generation
     if (qrRenderedDataUrl) {
@@ -425,12 +449,13 @@ export default function CreateLoofaPage() {
       const qrCanvas = document.createElement('canvas');
       qrCanvas.width = qrPx;
       qrCanvas.height = qrPx;
-      await renderQRToCanvas(qrCanvas, `https://loofabag.com/${slug || 'your-name'}`, qrDesignRef.current);
+      const qrUrl = qrToken ? `https://loofabag.com/q/${qrToken}` : `https://loofabag.com/${slug || 'your-name'}`;
+      await renderQRToCanvas(qrCanvas, qrUrl, qrDesignRef.current);
       ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
       y += qrPx + Math.round(PX * 0.02);
     }
 
-    // 3. URL
+    // 3. URL (shows friendly slug URL for human readability)
     const urlFs = Math.round(PX * 0.026);
     ctx.font = `700 ${urlFs}px Arial, sans-serif`;
     ctx.fillStyle = '#000000';
@@ -482,7 +507,8 @@ export default function CreateLoofaPage() {
     const qrCanvas = document.createElement('canvas');
     qrCanvas.width = qrPx;
     qrCanvas.height = qrPx;
-    await renderQRToCanvas(qrCanvas, `https://loofabag.com/${slug || 'your-name'}`, design);
+    const printQrUrl = qrToken ? `https://loofabag.com/q/${qrToken}` : `https://loofabag.com/${slug || 'your-name'}`;
+    await renderQRToCanvas(qrCanvas, printQrUrl, design);
     ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
     y += qrPx + Math.round(PX * 0.02);
 
@@ -596,6 +622,7 @@ export default function CreateLoofaPage() {
       selectedProductId,
       bagText,
       address,
+      qrToken,
       // Save design options (logoFile is a File object — can't be serialized)
       qrDesign: design ? { fgColor: design.fgColor, bgColor: design.bgColor, gradient: design.gradient, shape: design.shape, logoFile: null } : null,
     }));
@@ -704,7 +731,7 @@ export default function CreateLoofaPage() {
                           <h3 className="design-section-title">QR Code</h3>
                           <p className="step-subtitle">Customize how your QR code looks.</p>
                           <QRDesigner
-                            url={slug ? `https://loofabag.com/${slug}` : 'https://loofabag.com'}
+                            url={qrToken ? `https://loofabag.com/q/${qrToken}` : 'https://loofabag.com'}
                             onDataUrl={setQrRenderedDataUrl}
                             onDesignChange={(d) => { qrDesignRef.current = d; }}
                           />
