@@ -3281,3 +3281,545 @@ footer p {
     width: 100%;
   }
 }
+
+/* ── Analytics tabs ── */
+.analytics-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 20px 0 24px;
+  border-bottom: 2px solid #eee;
+}
+
+.analytics-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.analytics-tab:hover {
+  color: #555;
+}
+
+.analytics-tab-active {
+  color: #FF6B6B;
+  border-bottom-color: #FF6B6B;
+}
+
+.analytics-tab-badge {
+  background: #FF6B6B;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+}
+
+/* ── Analytics panel ── */
+.analytics-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.analytics-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.analytics-stat-card {
+  background: #f8f8f8;
+  border: 1.5px solid #eee;
+  border-radius: 12px;
+  padding: 18px 14px;
+  text-align: center;
+}
+
+.analytics-stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: #222;
+  line-height: 1;
+}
+
+.analytics-stat-label {
+  font-size: 12px;
+  color: #888;
+  margin-top: 6px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.analytics-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 14px;
+}
+
+.analytics-chart-section {
+  background: #fafafa;
+  border: 1.5px solid #eee;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+/* 30-day bar chart */
+.analytics-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 100px;
+  position: relative;
+}
+
+.analytics-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  position: relative;
+}
+
+.analytics-bar {
+  width: 100%;
+  background: linear-gradient(to top, #FF6B6B, #FFB347);
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  transition: height 0.3s;
+}
+
+.analytics-bar-label {
+  font-size: 10px;
+  color: #aaa;
+  margin-top: 4px;
+  white-space: nowrap;
+  position: absolute;
+  bottom: -18px;
+}
+
+/* Hour-of-day chart */
+.analytics-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.analytics-hour-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 70px;
+  position: relative;
+}
+
+.analytics-hour-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  position: relative;
+}
+
+.analytics-bar-sm {
+  width: 100%;
+  background: linear-gradient(to top, #4D96FF, #6BCB77);
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+}
+
+/* Day-of-week chart */
+.analytics-weekday-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 90px;
+}
+
+.analytics-weekday-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.analytics-bar-weekday {
+  width: 100%;
+  background: linear-gradient(to top, #FF6B9D, #c44dff);
+  border-radius: 4px 4px 0 0;
+  min-height: 2px;
+}
+
+.analytics-weekday-label {
+  font-size: 10px;
+  color: #aaa;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.analytics-weekday-label-top {
+  font-size: 10px;
+  color: #888;
+  font-weight: 700;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+/* Recent scans table */
+.analytics-scans-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.analytics-scans-header,
+.analytics-scans-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr;
+  gap: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.analytics-scans-header {
+  background: #f0f0f0;
+  font-weight: 700;
+  color: #555;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.analytics-scans-row {
+  border-top: 1px solid #eee;
+  color: #333;
+}
+
+.analytics-scans-row:nth-child(even) {
+  background: #fafafa;
+}
+
+@media (max-width: 900px) {
+  .analytics-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .analytics-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .analytics-scans-header,
+  .analytics-scans-row {
+    grid-template-columns: 1.5fr 1.2fr 1fr;
+  }
+  .analytics-scans-header span:last-child,
+  .analytics-scans-row span:last-child {
+    display: none;
+  }
+}
+
+/* ── Transfer ── */
+.transfer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.transfer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.transfer-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+.transfer-success {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.transfer-success-icon {
+  font-size: 52px;
+  margin-bottom: 16px;
+}
+
+.transfer-success h2 {
+  margin-bottom: 12px;
+}
+
+.transfer-success p {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+/* Confirm modal */
+.transfer-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.transfer-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+}
+
+.transfer-modal h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #222;
+}
+
+.transfer-modal-body {
+  font-size: 15px;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.transfer-modal-prompt {
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 8px;
+}
+
+.transfer-confirm-input {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.transfer-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Pending transfer banner on management page */
+.pending-transfer-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fffbeb;
+  border: 1.5px solid #f59e0b;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.pending-transfer-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.pending-transfer-sub {
+  color: #b45309;
+}
+
+/* Transferred state */
+.transferred-header {
+  opacity: 0.7;
+}
+
+.status-transferred {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1.5px solid #d1d5db;
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.transferred-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-top: 4px;
+}
+
+.transferred-banner-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.transferred-banner-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.transferred-banner-sub {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.mgmt-tile-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: #f9f9f9;
+  border: 1.5px solid #eee;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mgmt-grid-dimmed .mgmt-tile:not(.mgmt-tile-disabled) {
+  opacity: 0.85;
+}
+
+/* Claim page */
+.claim-container {
+  max-width: 480px;
+  text-align: center;
+  padding-top: 40px;
+}
+
+.claim-gift-icon,
+.claim-success-icon,
+.claim-already-icon,
+.claim-error-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.claim-container h2 {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #222;
+}
+
+.claim-loofa-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #f8f8f8;
+  border: 1.5px solid #eee;
+  border-radius: 14px;
+  padding: 18px 24px;
+  margin: 20px auto;
+  text-align: left;
+  max-width: 360px;
+}
+
+.claim-loofa-emoji {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.claim-loofa-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 4px;
+}
+
+.claim-loofa-slug {
+  font-size: 13px;
+  color: #888;
+}
+
+.claim-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.claim-btn {
+  width: 100%;
+  max-width: 280px;
+  padding: 14px 28px;
+  font-size: 16px;
+}
+
+.claim-hint {
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 16px;
+  line-height: 1.5;
+}
+
+/* ── Contact page ── */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.contact-textarea {
+  resize: vertical;
+  min-height: 120px;
+  font-family: inherit;
+}
+
+.contact-success {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.contact-success h2 {
+  margin-bottom: 10px;
+}
+
+.contact-success p {
+  color: #666;
+}

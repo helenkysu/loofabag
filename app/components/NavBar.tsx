@@ -35,6 +35,7 @@ export default function NavBar({ children }: { children?: React.ReactNode }) {
       <Link href="/" className="logo">👜 myloofabag</Link>
       <div className="nav-links">
         {children}
+        <Link href="/contact">Contact</Link>
         {isSignedIn === true && (
           <Link href="/my-loofas">My Loofas</Link>
         )}
