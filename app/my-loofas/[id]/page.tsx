@@ -13,6 +13,10 @@ interface Loofa {
   template: string;
   emoji: string;
   isActive?: boolean;
+  transferStatus?: 'pending' | 'claimed';
+  transferRecipientEmail?: string;
+  transferToken?: string;
+  transferredAt?: string;
 }
 
 interface Submission {
@@ -36,15 +40,37 @@ export default function LoofaManagementPage() {
     const loofas: Loofa[] = JSON.parse(stored);
     const found = loofas.find((l) => l.id === id);
     if (!found) { setNotFound(true); return; }
-    setLoofa({ isActive: true, ...found });
+    const withDefaults = { isActive: true, ...found };
+    setLoofa(withDefaults);
 
     fetch(`/api/submissions?slug=${encodeURIComponent(found.slug)}`)
       .then((r) => r.json())
       .then((data) => setSubmissionCount((data.submissions as Submission[])?.length ?? 0))
       .catch(() => setSubmissionCount(0));
+
+    // If transfer is pending, poll server to see if it's been claimed
+    if (found.transferStatus === 'pending') {
+      fetch(`/api/transfers/status?loofa_id=${encodeURIComponent(found.id)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.status === 'claimed') {
+            const updated = { ...withDefaults, transferStatus: 'claimed' as const };
+            setLoofa(updated);
+            // Persist the claimed status
+            const raw = localStorage.getItem('myLoofas');
+            if (raw) {
+              const all: Loofa[] = JSON.parse(raw);
+              localStorage.setItem('myLoofas', JSON.stringify(all.map((l) => l.id === id ? updated : l)));
+            }
+          }
+        })
+        .catch(() => {});
+    }
   }, [id]);
 
-  const isActive = loofa?.isActive ?? true;
+  const isTransferred = loofa?.transferStatus === 'claimed';
+  const isTransferPending = loofa?.transferStatus === 'pending';
+  const isActive = !isTransferred && (loofa?.isActive ?? true);
 
   const persist = (updated: Loofa) => {
     const stored = localStorage.getItem('myLoofas');
@@ -54,7 +80,7 @@ export default function LoofaManagementPage() {
   };
 
   const toggleActive = () => {
-    if (!loofa) return;
+    if (!loofa || isTransferred) return;
     const updated = { ...loofa, isActive: !isActive };
     setLoofa(updated);
     persist(updated);
@@ -85,6 +111,59 @@ export default function LoofaManagementPage() {
   }
 
   if (!loofa) return null;
+
+  // Transferred state — fully greyed out
+  if (isTransferred) {
+    return (
+      <main>
+        <NavBar />
+        <section className="my-loofas-section">
+          <div className="my-loofas-container">
+            <Link href="/my-loofas" className="back-link">← My Loofas</Link>
+
+            <div className="mgmt-header transferred-header">
+              <div className="mgmt-header-left">
+                <span className="mgmt-emoji" style={{ opacity: 0.4 }}>{loofa.emoji}</span>
+                <div>
+                  <h1 className="mgmt-name" style={{ color: '#aaa' }}>{loofa.name}</h1>
+                  <p className="loofa-slug" style={{ color: '#ccc' }}>loofabag.com/{loofa.slug}</p>
+                </div>
+              </div>
+              <span className="status-badge status-transferred">Transferred</span>
+            </div>
+
+            <div className="transferred-banner">
+              <div className="transferred-banner-icon">📦</div>
+              <div>
+                <p className="transferred-banner-title">Transferred to {loofa.transferRecipientEmail}</p>
+                <p className="transferred-banner-sub">This loofa has been claimed by the recipient and is no longer yours to manage.</p>
+              </div>
+            </div>
+
+            <div className="danger-zone" style={{ marginTop: 40 }}>
+              {!confirmDelete ? (
+                <button type="button" className="delete-loofa-btn" onClick={() => setConfirmDelete(true)}>
+                  Remove from my loofas
+                </button>
+              ) : (
+                <div className="confirm-delete">
+                  <p>Remove this loofa from your view?</p>
+                  <div className="confirm-actions">
+                    <button type="button" className="btn btn-secondary" onClick={() => setConfirmDelete(false)}>
+                      Cancel
+                    </button>
+                    <button type="button" className="delete-loofa-btn" onClick={deleteLoofa}>
+                      Yes, Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main>
@@ -121,7 +200,17 @@ export default function LoofaManagementPage() {
             </div>
           )}
 
-          <div className="mgmt-grid">
+          {isTransferPending && (
+            <div className="pending-transfer-banner">
+              <span className="pending-transfer-icon">⏳</span>
+              <div>
+                <strong>Pending transfer</strong> to {loofa.transferRecipientEmail}
+                <span className="pending-transfer-sub"> — waiting for them to claim it.</span>
+              </div>
+            </div>
+          )}
+
+          <div className={`mgmt-grid${isTransferPending ? ' mgmt-grid-dimmed' : ''}`}>
             <Link href={`/${loofa.slug}`} className="mgmt-tile mgmt-tile-blue">
               <div className="mgmt-tile-icon">👁</div>
               <h3>View QR Page</h3>
@@ -136,8 +225,8 @@ export default function LoofaManagementPage() {
 
             <Link href={`/my-loofas/${id}/submissions`} className="mgmt-tile mgmt-tile-green">
               <div className="mgmt-tile-icon">📋</div>
-              <h3>View Submissions</h3>
-              <p>See who filled out your form</p>
+              <h3>Submissions & Analytics</h3>
+              <p>Responses and QR scan stats</p>
               {submissionCount !== null && (
                 <span className="tile-badge">{submissionCount} response{submissionCount !== 1 ? 's' : ''}</span>
               )}
@@ -149,17 +238,25 @@ export default function LoofaManagementPage() {
               <p>Edit the fields visitors fill in</p>
             </Link>
 
+            {!isTransferPending ? (
+              <Link href={`/my-loofas/transfer/${id}`} className="mgmt-tile">
+                <div className="mgmt-tile-icon">📨</div>
+                <h3>Transfer Loofa</h3>
+                <p>Send this loofa to someone else</p>
+              </Link>
+            ) : (
+              <div className="mgmt-tile mgmt-tile-disabled">
+                <div className="mgmt-tile-icon">📨</div>
+                <h3>Transfer Pending</h3>
+                <p>Transfer to {loofa.transferRecipientEmail}</p>
+                <span className="tile-badge">Pending</span>
+              </div>
+            )}
+
             <button type="button" className="mgmt-tile">
               <div className="mgmt-tile-icon">📦</div>
               <h3>Order Tracking</h3>
               <p>Track your physical loofa orders</p>
-              <span className="tile-badge tile-badge-soon">Coming soon</span>
-            </button>
-
-            <button type="button" className="mgmt-tile">
-              <div className="mgmt-tile-icon">🛍️</div>
-              <h3>Order More</h3>
-              <p>Get more loofas for your bag</p>
               <span className="tile-badge tile-badge-soon">Coming soon</span>
             </button>
           </div>
