@@ -8,7 +8,7 @@ import DropZone from '@/app/components/DropZone';
 
 interface FormField {
   id: string;
-  type: 'text' | 'number' | 'paragraph' | 'photo' | 'url' | 'file';
+  type: 'text' | 'number' | 'paragraph' | 'photo' | 'video' | 'url' | 'file';
   label: string;
   optional: boolean;
 }
@@ -98,11 +98,12 @@ export default function ProfileEditorPage() {
 
     await Promise.all(
       fields
-        .filter((f) => (f.type === 'photo' || f.type === 'file') && pendingFiles[f.id]?.length)
+        .filter((f) => (f.type === 'photo' || f.type === 'video' || f.type === 'file') && pendingFiles[f.id]?.length)
         .map(async (field) => {
           const fd = new FormData();
           fd.append('loofa_id', loofa.id);
-          fd.append('type', field.type === 'photo' ? 'photos' : 'files');
+          const uploadType = field.type === 'photo' ? 'photos' : field.type === 'video' ? 'videos' : 'files';
+          fd.append('type', uploadType);
           pendingFiles[field.id].forEach((file) => fd.append('files', file));
           const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
           const data = await res.json();
@@ -187,6 +188,7 @@ export default function ProfileEditorPage() {
                     <option value="paragraph">Paragraph</option>
                     <option value="url">URL / Link</option>
                     <option value="photo">Photo</option>
+                    <option value="video">Video</option>
                     <option value="file">File upload</option>
                   </select>
                   <button type="button" className="question-delete-btn" onClick={() => removeField(idx)} aria-label="Remove field">×</button>
@@ -231,19 +233,20 @@ export default function ProfileEditorPage() {
                       onChange={(e) => handleTextChange(field.id, e.target.value)}
                     />
                   )}
-                  {(field.type === 'photo' || field.type === 'file') && (
+                  {(field.type === 'photo' || field.type === 'video' || field.type === 'file') && (
                     <div>
                       {parsePaths(profileData[field.id]).length > 0 && (
                         <div className="profile-existing-files">
                           {field.type === 'photo' ? (
                             <div className="profile-existing-photos">
                               {parsePaths(profileData[field.id]).map((path) => (
-                                <img
-                                  key={path}
-                                  src={`/api/files/proxy?path=${encodeURIComponent(path)}`}
-                                  alt=""
-                                  className="profile-existing-photo"
-                                />
+                                <img key={path} src={`/api/files/proxy?path=${encodeURIComponent(path)}`} alt="" className="profile-existing-photo" />
+                              ))}
+                            </div>
+                          ) : field.type === 'video' ? (
+                            <div className="profile-existing-photos">
+                              {parsePaths(profileData[field.id]).map((path) => (
+                                <video key={path} src={`/api/files/proxy?path=${encodeURIComponent(path)}`} controls className="profile-existing-photo" style={{ objectFit: 'cover' }} />
                               ))}
                             </div>
                           ) : (
@@ -255,9 +258,15 @@ export default function ProfileEditorPage() {
                         </div>
                       )}
                       <DropZone
-                        accept={field.type === 'photo' ? 'image/*,.heic,.HEIC,.heif,.HEIF' : '.pdf,.doc,.docx'}
-                        multiple={field.type === 'photo'}
-                        maxFiles={field.type === 'photo' ? 5 : 1}
+                        accept={
+                          field.type === 'photo' ? 'image/*,.heic,.HEIC,.heif,.HEIF' :
+                          field.type === 'video' ? 'video/*,.mp4,.mov,.avi,.webm' :
+                          '.pdf,.doc,.docx'
+                        }
+                        multiple={field.type === 'photo' || field.type === 'video'}
+                        maxFiles={field.type === 'photo' ? 10 : field.type === 'video' ? 2 : 1}
+                        maxSizeMB={field.type === 'photo' ? 5 : field.type === 'video' ? 50 : 5}
+                        maxDurationSeconds={field.type === 'video' ? 120 : undefined}
                         onFiles={(files) => handleFiles(field.id, files)}
                       />
                     </div>
