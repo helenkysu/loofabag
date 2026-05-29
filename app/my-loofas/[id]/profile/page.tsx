@@ -21,6 +21,7 @@ interface Loofa {
   fields?: FormField[];
   profileFields?: FormField[];
   profileData?: Record<string, string>;
+  profilePhotoUrl?: string | null;
   isActive?: boolean;
 }
 
@@ -41,6 +42,8 @@ export default function ProfileEditorPage() {
   const [fields, setFields] = useState<FormField[]>([]);
   const [profileData, setProfileData] = useState<Record<string, string>>({});
   const [pendingFiles, setPendingFiles] = useState<Record<string, File[]>>({});
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [pendingProfilePhoto, setPendingProfilePhoto] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -55,6 +58,7 @@ export default function ProfileEditorPage() {
         const seed = data.loofa.profileFields ?? data.loofa.fields ?? [];
         setFields(seed.map((f: FormField) => ({ ...f })));
         setProfileData(data.loofa.profileData ?? {});
+        setProfilePhoto(data.loofa.profilePhotoUrl ?? null);
       })
       .catch(() => setNotFound(true));
   }, [id]);
@@ -115,12 +119,24 @@ export default function ProfileEditorPage() {
         }),
     );
 
+    let newProfilePhotoUrl: string | null = profilePhoto ?? null;
+    if (pendingProfilePhoto) {
+      const fd = new FormData();
+      fd.append('loofa_id', loofa.id);
+      fd.append('type', 'photos');
+      fd.append('files', pendingProfilePhoto);
+      const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.paths?.[0]) newProfilePhotoUrl = data.paths[0] as string;
+    }
+
     await fetch(`/api/loofas/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         profileFields: fields.filter((f) => f.label.trim()),
         profileData: updatedData,
+        profilePhotoUrl: newProfilePhotoUrl,
       }),
     });
 
@@ -153,6 +169,40 @@ export default function ProfileEditorPage() {
           <Link href={`/my-loofas/${id}`} className="back-link">← Back</Link>
           <h1>QR Page Editor</h1>
           <p className="step-subtitle">Edit your profile fields and fill in your info.</p>
+
+          <div className="profile-photo-editor">
+            <p className="question-editor-label">Profile Photo</p>
+            <div className="profile-photo-editor-row">
+              {profilePhoto ? (
+                <div className="profile-photo-preview-wrap">
+                  <img
+                    src={`/api/files/proxy?path=${encodeURIComponent(profilePhoto)}`}
+                    alt="Profile"
+                    className="profile-photo-preview"
+                  />
+                  <button
+                    type="button"
+                    className="profile-photo-remove"
+                    onClick={() => { setProfilePhoto(null); setPendingProfilePhoto(null); }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <DropZone
+                  accept="image/*,.heic,.HEIC,.heif,.HEIF"
+                  maxFiles={1}
+                  maxSizeMB={5}
+                  onFiles={(files) => {
+                    if (files[0]) {
+                      setPendingProfilePhoto(files[0]);
+                      setProfilePhoto(URL.createObjectURL(files[0]));
+                    }
+                  }}
+                />
+              )}
+            </div>
+          </div>
 
           <div className="question-editor">
             <p className="question-editor-label">

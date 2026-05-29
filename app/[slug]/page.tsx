@@ -23,6 +23,7 @@ interface Loofa {
   fields?: FormField[];
   profileFields?: FormField[];
   profileData?: Record<string, string>;
+  profilePhotoUrl?: string | null;
   questions?: string[];
 }
 
@@ -130,7 +131,15 @@ export default function LoofahPage() {
         <div className="loofa-page-container">
 
           <div className="loofa-profile-header">
-            <span className="loofa-profile-emoji">{displayEmoji}</span>
+            {loofa?.profilePhotoUrl ? (
+              <img
+                src={`/api/files/proxy?path=${encodeURIComponent(loofa.profilePhotoUrl)}`}
+                alt={displayName}
+                className="loofa-profile-photo"
+              />
+            ) : (
+              <span className="loofa-profile-emoji">{displayEmoji}</span>
+            )}
             <h1 className="loofa-profile-name">{displayName}</h1>
           </div>
 

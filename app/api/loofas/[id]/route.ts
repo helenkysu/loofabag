@@ -14,6 +14,7 @@ function dbToClient(loofa: any, slug: string | null, profileData: Record<string,
     profileFields: loofa.profile_template ?? [],
     profileData: profileData ?? {},
     isActive: loofa.status === 'active',
+    profilePhotoUrl: (loofa.profile_photo_url ?? null) as string | null,
     qrToken: (loofa.qr_token ?? null) as string | null,
     storageId: (loofa.storage_id ?? null) as string | null,
     transferStatus: (loofa.transfer_status ?? null) as string | null,
@@ -73,6 +74,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if ('transferRecipientEmail' in body) updates.transfer_recipient_email = body.transferRecipientEmail;
   if ('transferToken' in body) updates.transfer_token = body.transferToken;
   if ('transferredAt' in body) updates.transferred_at = body.transferredAt;
+  if ('profilePhotoUrl' in body) updates.profile_photo_url = body.profilePhotoUrl;
 
   const { data: loofa, error } = Object.keys(updates).length
     ? await admin

@@ -1473,6 +1473,49 @@ footer p {
   margin-bottom: 4px;
 }
 
+.profile-photo-editor {
+  margin-bottom: 28px;
+}
+
+.profile-photo-editor-row {
+  margin-top: 10px;
+  max-width: 240px;
+}
+
+.profile-photo-preview-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-photo-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #f0ebe3;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  display: block;
+}
+
+.profile-photo-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ff6b6b;
+  color: #fff;
+  border: none;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
 .question-edit-row {
   display: flex;
   gap: 8px;
@@ -2025,6 +2068,17 @@ footer p {
   font-size: 56px;
   display: block;
   margin-bottom: 10px;
+}
+
+.loofa-profile-photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 12px;
+  border: 3px solid #f0ebe3;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
 }
 
 .loofa-profile-name {

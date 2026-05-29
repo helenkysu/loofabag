@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
       profileFields: l.profile_template ?? [],
       profileData: (pdResult.data?.data ?? {}) as Record<string, string>,
       isActive: l.status === 'active',
+      profilePhotoUrl: l.profile_photo_url ?? null,
     },
   });
 }
