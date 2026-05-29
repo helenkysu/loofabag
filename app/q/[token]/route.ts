@@ -3,9 +3,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { token: string } },
+  { params }: { params: Promise<{ token: string }> },
 ) {
-  const { token } = params;
+  const { token } = await params;
   const supabase = createAdminClient();
 
   const { data: qr } = await supabase
