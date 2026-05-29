@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { Turnstile } from '@marsidev/react-turnstile';
 import NavBar from '@/app/components/NavBar';
 
 export default function ContactPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
@@ -18,7 +20,7 @@ export default function ContactPage() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, message }),
+        body: JSON.stringify({ email, message, captchaToken }),
       });
       const data = await res.json();
       if (!data.ok) {
@@ -78,11 +80,18 @@ export default function ContactPage() {
                   rows={6}
                 />
               </div>
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA'}
+                onSuccess={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken(null)}
+                onError={() => setCaptchaToken(null)}
+                options={{ theme: 'light', size: 'normal' }}
+              />
               {error && <p className="rates-error">{error}</p>}
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={sending || !email || !message}
+                disabled={sending || !email || !message || !captchaToken}
               >
                 {sending ? 'Sending…' : 'Send Message'}
               </button>
