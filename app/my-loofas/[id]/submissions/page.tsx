@@ -75,6 +75,7 @@ export default function SubmissionsPage() {
   const { id } = useParams<{ id: string }>();
   const [loofa, setLoofa] = useState<Loofa | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [flaggedCount, setFlaggedCount] = useState(0);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -91,7 +92,10 @@ export default function SubmissionsPage() {
 
     fetch(`/api/submissions?slug=${encodeURIComponent(found.slug)}`)
       .then((r) => r.json())
-      .then((data) => setSubmissions(data.submissions ?? []))
+      .then((data) => {
+        setSubmissions(data.submissions ?? []);
+        setFlaggedCount(data.flagged_count ?? 0);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [id]);
@@ -163,11 +167,29 @@ export default function SubmissionsPage() {
             <>
               {loading ? (
                 <p className="submissions-empty">Loading…</p>
-              ) : submissions.length === 0 ? (
+              ) : submissions.length === 0 && flaggedCount === 0 ? (
                 <p className="submissions-empty">No submissions yet.</p>
+              ) : submissions.length === 0 ? (
+                <div>
+                  <p className="submissions-empty">No submissions yet.</p>
+                  {flaggedCount > 0 && (
+                    <span className="flagged-count-badge" title="Submissions hidden due to policy violations">
+                      {flaggedCount} flagged
+                    </span>
+                  )}
+                </div>
               ) : (
                 <div className="submissions-list">
-                  <p className="question-editor-label">{submissions.length} response{submissions.length !== 1 ? 's' : ''}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                    <p className="question-editor-label" style={{ margin: 0 }}>
+                      {submissions.length} response{submissions.length !== 1 ? 's' : ''}
+                    </p>
+                    {flaggedCount > 0 && (
+                      <span className="flagged-count-badge" title="Submissions hidden due to policy violations">
+                        {flaggedCount} flagged
+                      </span>
+                    )}
+                  </div>
                   {submissions.map((sub) => (
                     <div key={sub.id} className="submission-card">
                       <p className="submission-date">{formatDate(sub.submitted_at)}</p>
