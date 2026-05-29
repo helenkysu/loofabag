@@ -83,18 +83,19 @@ export default function SubmissionsPage() {
   const [tab, setTab] = useState<'submissions' | 'analytics'>('submissions');
 
   useEffect(() => {
-    const stored = localStorage.getItem('myLoofas');
-    if (!stored) { setNotFound(true); return; }
-    const loofas: Loofa[] = JSON.parse(stored);
-    const found = loofas.find((l) => l.id === id);
-    if (!found) { setNotFound(true); return; }
-    setLoofa(found);
-
-    fetch(`/api/submissions?slug=${encodeURIComponent(found.slug)}`)
+    fetch(`/api/loofas/${id}`)
       .then((r) => r.json())
       .then((data) => {
-        setSubmissions(data.submissions ?? []);
-        setFlaggedCount(data.flagged_count ?? 0);
+        if (data.error) { setNotFound(true); return; }
+        setLoofa(data.loofa);
+        return fetch(`/api/submissions?slug=${encodeURIComponent(data.loofa.slug)}`);
+      })
+      .then((r) => r?.json())
+      .then((data) => {
+        if (data) {
+          setSubmissions(data.submissions ?? []);
+          setFlaggedCount(data.flagged_count ?? 0);
+        }
       })
       .catch(console.error)
       .finally(() => setLoading(false));

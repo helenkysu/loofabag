@@ -35,62 +35,55 @@ export default function LoofaManagementPage() {
   const [submissionCount, setSubmissionCount] = useState<number | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('myLoofas');
-    if (!stored) { setNotFound(true); return; }
-    const loofas: Loofa[] = JSON.parse(stored);
-    const found = loofas.find((l) => l.id === id);
-    if (!found) { setNotFound(true); return; }
-    const withDefaults = { isActive: true, ...found };
-    setLoofa(withDefaults);
-
-    fetch(`/api/submissions?slug=${encodeURIComponent(found.slug)}`)
+    fetch(`/api/loofas/${id}`)
       .then((r) => r.json())
-      .then((data) => setSubmissionCount((data.submissions as Submission[])?.length ?? 0))
-      .catch(() => setSubmissionCount(0));
-
-    // If transfer is pending, poll server to see if it's been claimed
-    if (found.transferStatus === 'pending') {
-      fetch(`/api/transfers/status?loofa_id=${encodeURIComponent(found.id)}`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.status === 'claimed') {
-            const updated = { ...withDefaults, transferStatus: 'claimed' as const };
-            setLoofa(updated);
-            // Persist the claimed status
-            const raw = localStorage.getItem('myLoofas');
-            if (raw) {
-              const all: Loofa[] = JSON.parse(raw);
-              localStorage.setItem('myLoofas', JSON.stringify(all.map((l) => l.id === id ? updated : l)));
-            }
-          }
-        })
-        .catch(() => {});
-    }
+      .then((data) => {
+        if (data.error) { setNotFound(true); return; }
+        const withDefaults = { isActive: true, ...data.loofa };
+        setLoofa(withDefaults);
+        // fetch submission count
+        fetch(`/api/submissions?slug=${encodeURIComponent(data.loofa.slug)}`)
+          .then((r) => r.json())
+          .then((d) => setSubmissionCount(d.submissions?.length ?? 0))
+          .catch(() => setSubmissionCount(0));
+        // poll transfer status if pending
+        if (data.loofa.transferStatus === 'pending') {
+          fetch(`/api/transfers/status?loofa_id=${encodeURIComponent(data.loofa.id)}`)
+            .then((r) => r.json())
+            .then((s) => {
+              if (s.status === 'claimed') {
+                const updated = { ...withDefaults, transferStatus: 'claimed' as const };
+                setLoofa(updated);
+                fetch(`/api/loofas/${id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ transferStatus: 'claimed' }),
+                }).catch(console.error);
+              }
+            })
+            .catch(() => {});
+        }
+      })
+      .catch(() => setNotFound(true));
   }, [id]);
 
   const isTransferred = loofa?.transferStatus === 'claimed';
   const isTransferPending = loofa?.transferStatus === 'pending';
   const isActive = !isTransferred && (loofa?.isActive ?? true);
 
-  const persist = (updated: Loofa) => {
-    const stored = localStorage.getItem('myLoofas');
-    if (!stored) return;
-    const loofas: Loofa[] = JSON.parse(stored);
-    localStorage.setItem('myLoofas', JSON.stringify(loofas.map((l) => l.id === id ? updated : l)));
-  };
-
-  const toggleActive = () => {
+  const toggleActive = async () => {
     if (!loofa || isTransferred) return;
     const updated = { ...loofa, isActive: !isActive };
     setLoofa(updated);
-    persist(updated);
+    await fetch(`/api/loofas/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive: !isActive }),
+    }).catch(console.error);
   };
 
-  const deleteLoofa = () => {
-    const stored = localStorage.getItem('myLoofas');
-    if (!stored) return;
-    const loofas: Loofa[] = JSON.parse(stored);
-    localStorage.setItem('myLoofas', JSON.stringify(loofas.filter((l) => l.id !== id)));
+  const deleteLoofa = async () => {
+    await fetch(`/api/loofas/${id}`, { method: 'DELETE' }).catch(console.error);
     router.push('/my-loofas');
   };
 

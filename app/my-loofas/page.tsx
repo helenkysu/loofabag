@@ -35,16 +35,15 @@ export default function MyLoofas() {
   }, []);
 
   useEffect(() => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem('myLoofas') : null;
-    if (stored) {
-      setLoofas(JSON.parse(stored));
-    }
+    fetch('/api/loofas')
+      .then((r) => r.json())
+      .then((data) => { if (data.loofas) setLoofas(data.loofas); })
+      .catch(console.error);
   }, []);
 
-  const deleteLoofa = (id: string) => {
-    const updated = loofas.filter((loofa) => loofa.id !== id);
-    setLoofas(updated);
-    localStorage.setItem('myLoofas', JSON.stringify(updated));
+  const deleteLoofa = async (id: string) => {
+    await fetch(`/api/loofas/${id}`, { method: 'DELETE' }).catch(console.error);
+    setLoofas((prev) => prev.filter((l) => l.id !== id));
   };
 
   return (

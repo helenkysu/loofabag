@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
+import { createClient } from '@/lib/supabase/client';
 
 interface LoofaData {
   id: string;
@@ -41,12 +42,6 @@ function ClaimContent() {
       .then((data) => {
         if (data.error) { setError(data.error); return; }
         setInfo(data);
-        // Check if slug already exists in recipient's localStorage
-        const stored = localStorage.getItem('myLoofas');
-        if (stored) {
-          const loofas: LoofaData[] = JSON.parse(stored);
-          if (loofas.some((l) => l.slug === data.loofa.slug)) setSlugConflict(true);
-        }
       })
       .catch(() => setError('Failed to load transfer. Please try again.'))
       .finally(() => setLoading(false));
@@ -56,6 +51,26 @@ function ClaimContent() {
     if (!info) return;
     setClaiming(true);
     try {
+      const { data: { user } } = await createClient().auth.getUser();
+
+      if (user) {
+        // Authenticated: transfer ownership in the DB
+        const res = await fetch('/api/loofas/accept-transfer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ claimToken: token }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          setError(data.error ?? 'Claim failed. Please try again.');
+          setClaiming(false);
+          return;
+        }
+        // If legacy (pre-migration loofa), fall through to localStorage below
+        if (!data.legacy) { setClaimed(true); return; }
+      }
+
+      // Guest or legacy: mark as claimed then save to localStorage
       const res = await fetch('/api/transfers/claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -67,21 +82,13 @@ function ClaimContent() {
         setClaiming(false);
         return;
       }
-
-      // Add to recipient's localStorage — resolve slug conflict if needed
       const newLoofa = { ...data.loofa } as LoofaData;
-      // Give it a fresh local ID so it doesn't collide with sender's copy
       newLoofa.id = `claimed-${Date.now()}`;
-      // Strip transfer-state fields from the transferred loofa
       delete newLoofa.transferStatus;
       delete newLoofa.transferRecipientEmail;
       delete newLoofa.transferToken;
       delete newLoofa.transferredAt;
-
-      if (slugConflict) {
-        newLoofa.slug = `${newLoofa.slug}-2`;
-      }
-
+      if (slugConflict) newLoofa.slug = `${newLoofa.slug}-2`;
       const stored = localStorage.getItem('myLoofas');
       const existing: LoofaData[] = stored ? JSON.parse(stored) : [];
       localStorage.setItem('myLoofas', JSON.stringify([...existing, newLoofa]));

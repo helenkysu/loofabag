@@ -13,7 +13,7 @@ interface FormField {
   optional: boolean;
 }
 
-interface StoredLoofa {
+interface Loofa {
   id: string;
   name: string;
   slug: string;
@@ -30,7 +30,7 @@ interface StoredLoofa {
 export default function LoofahPage() {
   const { slug: slugParam } = useParams<{ slug: string }>();
   const [activeTab, setActiveTab] = useState<'profile' | 'submissions'>('profile');
-  const [loofa, setLoofa] = useState<StoredLoofa | null>(null);
+  const [loofa, setLoofa] = useState<Loofa | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [photoFiles, setPhotoFiles] = useState<Record<string, File[]>>({});
@@ -43,14 +43,16 @@ export default function LoofahPage() {
   const [reportDone, setReportDone] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('myLoofas');
-    if (!stored) return;
-    const loofas: StoredLoofa[] = JSON.parse(stored);
-    const found = loofas.find((l) => l.slug === slugParam);
-    if (found) {
-      setLoofa(found);
-      setIsActive(found.isActive ?? true);
-    }
+    if (!slugParam) return;
+    fetch(`/api/loofas/by-slug?slug=${encodeURIComponent(slugParam)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.loofa) {
+          setLoofa(data.loofa);
+          setIsActive(data.loofa.isActive ?? true);
+        }
+      })
+      .catch(console.error);
   }, [slugParam]);
 
   // Profile tab: owner's filled-in info

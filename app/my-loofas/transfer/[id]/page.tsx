@@ -29,14 +29,14 @@ export default function TransferLoofaPage() {
   const confirmInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('myLoofas');
-    if (!stored) { setNotFound(true); return; }
-    const loofas: Loofa[] = JSON.parse(stored);
-    const found = loofas.find((l) => l.id === id);
-    if (!found) { setNotFound(true); return; }
-    setLoofa(found);
+    fetch(`/api/loofas/${id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) { setNotFound(true); return; }
+        setLoofa(data.loofa);
+      })
+      .catch(() => setNotFound(true));
 
-    // Pre-fill sender email from Supabase session if logged in
     createClient().auth.getUser().then(({ data: { user } }) => {
       if (user?.email) setSenderEmail(user.email);
     });
@@ -70,17 +70,17 @@ export default function TransferLoofaPage() {
         return;
       }
 
-      // Mark loofa in localStorage as pending transfer
-      const stored = localStorage.getItem('myLoofas');
-      if (stored) {
-        const loofas: Loofa[] = JSON.parse(stored);
-        localStorage.setItem('myLoofas', JSON.stringify(
-          loofas.map((l) => l.id === id
-            ? { ...l, transferStatus: 'pending', transferRecipientEmail: recipientEmail, transferToken: data.claimToken, transferredAt: new Date().toISOString() }
-            : l,
-          ),
-        ));
-      }
+      // Mark loofa as pending transfer in DB
+      await fetch(`/api/loofas/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transferStatus: 'pending',
+          transferRecipientEmail: recipientEmail,
+          transferToken: data.claimToken,
+          transferredAt: new Date().toISOString(),
+        }),
+      }).catch(console.error);
       setDone(true);
     } catch {
       setError('Transfer failed. Check your connection and try again.');

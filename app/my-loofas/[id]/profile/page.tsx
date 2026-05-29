@@ -47,15 +47,16 @@ export default function ProfileEditorPage() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('myLoofas');
-    if (!stored) { setNotFound(true); return; }
-    const loofas: Loofa[] = JSON.parse(stored);
-    const found = loofas.find((l) => l.id === id);
-    if (!found) { setNotFound(true); return; }
-    setLoofa(found);
-    const seed = found.profileFields ?? found.fields ?? [];
-    setFields(seed.map((f) => ({ ...f })));
-    setProfileData(found.profileData ?? {});
+    fetch(`/api/loofas/${id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) { setNotFound(true); return; }
+        setLoofa(data.loofa);
+        const seed = data.loofa.profileFields ?? data.loofa.fields ?? [];
+        setFields(seed.map((f: FormField) => ({ ...f })));
+        setProfileData(data.loofa.profileData ?? {});
+      })
+      .catch(() => setNotFound(true));
   }, [id]);
 
   const updateField = (idx: number, updates: Partial<FormField>) =>
@@ -114,15 +115,14 @@ export default function ProfileEditorPage() {
         }),
     );
 
-    const profileFields = fields.filter((f) => f.label.trim());
-    const stored = localStorage.getItem('myLoofas');
-    if (stored) {
-      const loofas: Loofa[] = JSON.parse(stored);
-      localStorage.setItem(
-        'myLoofas',
-        JSON.stringify(loofas.map((l) => (l.id === id ? { ...l, profileFields, profileData: updatedData } : l))),
-      );
-    }
+    await fetch(`/api/loofas/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profileFields: fields.filter((f) => f.label.trim()),
+        profileData: updatedData,
+      }),
+    });
 
     setSaving(false);
     setSaved(true);

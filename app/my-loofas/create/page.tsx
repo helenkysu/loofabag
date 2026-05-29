@@ -378,13 +378,12 @@ export default function CreateLoofaPage() {
     .replace(/\s+/g, '-')
     .slice(0, 50);
 
-  // Check slug uniqueness against existing loofas in localStorage
+  // Check slug uniqueness against existing loofas in DB
   useEffect(() => {
     if (!slug) { setSlugTaken(false); return; }
-    const stored = localStorage.getItem('myLoofas');
-    if (!stored) { setSlugTaken(false); return; }
-    const loofas: Array<{ slug: string }> = JSON.parse(stored);
-    setSlugTaken(loofas.some((l) => l.slug === slug));
+    fetch(`/api/loofas/by-slug?slug=${encodeURIComponent(slug)}`)
+      .then((r) => { setSlugTaken(r.ok); })
+      .catch(() => setSlugTaken(false));
   }, [slug]);
 
   // Initialize QR token on mount (fresh session) or restore after Stripe redirect
@@ -502,14 +501,7 @@ export default function CreateLoofaPage() {
     didSave.current = true;
     setCreating(true);
 
-    const stored = localStorage.getItem('myLoofas');
-    const current = stored ? JSON.parse(stored) : [];
     const loofaId = loofaIdRef.current;
-    if (current.some((l: { id: string }) => l.id === loofaId)) {
-      setCreating(false);
-      setFinished(true);
-      return;
-    }
 
     const updatedProfileData = { ...profileData };
 
@@ -532,18 +524,21 @@ export default function CreateLoofaPage() {
 
     const newLoofa = {
       id: loofaId,
-      name: name || `Loofa ${current.length + 1}`,
+      name: name || 'My Loofa',
       slug,
       qrToken: qrToken || null,
-      product: selectedProductId,
       template: selectedTemplate.id,
       emoji: selectedTemplate.emoji,
       profileFields: customFields.filter((f) => f.label.trim()),
       fields: submissionFields.filter((f) => f.label.trim()),
       profileData: updatedProfileData,
-      bagText: bagText || null,
+      isActive: true,
     };
-    localStorage.setItem('myLoofas', JSON.stringify([...current, newLoofa]));
+    await fetch('/api/loofas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newLoofa),
+    }).catch(console.error);
 
     // Register the QR token → slug mapping
     if (qrToken) {

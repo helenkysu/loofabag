@@ -66,40 +66,39 @@ export default function EditLoofaPage() {
   const [savingNotif, setSavingNotif] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('myLoofas');
-    if (!stored) { setNotFound(true); return; }
-    const loofas: Loofa[] = JSON.parse(stored);
-    const loofa = loofas.find((l) => l.id === id);
-    if (!loofa) { setNotFound(true); return; }
-
-    setSlug(loofa.slug);
-
-    if (Array.isArray(loofa.fields) && loofa.fields.length > 0) {
-      setFields(loofa.fields.map((f) => ({ ...f })));
-    } else if (Array.isArray(loofa.questions) && loofa.questions.length > 0) {
-      setFields(loofa.questions.map((q) => ({
-        id: makeId(), type: 'paragraph' as const, label: q, optional: true,
-      })));
-    } else {
-      const defaults = submissionTemplateDefs[loofa.template] ?? [];
-      setFields(defaults.map((f) => ({ ...f, id: makeId() })));
-    }
-
-    // Load notification settings from server, fall back to session email if none saved
-    fetch(`/api/notifications/settings?slug=${encodeURIComponent(loofa.slug)}`)
+    fetch(`/api/loofas/${id}`)
       .then((r) => r.json())
-      .then((s: NotificationSettings) => {
-        setNotifEnabled(s.email ? s.enabled : true);
-        if (s.email) {
-          setNotifEmail(s.email);
+      .then((data) => {
+        if (data.error) { setNotFound(true); return; }
+        const loofa = data.loofa;
+        setSlug(loofa.slug);
+
+        if (Array.isArray(loofa.fields) && loofa.fields.length > 0) {
+          setFields(loofa.fields.map((f: FormField) => ({ ...f })));
+        } else if (Array.isArray(loofa.questions) && loofa.questions.length > 0) {
+          setFields(loofa.questions.map((q: string) => ({
+            id: makeId(), type: 'paragraph' as const, label: q, optional: true,
+          })));
         } else {
-          // No saved setting yet — pre-fill with signed-in email
-          createClient().auth.getUser().then(({ data }) => {
-            if (data.user?.email) setNotifEmail(data.user.email);
-          });
+          const defaults = submissionTemplateDefs[loofa.template] ?? [];
+          setFields(defaults.map((f) => ({ ...f, id: makeId() })));
         }
+
+        fetch(`/api/notifications/settings?slug=${encodeURIComponent(loofa.slug)}`)
+          .then((r) => r.json())
+          .then((s: NotificationSettings) => {
+            setNotifEnabled(s.email ? s.enabled : true);
+            if (s.email) {
+              setNotifEmail(s.email);
+            } else {
+              createClient().auth.getUser().then(({ data: authData }) => {
+                if (authData.user?.email) setNotifEmail(authData.user.email);
+              });
+            }
+          })
+          .catch(() => {});
       })
-      .catch(() => {});
+      .catch(() => setNotFound(true));
   }, [id]);
 
   const updateField = (idx: number, updates: Partial<FormField>) =>
@@ -129,17 +128,11 @@ export default function EditLoofaPage() {
   };
 
   const handleSave = async () => {
-    const stored = localStorage.getItem('myLoofas');
-    if (!stored) return;
-    const loofas: Loofa[] = JSON.parse(stored);
-    localStorage.setItem(
-      'myLoofas',
-      JSON.stringify(
-        loofas.map((l) =>
-          l.id === id ? { ...l, fields: fields.filter((f) => f.label.trim()) } : l,
-        ),
-      ),
-    );
+    await fetch(`/api/loofas/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: fields.filter((f) => f.label.trim()) }),
+    }).catch(console.error);
 
     if (slug) {
       setSavingNotif(true);
