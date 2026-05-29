@@ -7,6 +7,15 @@ const PRINTFUL_PRODUCT_MAP: Record<string, number> = {
   'premium-large-tote': 274,
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isVariantInStock(v: any): boolean {
+  const statuses: { region: string; status: string }[] = Array.isArray(v.availability_status)
+    ? v.availability_status
+    : [];
+  if (statuses.length === 0) return true;
+  return statuses.some((s) => s.status === 'in_stock');
+}
+
 async function getAvailableVariantId(printfulProductId: number): Promise<number | null> {
   const res = await fetch(`https://api.printful.com/products/${printfulProductId}`, {
     headers: { Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}` },
@@ -16,15 +25,18 @@ async function getAvailableVariantId(printfulProductId: number): Promise<number 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const variants: any[] = data.result?.variants ?? [];
-  const available = variants.find(
-    (v) => v.availability_status === 'active' || v.availability_status == null,
+  const inStock = variants.filter(isVariantInStock);
+
+  const preferred = inStock.find((v) =>
+    /oyster|natural|white|beige|cream/i.test(v.name ?? ''),
   );
-  return available?.id ?? variants[0]?.id ?? null;
+  return preferred?.id ?? inStock[0]?.id ?? null;
 }
 
 export async function POST(req: NextRequest) {
-  const { productId, country, state, address1, address2, city, zip } = await req.json() as {
+  const { productId, variantId: explicitVariantId, country, state, address1, address2, city, zip } = await req.json() as {
     productId: string;
+    variantId?: number;
     country: string;
     state?: string;
     address1?: string;
@@ -41,7 +53,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Country is required' }, { status: 400 });
   }
 
-  const variantId = await getAvailableVariantId(printfulProductId);
+  const variantId = explicitVariantId ?? await getAvailableVariantId(printfulProductId);
   if (!variantId) {
     return NextResponse.json({ error: 'No available variant found for this product' }, { status: 400 });
   }

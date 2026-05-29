@@ -10,6 +10,17 @@ const PRINTFUL_PRODUCT_MAP: Record<string, number> = {
   'premium-large-tote': 274,
 };
 
+// availability_status is an array of {region, status} objects from Printful's API.
+// A variant is considered available if any region shows 'in_stock'.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isVariantInStock(v: any): boolean {
+  const statuses: { region: string; status: string }[] = Array.isArray(v.availability_status)
+    ? v.availability_status
+    : [];
+  if (statuses.length === 0) return true; // no data → assume available
+  return statuses.some((s) => s.status === 'in_stock');
+}
+
 async function getAvailableVariantId(printfulProductId: number): Promise<number | null> {
   const res = await fetch(`https://api.printful.com/products/${printfulProductId}`, {
     headers: { Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}` },
@@ -19,18 +30,22 @@ async function getAvailableVariantId(printfulProductId: number): Promise<number 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const variants: any[] = data.result?.variants ?? [];
-  const available = variants.find(
-    (v) => v.availability_status === 'active' || v.availability_status == null,
+  const inStock = variants.filter(isVariantInStock);
+
+  // Prefer light colours (Oyster, Natural, White) so the print design shows well
+  const preferred = inStock.find((v) =>
+    /oyster|natural|white|beige|cream/i.test(v.name ?? ''),
   );
-  return available?.id ?? variants[0]?.id ?? null;
+  return preferred?.id ?? inStock[0]?.id ?? null;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { stripeSessionId, productId, customerName, address, printFileUrl } =
+    const { stripeSessionId, productId, variantId: explicitVariantId, customerName, address, printFileUrl } =
       await req.json() as {
         stripeSessionId: string;
         productId: string;
+        variantId?: number;
         customerName: string;
         address: { country: string; state: string; address1: string; address2: string; city: string; zip: string };
         printFileUrl: string;
@@ -51,8 +66,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing print file URL' }, { status: 400 });
     }
 
-    // Dynamically fetch an available variant from Printful
-    const variantId = await getAvailableVariantId(printfulProductId);
+    const variantId = explicitVariantId ?? await getAvailableVariantId(printfulProductId);
     if (!variantId) {
       return NextResponse.json({ error: 'No available variant found for this product' }, { status: 400 });
     }
