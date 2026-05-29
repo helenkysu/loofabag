@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
 
@@ -22,6 +23,11 @@ interface Loofa {
   fields?: FormField[];
   questions?: string[];
   isActive?: boolean;
+}
+
+interface NotificationSettings {
+  email: string;
+  enabled: boolean;
 }
 
 function makeId() {
@@ -54,6 +60,10 @@ export default function EditLoofaPage() {
   const [fields, setFields] = useState<FormField[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [slug, setSlug] = useState('');
+  const [notifEnabled, setNotifEnabled] = useState(true);
+  const [notifEmail, setNotifEmail] = useState('');
+  const [savingNotif, setSavingNotif] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('myLoofas');
@@ -61,6 +71,8 @@ export default function EditLoofaPage() {
     const loofas: Loofa[] = JSON.parse(stored);
     const loofa = loofas.find((l) => l.id === id);
     if (!loofa) { setNotFound(true); return; }
+
+    setSlug(loofa.slug);
 
     if (Array.isArray(loofa.fields) && loofa.fields.length > 0) {
       setFields(loofa.fields.map((f) => ({ ...f })));
@@ -72,6 +84,22 @@ export default function EditLoofaPage() {
       const defaults = submissionTemplateDefs[loofa.template] ?? [];
       setFields(defaults.map((f) => ({ ...f, id: makeId() })));
     }
+
+    // Load notification settings from server, fall back to session email if none saved
+    fetch(`/api/notifications/settings?slug=${encodeURIComponent(loofa.slug)}`)
+      .then((r) => r.json())
+      .then((s: NotificationSettings) => {
+        setNotifEnabled(s.email ? s.enabled : true);
+        if (s.email) {
+          setNotifEmail(s.email);
+        } else {
+          // No saved setting yet — pre-fill with signed-in email
+          createClient().auth.getUser().then(({ data }) => {
+            if (data.user?.email) setNotifEmail(data.user.email);
+          });
+        }
+      })
+      .catch(() => {});
   }, [id]);
 
   const updateField = (idx: number, updates: Partial<FormField>) =>
@@ -100,7 +128,7 @@ export default function EditLoofaPage() {
     setDragOverIndex(null);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const stored = localStorage.getItem('myLoofas');
     if (!stored) return;
     const loofas: Loofa[] = JSON.parse(stored);
@@ -112,6 +140,17 @@ export default function EditLoofaPage() {
         ),
       ),
     );
+
+    if (slug) {
+      setSavingNotif(true);
+      await fetch('/api/notifications/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, email: notifEmail.trim(), enabled: notifEnabled }),
+      }).catch(() => {});
+      setSavingNotif(false);
+    }
+
     router.push(`/my-loofas/${id}`);
   };
 
@@ -183,8 +222,8 @@ export default function EditLoofaPage() {
                   {field.type === 'number' && <input type="number" className="field-preview-input" placeholder="0" />}
                   {field.type === 'paragraph' && <textarea className="field-preview-textarea" placeholder={field.label || `Field ${idx + 1}`} rows={3} />}
                   {field.type === 'url' && <input type="url" className="field-preview-input" placeholder="https://" />}
-                  {field.type === 'photo' && <DropZone accept="image/*,.heic,.HEIC,.heif,.HEIF" multiple maxFiles={5} />}
-                  {field.type === 'file' && <DropZone accept=".pdf,.doc,.docx" />}
+                  {field.type === 'photo' && <DropZone accept="image/*,.heic,.HEIC,.heif,.HEIF" multiple maxFiles={5} maxSizeMB={5} />}
+                  {field.type === 'file' && <DropZone accept=".pdf,.docx" maxFiles={1} maxSizeMB={5} />}
                 </div>
               </div>
             ))}
@@ -194,9 +233,38 @@ export default function EditLoofaPage() {
             </div>
           </div>
 
+          <div className="notif-settings-section">
+            <label className="notif-toggle-row">
+              <span className="notif-toggle-label">
+                <span className="notif-toggle-title">Email notifications for new submissions</span>
+                <span className="notif-toggle-desc">Get an email every time someone submits a response</span>
+              </span>
+              <input
+                type="checkbox"
+                className="notif-checkbox"
+                checked={notifEnabled}
+                onChange={(e) => setNotifEnabled(e.target.checked)}
+              />
+            </label>
+            {notifEnabled && (
+              <div className="notif-email-row">
+                <label className="notif-email-label">Notification email</label>
+                <input
+                  type="email"
+                  className="notif-email-input"
+                  placeholder="you@example.com"
+                  value={notifEmail}
+                  onChange={(e) => setNotifEmail(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
           <div className="modal-footer">
             <Link href={`/my-loofas/${id}`} className="btn btn-secondary">Cancel</Link>
-            <button type="button" className="btn btn-primary" onClick={handleSave}>Save</button>
+            <button type="button" className="btn btn-primary" onClick={handleSave} disabled={savingNotif}>
+              {savingNotif ? 'Saving…' : 'Save'}
+            </button>
           </div>
         </div>
       </section>

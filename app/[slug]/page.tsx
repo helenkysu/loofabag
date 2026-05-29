@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 interface FormField {
   id: string;
-  type: 'text' | 'number' | 'paragraph' | 'photo' | 'url' | 'file';
+  type: 'text' | 'number' | 'paragraph' | 'photo' | 'video' | 'url' | 'file';
   label: string;
   optional: boolean;
 }
@@ -25,20 +26,6 @@ interface StoredLoofa {
   questions?: string[];
 }
 
-interface Submission {
-  id: string;
-  slug: string;
-  submitted_at: string;
-  responses: Record<string, string>;
-  file_paths: string[];
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-    hour: 'numeric', minute: '2-digit',
-  });
-}
 
 export default function LoofahPage() {
   const { slug: slugParam } = useParams<{ slug: string }>();
@@ -49,8 +36,11 @@ export default function LoofahPage() {
   const [photoFiles, setPhotoFiles] = useState<Record<string, File[]>>({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('myLoofas');
@@ -62,16 +52,6 @@ export default function LoofahPage() {
       setIsActive(found.isActive ?? true);
     }
   }, [slugParam]);
-
-  useEffect(() => {
-    if (activeTab !== 'submissions') return;
-    setLoadingSubmissions(true);
-    fetch(`/api/submissions?slug=${encodeURIComponent(slugParam)}`)
-      .then((r) => r.json())
-      .then((data) => setSubmissions(data.submissions ?? []))
-      .catch(console.error)
-      .finally(() => setLoadingSubmissions(false));
-  }, [activeTab, slugParam]);
 
   // Profile tab: owner's filled-in info
   const profileFields: FormField[] =
@@ -126,7 +106,7 @@ export default function LoofahPage() {
     await fetch('/api/submissions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: slugParam, responses, file_paths: uploadedPaths }),
+      body: JSON.stringify({ slug: slugParam, responses, file_paths: uploadedPaths, captchaToken }),
     }).catch(console.error);
 
     setSubmitting(false);
@@ -191,6 +171,30 @@ export default function LoofahPage() {
                                   src={`/api/files/proxy?path=${encodeURIComponent(path)}`}
                                   alt={field.label}
                                   className="profile-photo-thumb"
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="profile-field-value profile-field-blank">—</span>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    if (field.type === 'video') {
+                      let paths: string[] = [];
+                      try { paths = raw ? JSON.parse(raw) : []; } catch { paths = []; }
+                      return (
+                        <div key={field.id} className="profile-field-row profile-field-col">
+                          <span className="profile-field-label">{field.label}</span>
+                          {paths.length > 0 ? (
+                            <div className="profile-video-grid">
+                              {paths.map((path) => (
+                                <video
+                                  key={path}
+                                  src={`/api/files/proxy?path=${encodeURIComponent(path)}`}
+                                  controls
+                                  className="profile-video-thumb"
                                 />
                               ))}
                             </div>
@@ -315,12 +319,15 @@ export default function LoofahPage() {
                           accept="image/*,.heic,.HEIC,.heif,.HEIF"
                           multiple
                           maxFiles={5}
+                          maxSizeMB={5}
                           onFiles={(files) => handlePhotoChange(field.id, files)}
                         />
                       )}
                       {field.type === 'file' && (
                         <DropZone
-                          accept=".pdf,.doc,.docx"
+                          accept=".pdf,.docx"
+                          maxFiles={1}
+                          maxSizeMB={5}
                           onFiles={(files) => handlePhotoChange(field.id, files)}
                         />
                       )}
@@ -328,49 +335,92 @@ export default function LoofahPage() {
                   ))}
 
                   {submissionFields.length > 0 && (
-                    <button type="submit" className="btn btn-primary loofa-submit-btn" disabled={submitting}>
-                      {submitting ? 'Submitting…' : 'Submit'}
-                    </button>
+                    <>
+                      <Turnstile
+                        siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA'}
+                        onSuccess={(token) => setCaptchaToken(token)}
+                        onExpire={() => setCaptchaToken(null)}
+                        onError={() => setCaptchaToken(null)}
+                        options={{ theme: 'light', size: 'normal' }}
+                      />
+                      <button type="submit" className="btn btn-primary loofa-submit-btn" disabled={submitting || !captchaToken}>
+                        {submitting ? 'Submitting…' : 'Submit'}
+                      </button>
+                    </>
                   )}
                 </form>
               )}
 
-              {/* Received submissions list */}
-              {submitted || !isActive ? null : (
-                <>
-                  {loadingSubmissions ? (
-                    <p className="submissions-empty">Loading…</p>
-                  ) : submissions.length > 0 ? (
-                    <div className="submissions-list" style={{ marginTop: 32 }}>
-                      <p className="question-editor-label">Received</p>
-                      {submissions.map((sub) => (
-                        <div key={sub.id} className="submission-card">
-                          <p className="submission-date">{formatDate(sub.submitted_at)}</p>
-                          {Object.entries(sub.responses).map(([label, value]) => (
-                            <div key={label} className="submission-field">
-                              <span className="submission-label">{label}</span>
-                              <span className="submission-value">{value}</span>
-                            </div>
-                          ))}
-                          {sub.file_paths.length > 0 && (
-                            <div className="submission-files">
-                              <span className="submission-label">Attachments</span>
-                              <span className="submission-value">
-                                {sub.file_paths.length} file{sub.file_paths.length !== 1 ? 's' : ''}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                </>
-              )}
             </div>
           )}
 
+          {/* Report link */}
+          <div className="report-link-row">
+            <button className="report-link" onClick={() => { setReportOpen(true); setReportDone(false); setReportReason(''); }}>
+              Report this loofa
+            </button>
+          </div>
+
         </div>
       </section>
+
+      {/* Report modal */}
+      {reportOpen && (
+        <div className="report-modal-backdrop" onClick={() => setReportOpen(false)}>
+          <div className="report-modal" onClick={(e) => e.stopPropagation()}>
+            {reportDone ? (
+              <div className="report-modal-done">
+                <div className="report-done-icon">✓</div>
+                <h2 className="report-modal-title">Report Received</h2>
+                <p className="report-modal-body">
+                  We have received your report and will review this loofa for guideline violations. Thank you for helping us maintain a safe and respectful community.
+                </p>
+                <button className="btn btn-secondary" style={{ marginTop: 20 }} onClick={() => setReportOpen(false)}>Close</button>
+              </div>
+            ) : (
+              <>
+                <button className="report-modal-close" onClick={() => setReportOpen(false)} aria-label="Close">×</button>
+                <h2 className="report-modal-title">Report This Loofa</h2>
+                <p className="report-modal-body">
+                  If this loofa contains inappropriate content or violates our community guidelines, please let us know. All reports are reviewed by our team.
+                </p>
+                <div className="report-form-group">
+                  <label className="report-label">Reason for reporting</label>
+                  <textarea
+                    className="report-textarea"
+                    placeholder="Please describe the issue in as much detail as possible…"
+                    rows={4}
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                  />
+                </div>
+                <p className="report-community-note">
+                  Thank you for helping us keep the Loofabag community safe and welcoming for everyone.
+                </p>
+                <div className="report-modal-footer">
+                  <button className="btn btn-secondary" onClick={() => setReportOpen(false)}>Cancel</button>
+                  <button
+                    className="btn report-submit-btn"
+                    disabled={!reportReason.trim() || reportSubmitting}
+                    onClick={async () => {
+                      setReportSubmitting(true);
+                      await fetch('/api/report', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ slug: slugParam, reason: reportReason.trim() }),
+                      }).catch(() => {});
+                      setReportSubmitting(false);
+                      setReportDone(true);
+                    }}
+                  >
+                    {reportSubmitting ? 'Submitting…' : 'Submit Report'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }

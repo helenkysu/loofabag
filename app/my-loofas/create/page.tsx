@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
 import QRDesigner, { renderQRToCanvas } from '@/app/components/QRDesigner';
@@ -9,12 +10,44 @@ import type { QRDesignOptions } from '@/app/components/QRDesigner';
 import BagTextSelector from '@/app/components/BagTextSelector';
 
 type ProductVariant = { id: string; label: string; image: string };
-type Product = { id: string; name: string; description: string; image: string | null; variants: ProductVariant[] | null };
+type Product = {
+  id: string;
+  name: string;
+  description: string;
+  image: string | null;
+  variants: ProductVariant[] | null;
+  dimensions?: string;
+  specs?: string[];
+};
 
 const PRODUCTS: Product[] = [
-  { id: 'eco-tote', name: 'Eco Tote Bag', description: 'Classic canvas tote', image: '/bagimages/ecototebag.webp', variants: null },
-  { id: 'large-eco-tote', name: 'Large Eco Tote Bag', description: 'Extra room for everything', image: '/bagimages/largeecotote.webp', variants: null },
-  { id: 'premium-large-tote', name: 'Premium Large Tote Bag', description: 'Oversized luxury canvas tote', image: '/bagimages/premiumtote-black.webp', variants: null },
+  {
+    id: 'eco-tote',
+    name: 'Eco Tote Bag',
+    description: 'Classic canvas tote',
+    image: '/bagimages/ecototebag.webp',
+    variants: null,
+    dimensions: '16″ × 14½″ × 5″',
+    specs: ['100% organic cotton', 'Holds up to 30 lbs', 'Durable & eco-friendly'],
+  },
+  {
+    id: 'large-eco-tote',
+    name: 'Large Eco Tote Bag',
+    description: 'Extra room for everything',
+    image: '/bagimages/largeecotote.webp',
+    variants: null,
+    dimensions: '20″ × 14″ × 5″',
+    specs: ['100% organic cotton', 'Roomy & lightweight', 'Sustainably made'],
+  },
+  {
+    id: 'premium-large-tote',
+    name: 'Premium Large Tote Bag',
+    description: 'Oversized luxury tote',
+    image: '/bagimages/premiumtote-black.webp',
+    variants: null,
+    dimensions: '16″ × 20″',
+    specs: ['100% polyester with fusible backing', 'Holds up to 44 lbs', 'Interior pocket + cotton handles'],
+  },
 ];
 
 interface ShippingRate {
@@ -27,37 +60,144 @@ interface ShippingRate {
 }
 
 const COUNTRIES = [
+  // North America
   { code: 'CA', name: 'Canada' },
   { code: 'US', name: 'United States' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'NZ', name: 'New Zealand' },
+  { code: 'MX', name: 'Mexico' },
+  // Europe
+  { code: 'AL', name: 'Albania' },
+  { code: 'AD', name: 'Andorra' },
+  { code: 'AM', name: 'Armenia' },
   { code: 'AT', name: 'Austria' },
+  { code: 'AZ', name: 'Azerbaijan' },
+  { code: 'BY', name: 'Belarus' },
   { code: 'BE', name: 'Belgium' },
-  { code: 'BR', name: 'Brazil' },
+  { code: 'BA', name: 'Bosnia and Herzegovina' },
+  { code: 'BG', name: 'Bulgaria' },
+  { code: 'HR', name: 'Croatia' },
+  { code: 'CY', name: 'Cyprus' },
   { code: 'CZ', name: 'Czech Republic' },
   { code: 'DK', name: 'Denmark' },
+  { code: 'EE', name: 'Estonia' },
   { code: 'FI', name: 'Finland' },
   { code: 'FR', name: 'France' },
+  { code: 'GE', name: 'Georgia' },
   { code: 'DE', name: 'Germany' },
+  { code: 'GI', name: 'Gibraltar' },
+  { code: 'GR', name: 'Greece' },
   { code: 'HU', name: 'Hungary' },
-  { code: 'IN', name: 'India' },
+  { code: 'IS', name: 'Iceland' },
   { code: 'IE', name: 'Ireland' },
   { code: 'IT', name: 'Italy' },
-  { code: 'JP', name: 'Japan' },
-  { code: 'KR', name: 'South Korea' },
-  { code: 'MX', name: 'Mexico' },
+  { code: 'XK', name: 'Kosovo' },
+  { code: 'LV', name: 'Latvia' },
+  { code: 'LI', name: 'Liechtenstein' },
+  { code: 'LT', name: 'Lithuania' },
+  { code: 'LU', name: 'Luxembourg' },
+  { code: 'MT', name: 'Malta' },
+  { code: 'MD', name: 'Moldova' },
+  { code: 'MC', name: 'Monaco' },
+  { code: 'ME', name: 'Montenegro' },
   { code: 'NL', name: 'Netherlands' },
+  { code: 'MK', name: 'North Macedonia' },
   { code: 'NO', name: 'Norway' },
   { code: 'PL', name: 'Poland' },
   { code: 'PT', name: 'Portugal' },
   { code: 'RO', name: 'Romania' },
-  { code: 'SG', name: 'Singapore' },
-  { code: 'ZA', name: 'South Africa' },
+  { code: 'SM', name: 'San Marino' },
+  { code: 'RS', name: 'Serbia' },
+  { code: 'SK', name: 'Slovakia' },
+  { code: 'SI', name: 'Slovenia' },
   { code: 'ES', name: 'Spain' },
   { code: 'SE', name: 'Sweden' },
   { code: 'CH', name: 'Switzerland' },
+  { code: 'TR', name: 'Turkey' },
+  { code: 'UA', name: 'Ukraine' },
+  { code: 'GB', name: 'United Kingdom' },
+  // Asia Pacific
+  { code: 'AU', name: 'Australia' },
+  { code: 'BD', name: 'Bangladesh' },
+  { code: 'KH', name: 'Cambodia' },
+  { code: 'CN', name: 'China' },
+  { code: 'FJ', name: 'Fiji' },
+  { code: 'HK', name: 'Hong Kong' },
+  { code: 'IN', name: 'India' },
+  { code: 'ID', name: 'Indonesia' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'KZ', name: 'Kazakhstan' },
+  { code: 'LA', name: 'Laos' },
+  { code: 'MO', name: 'Macau' },
+  { code: 'MY', name: 'Malaysia' },
+  { code: 'MV', name: 'Maldives' },
+  { code: 'MN', name: 'Mongolia' },
+  { code: 'NP', name: 'Nepal' },
+  { code: 'NZ', name: 'New Zealand' },
+  { code: 'PK', name: 'Pakistan' },
+  { code: 'PH', name: 'Philippines' },
+  { code: 'SG', name: 'Singapore' },
+  { code: 'KR', name: 'South Korea' },
+  { code: 'LK', name: 'Sri Lanka' },
+  { code: 'TW', name: 'Taiwan' },
+  { code: 'TH', name: 'Thailand' },
+  { code: 'VN', name: 'Vietnam' },
+  // Middle East
+  { code: 'BH', name: 'Bahrain' },
+  { code: 'IL', name: 'Israel' },
+  { code: 'JO', name: 'Jordan' },
+  { code: 'KW', name: 'Kuwait' },
+  { code: 'LB', name: 'Lebanon' },
+  { code: 'OM', name: 'Oman' },
+  { code: 'QA', name: 'Qatar' },
+  { code: 'SA', name: 'Saudi Arabia' },
+  { code: 'AE', name: 'United Arab Emirates' },
+  // Africa
+  { code: 'BW', name: 'Botswana' },
+  { code: 'EG', name: 'Egypt' },
+  { code: 'ET', name: 'Ethiopia' },
+  { code: 'GH', name: 'Ghana' },
+  { code: 'KE', name: 'Kenya' },
+  { code: 'MU', name: 'Mauritius' },
+  { code: 'MA', name: 'Morocco' },
+  { code: 'NG', name: 'Nigeria' },
+  { code: 'RW', name: 'Rwanda' },
+  { code: 'SN', name: 'Senegal' },
+  { code: 'ZA', name: 'South Africa' },
+  { code: 'TZ', name: 'Tanzania' },
+  { code: 'UG', name: 'Uganda' },
+  // Latin America & Caribbean
+  { code: 'AR', name: 'Argentina' },
+  { code: 'BR', name: 'Brazil' },
+  { code: 'CL', name: 'Chile' },
+  { code: 'CO', name: 'Colombia' },
+  { code: 'CR', name: 'Costa Rica' },
+  { code: 'EC', name: 'Ecuador' },
+  { code: 'SV', name: 'El Salvador' },
+  { code: 'GT', name: 'Guatemala' },
+  { code: 'HN', name: 'Honduras' },
+  { code: 'JM', name: 'Jamaica' },
+  { code: 'PA', name: 'Panama' },
+  { code: 'PY', name: 'Paraguay' },
+  { code: 'PE', name: 'Peru' },
+  { code: 'TT', name: 'Trinidad and Tobago' },
+  { code: 'UY', name: 'Uruguay' },
 ];
+
+// Countries where a state / province is required by Printful
+const STATE_REQUIRED = new Set(['US', 'CA', 'AU', 'BR', 'IN', 'MX', 'AR', 'MY']);
+const STATE_LABEL: Record<string, string> = {
+  US: 'State', CA: 'Province', AU: 'State', BR: 'State', IN: 'State / UT',
+  MX: 'State', AR: 'Province', MY: 'State',
+};
+const STATE_PLACEHOLDER: Record<string, string> = {
+  US: 'e.g. CA', CA: 'e.g. ON', AU: 'e.g. NSW', BR: 'e.g. SP', IN: 'e.g. MH',
+  MX: 'e.g. JAL', AR: 'e.g. BA', MY: 'e.g. KL',
+};
+// 2-char code countries vs free-text
+const STATE_SHORT_CODE = new Set(['US', 'CA']);
+
+function getSiteUrl() {
+  return process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+}
 
 function getBagImageUrl(productId: string): string {
   return PRODUCTS.find((p) => p.id === productId)?.image ?? '';
@@ -65,7 +205,7 @@ function getBagImageUrl(productId: string): string {
 
 export interface FormField {
   id: string;
-  type: 'text' | 'number' | 'paragraph' | 'photo' | 'url' | 'file';
+  type: 'text' | 'number' | 'paragraph' | 'photo' | 'video' | 'url' | 'file';
   label: string;
   optional: boolean;
 }
@@ -198,6 +338,7 @@ export default function CreateLoofaPage() {
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
   const [selectedRateId, setSelectedRateId] = useState('');
   const [fetchingRates, setFetchingRates] = useState(false);
+  const [addressErrors, setAddressErrors] = useState<Record<string, boolean>>({});
   const [ratesError, setRatesError] = useState('');
   const [restoredQrDesign, setRestoredQrDesign] = useState<QRDesignOptions | null>(null);
   const [stripeSessionId, setStripeSessionId] = useState('');
@@ -212,10 +353,24 @@ export default function CreateLoofaPage() {
   const [subDragOverIndex, setSubDragOverIndex] = useState<number | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [qrToken, setQrToken] = useState('');
+  const [backDesign, setBackDesign] = useState<'blank' | 'duplicate' | 'universe' | 'grass'>('blank');
+  const [checkoutPreviewSide, setCheckoutPreviewSide] = useState<'front' | 'back'>('front');
+
+  // Notification settings
+  const [notifEnabled, setNotifEnabled] = useState(true);
+  const [notifEmail, setNotifEmail] = useState('');
+
+  // Availability data from Printful
+  type VariantOption = { id: number; label: string; colorCode: string | null };
+  type ProductAvailability = { inStock: boolean; defaultVariantId: number | null; variants: VariantOption[] | null };
+  const [availability, setAvailability] = useState<Record<string, ProductAvailability>>({});
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
   const didSave = useRef(false);
   const loofaIdRef = useRef(Date.now().toString());
   const qrDesignRef = useRef<QRDesignOptions | null>(null);
   const orderPlacedRef = useRef(false);
+  const designStep2Ref = useRef<HTMLDivElement>(null);
+  const designStep3Ref = useRef<HTMLDivElement>(null);
 
   const slug = name
     .toLowerCase()
@@ -267,6 +422,13 @@ export default function CreateLoofaPage() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Pre-fill notification email from signed-in session
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => {
+      if (data.user?.email) setNotifEmail(data.user.email);
+    });
   }, []);
 
   const selectTemplate = (template: typeof templateDefs[0]) => {
@@ -353,11 +515,12 @@ export default function CreateLoofaPage() {
 
     await Promise.all(
       customFields
-        .filter((f) => (f.type === 'photo' || f.type === 'file') && pendingProfileFiles[f.id]?.length)
+        .filter((f) => (f.type === 'photo' || f.type === 'video' || f.type === 'file') && pendingProfileFiles[f.id]?.length)
         .map(async (field) => {
           const fd = new FormData();
           fd.append('loofa_id', loofaId);
-          fd.append('type', field.type === 'photo' ? 'photos' : 'files');
+          const uploadType = field.type === 'photo' ? 'photos' : field.type === 'video' ? 'videos' : 'files';
+          fd.append('type', uploadType);
           pendingProfileFiles[field.id].forEach((file) => fd.append('files', file));
           const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
           const data = await res.json();
@@ -391,6 +554,15 @@ export default function CreateLoofaPage() {
       }).catch(console.error);
     }
 
+    // Save notification settings
+    if (notifEmail.trim()) {
+      fetch('/api/notifications/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, email: notifEmail.trim(), enabled: notifEnabled }),
+      }).catch(console.error);
+    }
+
     // Use pre-rendered design if available, otherwise fall back to server generation
     if (qrRenderedDataUrl) {
       setQrDataUrl(qrRenderedDataUrl);
@@ -400,7 +572,7 @@ export default function CreateLoofaPage() {
         body: JSON.stringify({ loofa_id: loofaId, imageData: qrRenderedDataUrl }),
       }).catch(console.error);
     } else {
-      const qrUrl = `${window.location.origin}/${slug}`;
+      const qrUrl = `${getSiteUrl()}/${slug}`;
       fetch('/api/upload/qr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -449,7 +621,7 @@ export default function CreateLoofaPage() {
       const qrCanvas = document.createElement('canvas');
       qrCanvas.width = qrPx;
       qrCanvas.height = qrPx;
-      const qrUrl = qrToken ? `https://loofabag.com/q/${qrToken}` : `https://loofabag.com/${slug || 'your-name'}`;
+      const qrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
       await renderQRToCanvas(qrCanvas, qrUrl, qrDesignRef.current);
       ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
       y += qrPx + Math.round(PX * 0.02);
@@ -507,7 +679,7 @@ export default function CreateLoofaPage() {
     const qrCanvas = document.createElement('canvas');
     qrCanvas.width = qrPx;
     qrCanvas.height = qrPx;
-    const printQrUrl = qrToken ? `https://loofabag.com/q/${qrToken}` : `https://loofabag.com/${slug || 'your-name'}`;
+    const printQrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
     await renderQRToCanvas(qrCanvas, printQrUrl, design);
     ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
     y += qrPx + Math.round(PX * 0.02);
@@ -555,6 +727,7 @@ export default function CreateLoofaPage() {
         body: JSON.stringify({
           stripeSessionId: sessionId,
           productId: selectedProductId,
+          variantId: selectedVariantId ?? undefined,
           customerName: address.customerName,
           address,
           printFileUrl: uploadData.signedUrl,
@@ -577,6 +750,23 @@ export default function CreateLoofaPage() {
   };
 
   // Auto-place order when arriving at step 4 after Stripe payment
+  // Fetch availability once when reaching the design step
+  useEffect(() => {
+    if (step !== 2 || Object.keys(availability).length > 0) return;
+    fetch('/api/products/availability')
+      .then((r) => r.json())
+      .then((data: Record<string, ProductAvailability>) => {
+        setAvailability(data);
+        // Set default variant for whichever product is currently selected
+        const avail = data[selectedProductId];
+        if (avail?.defaultVariantId && !selectedVariantId) {
+          setSelectedVariantId(avail.defaultVariantId);
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
   useEffect(() => {
     if (step !== 4 || !stripeSessionId || orderPlacedRef.current) return;
     const savedOrder = sessionStorage.getItem('loofabag_order');
@@ -589,6 +779,16 @@ export default function CreateLoofaPage() {
   }, [step, stripeSessionId]);
 
   const fetchShippingRates = async () => {
+    // Validate required fields
+    const errors: Record<string, boolean> = {};
+    if (!address.customerName.trim()) errors.customerName = true;
+    if (!address.address1.trim()) errors.address1 = true;
+    if (!address.city.trim()) errors.city = true;
+    if (!address.zip.trim()) errors.zip = true;
+    if (STATE_REQUIRED.has(address.country) && !address.state.trim()) errors.state = true;
+    setAddressErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setFetchingRates(true);
     setRatesError('');
     setShippingRates([]);
@@ -597,7 +797,7 @@ export default function CreateLoofaPage() {
       const res = await fetch('/api/shipping-rates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: selectedProductId, ...address }),
+        body: JSON.stringify({ productId: selectedProductId, variantId: selectedVariantId ?? undefined, ...address }),
       });
       const data = await res.json();
       if (data.rates?.length) {
@@ -720,103 +920,247 @@ export default function CreateLoofaPage() {
               {step === 2 && (() => {
                 const selectedProduct = PRODUCTS.find((p) => p.id === selectedProductId)!;
                 const bagImageUrl = getBagImageUrl(selectedProductId);
+
+                const frontPreview = bagImageUrl && (
+                  <div className="bag-preview-sticky">
+                    <div className="bag-preview-overlay-wrap">
+                      <img src={bagImageUrl} alt={selectedProduct.name} className="bag-preview-img" />
+                      <div className="bag-preview-overlay">
+                        {bagText && (
+                          <div className="bag-preview-text-overlay">
+                            {bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+                          </div>
+                        )}
+                        {qrRenderedDataUrl && (
+                          <>
+                            <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
+                            <div className="bag-preview-url-overlay">loofabag.com/{slug || 'your-name'}</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <p className="bag-preview-name">{selectedProduct.name} · Front</p>
+                    <button
+                      type="button"
+                      className="download-design-btn"
+                      onClick={downloadDesignPNG}
+                      disabled={!qrRenderedDataUrl}
+                    >
+                      ↓ Download print file (9.5" PNG)
+                    </button>
+                  </div>
+                );
+
+                const backPreview = bagImageUrl && (
+                  <div className="bag-preview-sticky">
+                    <div className="bag-preview-overlay-wrap">
+                      <img src={bagImageUrl} alt={selectedProduct.name} className="bag-preview-img" />
+                      <div className="bag-preview-overlay">
+                        {backDesign === 'duplicate' && (
+                          <>
+                            {bagText && (
+                              <div className="bag-preview-text-overlay">
+                                {bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+                              </div>
+                            )}
+                            {qrRenderedDataUrl && (
+                              <>
+                                <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
+                                <div className="bag-preview-url-overlay">loofabag.com/{slug || 'your-name'}</div>
+                              </>
+                            )}
+                          </>
+                        )}
+                        {backDesign === 'universe' && (
+                          <div className="back-placeholder back-placeholder-universe">
+                            <span className="back-placeholder-emoji">🌌</span>
+                            <span className="back-placeholder-text">Universe do your thing</span>
+                            <span className="back-placeholder-sub">Design coming soon</span>
+                          </div>
+                        )}
+                        {backDesign === 'grass' && (
+                          <div className="back-placeholder back-placeholder-grass">
+                            <span className="back-placeholder-emoji">🌿</span>
+                            <span className="back-placeholder-text">I&apos;m touching grass</span>
+                            <span className="back-placeholder-sub">Design coming soon</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <p className="bag-preview-name">{selectedProduct.name} · Back</p>
+                  </div>
+                );
+
                 return (
                   <div className="step-content step-content-wide">
                     <h2>Design Your Loofa</h2>
-                    <div className="design-two-col">
 
-                      {/* LEFT: QR controls → product selector → text selector */}
-                      <div className="design-left">
-                        <div className="design-section">
-                          <h3 className="design-section-title">QR Code</h3>
-                          <p className="step-subtitle">Customize how your QR code looks.</p>
-                          <QRDesigner
-                            url={qrToken ? `https://loofabag.com/q/${qrToken}` : 'https://loofabag.com'}
-                            onDataUrl={setQrRenderedDataUrl}
-                            onDesignChange={(d) => { qrDesignRef.current = d; }}
-                          />
-                        </div>
-
-                        <div className="design-section">
-                          <h3 className="design-section-title">Choose Your Bag</h3>
-                          <div className="product-selector">
-                            {PRODUCTS.map((product) => (
-                              <button
-                                key={product.id}
-                                type="button"
-                                className={`product-card${selectedProductId === product.id ? ' selected' : ''}`}
-                                onClick={() => setSelectedProductId(product.id)}
-                              >
-                                <span className="product-card-name">{product.name}</span>
-                                <span className="product-card-desc">{product.description}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="design-section">
-                          <h3 className="design-section-title">Bag Text</h3>
-                          <p className="step-subtitle">Choose text to print on your bag — or skip for a blank bag.</p>
-                          <BagTextSelector
-                            templateId={selectedTemplate.id}
-                            onChange={setBagText}
-                          />
-                        </div>
+                    {/* ── Sub-step 1: Pick your bag ── */}
+                    <div className="design-substep">
+                      <div className="design-substep-header">
+                        <span className="design-substep-num">1</span>
+                        <h3 className="design-substep-title">Pick Your Bag</h3>
                       </div>
-
-                      {/* RIGHT: bag image preview with overlays */}
-                      <div className="design-right">
-                        <div className="bag-preview-sticky">
-                          {bagImageUrl && (
-                            <div className="bag-preview-overlay-wrap">
-                              <img
-                                src={bagImageUrl}
-                                alt={selectedProduct.name}
-                                className="bag-preview-img"
-                              />
-                              <div className="bag-preview-overlay">
-                                {bagText && (
-                                  <div className="bag-preview-text-overlay">
-                                    {bagText.split('\n').map((line, i) => (
-                                      <div key={i}>{line}</div>
-                                    ))}
+                      <div className="design-substep-body">
+                        <div className="product-selector">
+                          {PRODUCTS.map((product) => {
+                              const avail = availability[product.id];
+                              const oos = avail ? !avail.inStock : false;
+                              return (
+                                <button
+                                  key={product.id}
+                                  type="button"
+                                  disabled={oos}
+                                  className={`product-card${selectedProductId === product.id ? ' selected' : ''}${oos ? ' product-card-oos' : ''}`}
+                                  onClick={() => {
+                                    setSelectedProductId(product.id);
+                                    const def = availability[product.id]?.defaultVariantId ?? null;
+                                    setSelectedVariantId(def);
+                                  }}
+                                >
+                                  <div className="product-card-img-wrap">
+                                    {product.image && (
+                                      <img src={product.image} alt={product.name} className="product-card-img" />
+                                    )}
+                                    {oos && <div className="product-card-oos-badge">Out of stock</div>}
                                   </div>
-                                )}
-                                {qrRenderedDataUrl && (
-                                  <>
-                                    <img
-                                      src={qrRenderedDataUrl}
-                                      alt="QR"
-                                      className="bag-preview-qr-overlay"
-                                    />
-                                    <div className="bag-preview-url-overlay">
-                                      loofabag.com/{slug || 'your-name'}
+                                  <div className="product-card-info">
+                                    <div className="product-card-title-row">
+                                      <span className="product-card-name">{product.name}</span>
+                                      {product.dimensions && (
+                                        <span className="product-card-dims">{product.dimensions}</span>
+                                      )}
                                     </div>
-                                  </>
-                                )}
+                                    {product.specs && (
+                                      <div className="product-card-specs">
+                                        {product.specs.map((s) => (
+                                          <span key={s} className="product-card-spec">{s}</span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                          })}
+                        </div>
+                        {/* Handle colour picker for premium tote */}
+                        {(() => {
+                          const variants = availability[selectedProductId]?.variants;
+                          if (!variants?.length) return null;
+                          return (
+                            <div className="handle-color-picker">
+                              <p className="handle-color-label">Handle colour</p>
+                              <div className="handle-color-options">
+                                {variants.map((v) => (
+                                  <button
+                                    key={v.id}
+                                    type="button"
+                                    className={`handle-color-swatch${selectedVariantId === v.id ? ' selected' : ''}`}
+                                    style={{ background: v.colorCode ?? '#ccc' }}
+                                    onClick={() => setSelectedVariantId(v.id)}
+                                    title={v.label}
+                                  >
+                                    {selectedVariantId === v.id && <span className="handle-color-check">✓</span>}
+                                  </button>
+                                ))}
+                                <span className="handle-color-name">
+                                  {variants.find((v) => v.id === selectedVariantId)?.label ?? ''}
+                                </span>
                               </div>
                             </div>
-                          )}
-                          <p className="bag-preview-name">{selectedProduct.name}</p>
-                          <button
-                            type="button"
-                            className="download-design-btn"
-                            onClick={downloadDesignPNG}
-                            disabled={!qrRenderedDataUrl}
-                          >
-                            ↓ Download print file (9.5" PNG)
-                          </button>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* ── Sub-step 2: Front design ── */}
+                    <div className="design-substep" ref={designStep2Ref}>
+                      <div className="design-substep-header">
+                        <span className="design-substep-num">2</span>
+                        <h3 className="design-substep-title">Front Design</h3>
+                      </div>
+                      <div className="design-substep-body">
+                        <div className="design-two-col">
+                          <div className="design-left">
+                            <p className="step-subtitle" style={{ marginBottom: 12 }}>Customize your QR code and add bag text.</p>
+                            <QRDesigner
+                              url={qrToken ? `${getSiteUrl()}/q/${qrToken}` : getSiteUrl()}
+                              onDataUrl={setQrRenderedDataUrl}
+                              onDesignChange={(d) => { qrDesignRef.current = d; }}
+                            />
+                            <div style={{ marginTop: 20 }}>
+                              <p className="step-subtitle" style={{ marginBottom: 8 }}>Bag text <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span></p>
+                              <BagTextSelector
+                                templateId={selectedTemplate.id}
+                                onChange={setBagText}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              className="design-substep-next"
+                              onClick={() => {
+                                setTimeout(() => designStep3Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+                              }}
+                            >
+                              Next: Back Design ↓
+                            </button>
+                          </div>
+                          <div className="design-right">
+                            {frontPreview}
+                          </div>
                         </div>
                       </div>
-
                     </div>
+
+                    {/* ── Sub-step 3: Back design ── */}
+                    <div className="design-substep design-substep-last" ref={designStep3Ref}>
+                      <div className="design-substep-header">
+                        <span className="design-substep-num">3</span>
+                        <h3 className="design-substep-title">Back Design</h3>
+                      </div>
+                      <div className="design-substep-body">
+                        <div className="design-two-col">
+                          <div className="design-left">
+                            <p className="step-subtitle" style={{ marginBottom: 12 }}>Choose what goes on the back of your bag.</p>
+                            <div className="back-design-grid">
+                              {([
+                                { id: 'blank', label: 'Blank', desc: 'Nothing on the back', emoji: '◻️' },
+                                { id: 'duplicate', label: 'Duplicate front', desc: 'Same QR on the back', emoji: '🔁' },
+                                { id: 'universe', label: 'Universe do your thing', desc: 'Cosmic surprise', emoji: '🌌' },
+                                { id: 'grass', label: "I'm touching grass", desc: 'Nature vibes', emoji: '🌿' },
+                              ] as const).map((opt) => (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  className={`back-design-card${backDesign === opt.id ? ' selected' : ''}`}
+                                  onClick={() => setBackDesign(opt.id)}
+                                >
+                                  <span className="back-design-emoji">{opt.emoji}</span>
+                                  <span className="back-design-label">{opt.label}</span>
+                                  <span className="back-design-desc">{opt.desc}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="design-right">
+                            {backPreview}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
                 );
               })()}
 
               {/* Step 3: Checkout */}
-              {step === 3 && (
-                <div className="step-content">
+              {step === 3 && (() => {
+                const checkoutProduct = PRODUCTS.find((p) => p.id === selectedProductId)!;
+                const checkoutBagUrl = getBagImageUrl(selectedProductId);
+                return (
+                <div className="step-content step-content-wide">
+                  <div className="checkout-two-col">
+                    <div className="checkout-form-col">
                   <h2>Checkout</h2>
                   <div className="checkout-summary">
                     <div className="summary-item">
@@ -825,7 +1169,7 @@ export default function CreateLoofaPage() {
                     </div>
                     <div className="summary-item">
                       <span>Product:</span>
-                      <strong>{PRODUCTS.find((p) => p.id === selectedProductId)?.name}</strong>
+                      <strong>{checkoutProduct?.name}</strong>
                     </div>
                   </div>
 
@@ -836,11 +1180,15 @@ export default function CreateLoofaPage() {
                       <div className="shipping-field shipping-field-full">
                         <label>Full name</label>
                         <input
-                          className="shipping-input"
+                          className={`shipping-input${addressErrors.customerName ? ' shipping-input-error' : ''}`}
                           placeholder="Jane Smith"
                           value={address.customerName}
-                          onChange={(e) => setAddress((a) => ({ ...a, customerName: e.target.value }))}
+                          onChange={(e) => {
+                            setAddress((a) => ({ ...a, customerName: e.target.value }));
+                            if (e.target.value.trim()) setAddressErrors((err) => ({ ...err, customerName: false }));
+                          }}
                         />
+                        {addressErrors.customerName && <p className="shipping-field-error">Full name is required</p>}
                       </div>
                       <div className="shipping-field">
                         <label>Country</label>
@@ -851,6 +1199,7 @@ export default function CreateLoofaPage() {
                             setAddress((a) => ({ ...a, country: e.target.value, state: '' }));
                             setShippingRates([]);
                             setSelectedRateId('');
+                            setAddressErrors((err) => ({ ...err, state: false }));
                           }}
                         >
                           {COUNTRIES.map((c) => (
@@ -858,33 +1207,40 @@ export default function CreateLoofaPage() {
                           ))}
                         </select>
                       </div>
-                      {(address.country === 'CA' || address.country === 'US') && (
+                      {STATE_REQUIRED.has(address.country) && (
                         <div className="shipping-field">
-                          <label>{address.country === 'CA' ? 'Province' : 'State'}</label>
+                          <label>{STATE_LABEL[address.country] ?? 'State / Region'}</label>
                           <input
-                            className="shipping-input"
-                            placeholder={address.country === 'CA' ? 'e.g. ON' : 'e.g. CA'}
+                            className={`shipping-input${addressErrors.state ? ' shipping-input-error' : ''}`}
+                            placeholder={STATE_PLACEHOLDER[address.country] ?? ''}
                             value={address.state}
                             onChange={(e) => {
-                              setAddress((a) => ({ ...a, state: e.target.value.toUpperCase().slice(0, 2) }));
+                              const val = STATE_SHORT_CODE.has(address.country)
+                                ? e.target.value.toUpperCase().slice(0, 2)
+                                : e.target.value;
+                              setAddress((a) => ({ ...a, state: val }));
                               setShippingRates([]);
                               setSelectedRateId('');
+                              if (val.trim()) setAddressErrors((err) => ({ ...err, state: false }));
                             }}
                           />
+                          {addressErrors.state && <p className="shipping-field-error">{STATE_LABEL[address.country] ?? 'State'} is required</p>}
                         </div>
                       )}
                       <div className="shipping-field shipping-field-full">
                         <label>Street address</label>
                         <input
-                          className="shipping-input"
+                          className={`shipping-input${addressErrors.address1 ? ' shipping-input-error' : ''}`}
                           placeholder="123 Main St"
                           value={address.address1}
                           onChange={(e) => {
                             setAddress((a) => ({ ...a, address1: e.target.value }));
                             setShippingRates([]);
                             setSelectedRateId('');
+                            if (e.target.value.trim()) setAddressErrors((err) => ({ ...err, address1: false }));
                           }}
                         />
+                        {addressErrors.address1 && <p className="shipping-field-error">Street address is required</p>}
                       </div>
                       <div className="shipping-field shipping-field-full">
                         <label>Apt, suite, unit <span className="shipping-optional">(optional)</span></label>
@@ -892,44 +1248,50 @@ export default function CreateLoofaPage() {
                           className="shipping-input"
                           placeholder="Apt 4B"
                           value={address.address2}
-                          onChange={(e) => {
-                            setAddress((a) => ({ ...a, address2: e.target.value }));
-                          }}
+                          onChange={(e) => setAddress((a) => ({ ...a, address2: e.target.value }))}
                         />
                       </div>
                       <div className="shipping-field">
                         <label>City</label>
                         <input
-                          className="shipping-input"
+                          className={`shipping-input${addressErrors.city ? ' shipping-input-error' : ''}`}
                           placeholder="City"
                           value={address.city}
                           onChange={(e) => {
                             setAddress((a) => ({ ...a, city: e.target.value }));
                             setShippingRates([]);
                             setSelectedRateId('');
+                            if (e.target.value.trim()) setAddressErrors((err) => ({ ...err, city: false }));
                           }}
                         />
+                        {addressErrors.city && <p className="shipping-field-error">City is required</p>}
                       </div>
                       <div className="shipping-field">
                         <label>Postal / ZIP code</label>
                         <input
-                          className="shipping-input"
+                          className={`shipping-input${addressErrors.zip ? ' shipping-input-error' : ''}`}
                           placeholder="Postal / ZIP"
                           value={address.zip}
                           onChange={(e) => {
                             setAddress((a) => ({ ...a, zip: e.target.value }));
                             setShippingRates([]);
                             setSelectedRateId('');
+                            if (e.target.value.trim()) setAddressErrors((err) => ({ ...err, zip: false }));
                           }}
                         />
+                        {addressErrors.zip && <p className="shipping-field-error">Postal code is required</p>}
                       </div>
                     </div>
+
+                    <p className="shipping-restrictions-note">
+                      🚫 Printful does not ship to Russia, Belarus, North Korea, Iran, Cuba, Syria, Sudan, or other sanctioned territories.
+                    </p>
 
                     <button
                       type="button"
                       className="btn btn-secondary get-rates-btn"
                       onClick={fetchShippingRates}
-                      disabled={fetchingRates || !address.country}
+                      disabled={fetchingRates}
                     >
                       {fetchingRates ? 'Getting rates…' : 'Get shipping rates'}
                     </button>
@@ -968,8 +1330,75 @@ export default function CreateLoofaPage() {
                   >
                     {checkingOut ? 'Redirecting to payment…' : 'Complete Purchase'}
                   </button>
+                    </div>{/* end checkout-form-col */}
+
+                    {/* Bag preview */}
+                    <div className="checkout-preview-col">
+                      <div className="bag-preview-sticky">
+                        <div className="bag-side-tabs">
+                          <button type="button" className={`bag-side-tab${checkoutPreviewSide === 'front' ? ' bag-side-tab-active' : ''}`} onClick={() => setCheckoutPreviewSide('front')}>Front</button>
+                          <button type="button" className={`bag-side-tab${checkoutPreviewSide === 'back' ? ' bag-side-tab-active' : ''}`} onClick={() => setCheckoutPreviewSide('back')}>Back</button>
+                        </div>
+                        {checkoutBagUrl && (
+                          <div className="bag-preview-overlay-wrap">
+                            <img src={checkoutBagUrl} alt={checkoutProduct?.name} className="bag-preview-img" />
+                            {checkoutPreviewSide === 'front' && (
+                              <div className="bag-preview-overlay">
+                                {bagText && (
+                                  <div className="bag-preview-text-overlay">
+                                    {bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+                                  </div>
+                                )}
+                                {qrRenderedDataUrl && (
+                                  <>
+                                    <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
+                                    <div className="bag-preview-url-overlay">loofabag.com/{slug || 'your-name'}</div>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                            {checkoutPreviewSide === 'back' && (
+                              <div className="bag-preview-overlay">
+                                {backDesign === 'duplicate' && (
+                                  <>
+                                    {bagText && (
+                                      <div className="bag-preview-text-overlay">
+                                        {bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+                                      </div>
+                                    )}
+                                    {qrRenderedDataUrl && (
+                                      <>
+                                        <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
+                                        <div className="bag-preview-url-overlay">loofabag.com/{slug || 'your-name'}</div>
+                                      </>
+                                    )}
+                                  </>
+                                )}
+                                {backDesign === 'universe' && (
+                                  <div className="back-placeholder back-placeholder-universe">
+                                    <span className="back-placeholder-emoji">🌌</span>
+                                    <span className="back-placeholder-text">Universe do your thing</span>
+                                    <span className="back-placeholder-sub">Design coming soon</span>
+                                  </div>
+                                )}
+                                {backDesign === 'grass' && (
+                                  <div className="back-placeholder back-placeholder-grass">
+                                    <span className="back-placeholder-emoji">🌿</span>
+                                    <span className="back-placeholder-text">I&apos;m touching grass</span>
+                                    <span className="back-placeholder-sub">Design coming soon</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <p className="bag-preview-name">{checkoutProduct?.name} · {checkoutPreviewSide === 'front' ? 'Front' : 'Back'}</p>
+                      </div>
+                    </div>
+                  </div>{/* end checkout-two-col */}
                 </div>
-              )}
+                );
+              })()}
 
               {/* Step 4: Order placement */}
               {step === 4 && (
@@ -1078,6 +1507,7 @@ export default function CreateLoofaPage() {
                             <option value="paragraph">Paragraph</option>
                             <option value="url">URL / Link</option>
                             <option value="photo">Photo</option>
+                            <option value="video">Video</option>
                             <option value="file">File upload</option>
                           </select>
                           <button
@@ -1129,13 +1559,26 @@ export default function CreateLoofaPage() {
                             <DropZone
                               accept="image/*,.heic,.HEIC,.heif,.HEIF"
                               multiple
-                              maxFiles={5}
+                              maxFiles={10}
+                              maxSizeMB={5}
+                              onFiles={(files) => handleProfileFiles(field.id, files)}
+                            />
+                          )}
+                          {field.type === 'video' && (
+                            <DropZone
+                              accept="video/*,.mp4,.mov,.avi,.webm"
+                              multiple
+                              maxFiles={2}
+                              maxSizeMB={50}
+                              maxDurationSeconds={120}
                               onFiles={(files) => handleProfileFiles(field.id, files)}
                             />
                           )}
                           {field.type === 'file' && (
                             <DropZone
-                              accept=".pdf,.doc,.docx"
+                              accept=".pdf,.docx"
+                              maxFiles={1}
+                              maxSizeMB={5}
                               onFiles={(files) => handleProfileFiles(field.id, files)}
                             />
                           )}
@@ -1217,14 +1660,41 @@ export default function CreateLoofaPage() {
                           {field.type === 'number' && <input type="number" className="field-preview-input" placeholder="0" />}
                           {field.type === 'paragraph' && <textarea className="field-preview-textarea" placeholder={field.label || `Field ${idx + 1}`} rows={3} />}
                           {field.type === 'url' && <input type="url" className="field-preview-input" placeholder="https://" />}
-                          {field.type === 'photo' && <DropZone accept="image/*,.heic,.HEIC,.heif,.HEIF" multiple maxFiles={5} />}
-                          {field.type === 'file' && <DropZone accept=".pdf,.doc,.docx" />}
+                          {field.type === 'photo' && <DropZone accept="image/*,.heic,.HEIC,.heif,.HEIF" multiple maxFiles={5} maxSizeMB={5} />}
+                          {field.type === 'file' && <DropZone accept=".pdf,.docx" maxFiles={1} maxSizeMB={5} />}
                         </div>
                       </div>
                     ))}
                     <div className="field-editor-actions">
                       <button type="button" className="add-question-btn" onClick={addSubField}>+ Add field</button>
                     </div>
+                  </div>
+
+                  <div className="notif-settings-section">
+                    <label className="notif-toggle-row">
+                      <span className="notif-toggle-label">
+                        <span className="notif-toggle-title">Email notifications for new submissions</span>
+                        <span className="notif-toggle-desc">Get an email every time someone submits a response</span>
+                      </span>
+                      <input
+                        type="checkbox"
+                        className="notif-checkbox"
+                        checked={notifEnabled}
+                        onChange={(e) => setNotifEnabled(e.target.checked)}
+                      />
+                    </label>
+                    {notifEnabled && (
+                      <div className="notif-email-row">
+                        <label className="notif-email-label">Notification email</label>
+                        <input
+                          type="email"
+                          className="notif-email-input"
+                          placeholder="you@example.com"
+                          value={notifEmail}
+                          onChange={(e) => setNotifEmail(e.target.value)}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
