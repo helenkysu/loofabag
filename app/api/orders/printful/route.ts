@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
     if (data.code !== 200) {
       console.error('[orders/printful] Printful error:', data);
       return NextResponse.json(
-        { error: data.error?.message ?? 'Printful order creation failed' },
+        { error: data.error?.message ?? 'Order creation failed' },
         { status: 400 },
       );
     }

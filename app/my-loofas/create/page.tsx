@@ -346,6 +346,7 @@ export default function CreateLoofaPage() {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderError, setOrderError] = useState('');
   const [finished, setFinished] = useState(false);
+  const [createError, setCreateError] = useState('');
   const [creating, setCreating] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -534,11 +535,20 @@ export default function CreateLoofaPage() {
       profileData: updatedProfileData,
       isActive: true,
     };
-    await fetch('/api/loofas', {
+    const createRes = await fetch('/api/loofas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newLoofa),
-    }).catch(console.error);
+    }).catch((err) => { console.error(err); return null; });
+
+    if (!createRes || !createRes.ok) {
+      const errData = createRes ? await createRes.json().catch(() => ({})) : {};
+      const msg = (errData as { error?: string }).error ?? 'Failed to save your loofa. Please try again.';
+      setCreating(false);
+      didSave.current = false;
+      setCreateError(msg);
+      return;
+    }
 
     // Register the QR token → slug mapping
     if (qrToken) {
@@ -1279,7 +1289,7 @@ export default function CreateLoofaPage() {
                     </div>
 
                     <p className="shipping-restrictions-note">
-                      🚫 Printful does not ship to Russia, Belarus, North Korea, Iran, Cuba, Syria, Sudan, or other sanctioned territories.
+                      🚫 Loofabag does not ship to Russia, Belarus, North Korea, Iran, Cuba, Syria, Sudan, or other sanctioned territories.
                     </p>
 
                     <button
@@ -1402,7 +1412,7 @@ export default function CreateLoofaPage() {
                     <div className="order-placing">
                       <div className="order-spinner" />
                       <h2>Placing your order…</h2>
-                      <p className="step-subtitle">Generating your print file and placing your order with Printful — this takes a few seconds.</p>
+                      <p className="step-subtitle">Generating your print file and placing your order — this takes a few seconds.</p>
                     </div>
                   )}
                   {!placingOrder && printfulOrder && (
@@ -1713,9 +1723,12 @@ export default function CreateLoofaPage() {
                     </button>
                     <div className="step-indicator">Step {step} of 6</div>
                     {step === 6 ? (
-                      <button className="btn btn-primary" onClick={handleCreate} disabled={creating}>
-                        {creating ? 'Creating…' : 'Create Loofa'}
-                      </button>
+                      <>
+                        {createError && <p style={{ color: 'red', fontSize: 13, margin: '0 8px' }}>{createError}</p>}
+                        <button className="btn btn-primary" onClick={handleCreate} disabled={creating}>
+                          {creating ? 'Creating…' : 'Create Loofa'}
+                        </button>
+                      </>
                     ) : (
                       <button
                         className="btn btn-primary"
