@@ -13,17 +13,30 @@ interface ModerationResult {
   categories: Record<string, boolean>;
 }
 
+const HARASSMENT_SCORE_THRESHOLD = 0.4;
+
 async function moderateText(text: string): Promise<ModerationResult> {
   if (!openai || !text.trim()) return { flagged: false, categories: {} };
   try {
-    const res = await openai.moderations.create({ input: text });
+    const res = await openai.moderations.create({
+      model: 'omni-moderation-latest',
+      input: text,
+    });
     const result = res.results[0];
-    return {
-      flagged: result.flagged,
-      categories: Object.fromEntries(
-        Object.entries(result.categories).filter(([, v]) => v),
-      ),
-    };
+    const scores = result.category_scores as Record<string, number>;
+
+    // Flag if OpenAI flags it, OR if any score exceeds our lower threshold
+    const highScoreCategories = Object.entries(scores)
+      .filter(([, score]) => score >= HARASSMENT_SCORE_THRESHOLD)
+      .map(([cat]) => cat);
+
+    const flagged = result.flagged || highScoreCategories.length > 0;
+    const activeCategories = Object.fromEntries(
+      Object.entries(result.categories as Record<string, boolean>).filter(([, v]) => v),
+    );
+    highScoreCategories.forEach((cat) => { activeCategories[cat] = true; });
+
+    return { flagged, categories: activeCategories };
   } catch {
     return { flagged: false, categories: {} };
   }
