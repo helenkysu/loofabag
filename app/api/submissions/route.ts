@@ -15,7 +15,42 @@ interface ModerationResult {
 
 const HARASSMENT_SCORE_THRESHOLD = 0.2;
 
-// Catch slurs and bad words
+// Exact bad words — checked as whole words (split on non-alphanumeric)
+const BANNED_WORDS = new Set([
+  // Profanity
+  'fuck', 'fucker', 'fucked', 'fucking', 'fuckers', 'fucks',
+  'shit', 'shits', 'shitty', 'bullshit', 'dipshit', 'shithead', 'shitheads',
+  'bitch', 'bitches', 'bitchy',
+  'ass', 'asses', 'asshole', 'assholes', 'arsehole', 'arseholes',
+  'dick', 'dicks', 'dickhead', 'dickheads',
+  'cock', 'cocks', 'cockhead', 'cocksucker',
+  'prick', 'pricks',
+  'twat', 'twats',
+  'wanker', 'wankers', 'wank',
+  'bastard', 'bastards',
+  'douchebag', 'douchebags', 'douche',
+  'jackass', 'jackasses',
+  'dumbass', 'dumbasses',
+  'scumbag', 'scumbags',
+  'jizz', 'cum',
+  'skank', 'skanks', 'skanky',
+  'slag', 'slags',
+  'piss', 'pisser',
+  'perv', 'pervert', 'perverts',
+  'creep', 'creeper',
+  'pedo', 'pedophile', 'paedophile',
+  'nonce',
+  'tard',
+  // Sexist / misogynistic
+  'slut', 'sluts',
+  'whore', 'whores',
+  'cunt', 'cunts',
+  // Ableist
+  'retard', 'retarded', 'retards',
+  'spaz',
+]);
+
+// Regex patterns for: leet-speak slurs, phrase-level threats, compound words
 const KEYWORD_PATTERNS = [
   // Self-harm / threats
   /\bjump off (a )?(bridge|cliff|building|roof)\b/i,
@@ -43,42 +78,7 @@ const KEYWORD_PATTERNS = [
   /\bscrew you\b/i,
   /\blose (some )?weight\b/i,
 
-  // Profanity (standalone words)
-  /\bf+[u*][c*]+[k*]/i,
-  /\bsh[i1!]ts?\b/i,
-  /\bsh[i1!]tty\b/i,
-  /\bbullsh[i1!]t\b/i,
-  /\bdipsh[i1!]t\b/i,
-  /\bsh[i1!]thead\b/i,
-  /\bass+h[o0]les?\b/i,
-  /\ba[rs]+eh[o0]les?\b/i,
-  /\bb[i1!]tch(es)?\b/i,
-  /\bd[i1!]cks?\b/i,
-  /\bd[i1!]ckhead\b/i,
-  /\bc[o0]cks?\b/i,
-  /\bc[o0]cksucker\b/i,
-  /\bpr[i1!]cks?\b/i,
-  /\btwats?\b/i,
-  /\bwankers?\b/i,
-  /\bbastards?\b/i,
-  /\bdouchebags?\b/i,
-  /\bdouches?\b/i,
-  /\bjackass(es)?\b/i,
-  /\bdumba[rs]+\b/i,
-  /\bscumbags?\b/i,
-  /\btards?\b/i,
-  /\bj[i1!]zz\b/i,
-  /\bskanks?\b/i,
-  /\bskanky\b/i,
-  /\bslags?\b/i,
-  /\btr[a4]mp(y)?\b/i,
-  /\bpervs?\b/i,
-  /\bpervert\b/i,
-  /\bcreep(er)?\b/i,
-  /\bpedo(phile)?\b/i,
-  /\bnonce\b/i,
-
-  // Racial slurs (leet substitutions)
+  // Racial slurs with leet substitutions
   /\bn[i1!][g9]+[ae3@][rs]?\b/i,
   /\bch[i1!]nk/i,
   /\bsp[i1!][ck]/i,
@@ -89,21 +89,26 @@ const KEYWORD_PATTERNS = [
   /\bc[o0]{2}n\b/i,
   /\bj[a4]p\b/i,
 
-  // Homophobic slurs
+  // Homophobic slurs with leet substitutions
   /\bf[a4@]g+[o0]?t?s?\b/i,
   /\bd[y1!]k[e3]\b/i,
 
-  // Sexist / misogynistic slurs
-  /\bc[u*]nt\b/i,
-  /\bsl[u*]ts?\b/i,
-  /\bwh[o0]r[e3]s?\b/i,
-
-  // Ableist slurs
+  // Leet variants of words in BANNED_WORDS
+  /\bf+[u*][c*]+k/i,
+  /\bsh[i1!]t/i,
+  /\bb[i1!]tch/i,
+  /\bd[i1!]ck/i,
+  /\bc[o0]ck/i,
+  /\bc[u*]nt/i,
+  /\bsl[u*]t/i,
+  /\bwh[o0]r[e3]/i,
   /\br[e3]t[a4]rd/i,
-  /\bsp[a4]z\b/i,
+  /\bsp[a4]z/i,
 ];
 
 function keywordFlagged(text: string): boolean {
+  const words = text.toLowerCase().split(/[^a-z0-9]+/);
+  if (words.some((w) => BANNED_WORDS.has(w))) return true;
   return KEYWORD_PATTERNS.some((re) => re.test(text));
 }
 
