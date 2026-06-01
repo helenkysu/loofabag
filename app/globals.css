@@ -726,6 +726,38 @@ footer p {
   font-weight: 700;
   color: #888;
   margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.greeting-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 2px;
+  opacity: 0.5;
+  line-height: 1;
+  transition: opacity 0.15s;
+}
+
+.greeting-edit-btn:hover {
+  opacity: 1;
+}
+
+.greeting-name-input {
+  font-size: 22px;
+  font-weight: 700;
+  color: #555;
+  border: none;
+  border-bottom: 2px solid #c8a97e;
+  background: transparent;
+  outline: none;
+  width: auto;
+  min-width: 60px;
+  max-width: 220px;
 }
 
 .my-loofas-section {

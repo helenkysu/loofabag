@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import NavBar from '@/app/components/NavBar';
@@ -18,11 +18,16 @@ interface Loofa {
 export default function MyLoofas() {
   const [loofas, setLoofas] = useState<Loofa[]>([]);
   const [preferredName, setPreferredName] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
+      setUserId(user.id);
       supabase
         .from('loofabag_profiles')
         .select('preferred_name')
@@ -35,11 +40,34 @@ export default function MyLoofas() {
   }, []);
 
   useEffect(() => {
+    if (editingName) inputRef.current?.focus();
+  }, [editingName]);
+
+  useEffect(() => {
     fetch('/api/loofas')
       .then((r) => r.json())
       .then((data) => { if (data.loofas) setLoofas(data.loofas); })
       .catch(console.error);
   }, []);
+
+  const startEditing = () => {
+    setNameInput(preferredName);
+    setEditingName(true);
+  };
+
+  const saveName = async () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed || !userId) { setEditingName(false); return; }
+    const supabase = createClient();
+    await supabase.from('loofabag_profiles').update({ preferred_name: trimmed }).eq('id', userId);
+    setPreferredName(trimmed);
+    setEditingName(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') saveName();
+    if (e.key === 'Escape') setEditingName(false);
+  };
 
   const deleteLoofa = async (id: string) => {
     await fetch(`/api/loofas/${id}`, { method: 'DELETE' }).catch(console.error);
@@ -53,10 +81,34 @@ export default function MyLoofas() {
       <section className="my-loofas-section">
         <div className="my-loofas-container">
           {preferredName && (
-            <p className="loofas-greeting">Hi {preferredName}! 👋</p>
+            <p className="loofas-greeting">
+              {editingName ? (
+                <>
+                  Hi{' '}
+                  <input
+                    ref={inputRef}
+                    className="greeting-name-input"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onBlur={saveName}
+                    onKeyDown={handleKeyDown}
+                    maxLength={50}
+                  />
+                  ! 👋
+                </>
+              ) : (
+                <>
+                  Hi {preferredName}!{' '}
+                  <button className="greeting-edit-btn" onClick={startEditing} aria-label="Edit name">
+                    ✏️
+                  </button>
+                  {' '}👋
+                </>
+              )}
+            </p>
           )}
           <h1>My Loofas</h1>
-          
+
           <Link href="/my-loofas/create" className="add-loofa-btn">
             <span className="plus-icon">+</span>
           </Link>
