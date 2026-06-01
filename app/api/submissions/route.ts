@@ -48,6 +48,37 @@ const BANNED_WORDS = new Set([
   // Ableist
   'retard', 'retarded', 'retards',
   'spaz',
+  // Racial slurs
+  'nigger', 'niggers', 'nigga', 'niggas',
+  'chink', 'chinks',
+  'spic', 'spics', 'spick', 'spicks',
+  'kike', 'kikes',
+  'gook', 'gooks',
+  'wetback', 'wetbacks',
+  'coon', 'coons',
+  'jap', 'japs',
+  'sandnigger',
+  'cracker', 'crackers',
+  'beaner', 'beaners',
+  'zipperhead',
+  'towelhead', 'towelheads',
+  'raghead', 'ragheads',
+  'redskin', 'redskins',
+  'injun',
+  'golliwog',
+  'kraut', 'krauts',
+  'hymie',
+  'wop', 'wops',
+  'mick', 'micks',
+  'dago', 'dagos',
+  'greaseball',
+  'cholo',
+  'gypsy',
+  // Homophobic slurs
+  'faggot', 'faggots', 'fag', 'fags',
+  'dyke', 'dykes',
+  'tranny', 'trannies',
+  'shemale',
 ]);
 
 // Regex patterns for: leet-speak slurs, phrase-level threats, compound words
