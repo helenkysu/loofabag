@@ -43,7 +43,7 @@ async function moderateText(text: string): Promise<ModerationResult> {
   }
   try {
     const res = await openai.moderations.create({
-      model: 'omni-moderation-latest',
+      model: 'text-moderation-latest',
       input: text,
     });
     const result = res.results[0];
