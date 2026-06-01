@@ -13,10 +13,31 @@ interface ModerationResult {
   categories: Record<string, boolean>;
 }
 
-const HARASSMENT_SCORE_THRESHOLD = 0.4;
+const HARASSMENT_SCORE_THRESHOLD = 0.2;
+
+// Catch explicit phrases that score just below API thresholds
+const KEYWORD_PATTERNS = [
+  /\bjump off (a )?(bridge|cliff|building|roof)\b/i,
+  /\bkill your?self\b/i,
+  /\bgo die\b/i,
+  /\bi hate you\b/i,
+  /\byou('re| are) (the )?worst\b/i,
+  /\byou('re| are) (so )?ugly\b/i,
+];
+
+function keywordFlagged(text: string): boolean {
+  return KEYWORD_PATTERNS.some((re) => re.test(text));
+}
 
 async function moderateText(text: string): Promise<ModerationResult> {
-  if (!openai || !text.trim()) return { flagged: false, categories: {} };
+  if (!text.trim()) return { flagged: false, categories: {} };
+
+  // Keyword gate runs regardless of whether OpenAI is configured
+  if (keywordFlagged(text)) {
+    return { flagged: true, categories: { harassment: true } };
+  }
+
+  if (!openai) return { flagged: false, categories: {} };
   try {
     const res = await openai.moderations.create({
       model: 'omni-moderation-latest',
