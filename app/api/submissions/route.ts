@@ -15,7 +15,7 @@ interface ModerationResult {
 
 const HARASSMENT_SCORE_THRESHOLD = 0.2;
 
-// Catch slurs and harassment phrases that score below API thresholds
+// Catch slurs and bad words
 const KEYWORD_PATTERNS = [
   // Self-harm / threats
   /\bjump off (a )?(bridge|cliff|building|roof)\b/i,
@@ -24,20 +24,62 @@ const KEYWORD_PATTERNS = [
   /\bgo die\b/i,
   /\byou should (be )?dead\b/i,
   /\bi (will|'ll|gonna) (kill|hurt|find|stab|beat)\b/i,
+  /\bmother\s?f+[u*][c*]k/i,
+  /\bson\s+of\s+a\s+b[i1!]tch\b/i,
+  /\bstfu\b/i,
 
-  // Harassment
+  // Harassment phrases
   /\bi hate you\b/i,
-  /\bnobody likes you\b/i,
+  /\bnobody (likes|wants|loves|cares about) you\b/i,
   /\byou('re| are) (the )?worst\b/i,
   /\byou('re| are) (so )?ugly\b/i,
   /\byou('re| are) pathetic\b/i,
   /\byou('re| are) worthless\b/i,
   /\byou('re| are) disgusting\b/i,
+  /\byou don'?t deserve to (live|exist)\b/i,
+  /\byou make (me )?sick\b/i,
   /\bgo to hell\b/i,
-  /\bfuck (you|off|your)\b/i,
+  /\bpiss off\b/i,
+  /\bscrew you\b/i,
+  /\blose (some )?weight\b/i,
 
-  // Racial slurs (common spellings + leet substitutions)
-  /\bn[i1!][g9]+[ae3@][rs]?\b/i,   // n-word (nigga / nigger variants)
+  // Profanity (standalone words)
+  /\bf+[u*][c*]+[k*]/i,
+  /\bsh[i1!]ts?\b/i,
+  /\bsh[i1!]tty\b/i,
+  /\bbullsh[i1!]t\b/i,
+  /\bdipsh[i1!]t\b/i,
+  /\bsh[i1!]thead\b/i,
+  /\bass+h[o0]les?\b/i,
+  /\ba[rs]+eh[o0]les?\b/i,
+  /\bb[i1!]tch(es)?\b/i,
+  /\bd[i1!]cks?\b/i,
+  /\bd[i1!]ckhead\b/i,
+  /\bc[o0]cks?\b/i,
+  /\bc[o0]cksucker\b/i,
+  /\bpr[i1!]cks?\b/i,
+  /\btwats?\b/i,
+  /\bwankers?\b/i,
+  /\bbastards?\b/i,
+  /\bdouchebags?\b/i,
+  /\bdouches?\b/i,
+  /\bjackass(es)?\b/i,
+  /\bdumba[rs]+\b/i,
+  /\bscumbags?\b/i,
+  /\btards?\b/i,
+  /\bj[i1!]zz\b/i,
+  /\bskanks?\b/i,
+  /\bskanky\b/i,
+  /\bslags?\b/i,
+  /\btr[a4]mp(y)?\b/i,
+  /\bpervs?\b/i,
+  /\bpervert\b/i,
+  /\bcreep(er)?\b/i,
+  /\bpedo(phile)?\b/i,
+  /\bnonce\b/i,
+
+  // Racial slurs (leet substitutions)
+  /\bn[i1!][g9]+[ae3@][rs]?\b/i,
   /\bch[i1!]nk/i,
   /\bsp[i1!][ck]/i,
   /\bk[i1!]k[e3]/i,
@@ -53,37 +95,12 @@ const KEYWORD_PATTERNS = [
 
   // Sexist / misogynistic slurs
   /\bc[u*]nt\b/i,
-  /\bsl[u*]t\b/i,
-  /\bwh[o0]r[e3]\b/i,
+  /\bsl[u*]ts?\b/i,
+  /\bwh[o0]r[e3]s?\b/i,
 
   // Ableist slurs
   /\br[e3]t[a4]rd/i,
-
-  // Crude insults directed at a person
-  /\b(you'?re?|ur|u\s+r)\s+(a\s+)?(dick|cock|prick|asshole|a[\s-]?hole|arsehole|bastard|bitch|douchebag|douche|jackass|jerk[\s-]?off|scumbag|shithead|dickhead|dumb[\s-]?ass|piece\s+of\s+shit|pos|twat|wanker|turd|piss[\s-]?off)\b/i,
-  /\bmother\s?f+[u*][c*]k/i,
-  /\bson\s+of\s+a\s+b[i1]tch\b/i,
-  /\bgo\s+f+[u*][c*]k\s+(your?self|off)\b/i,
-  /\bf+[u*][c*]k\s+(you|off|your)\b/i,
-  /\bwhat\s+the\s+f+[u*][c*]k\b/i,
-  /\bstfu\b/i,
-  /\bpiss\s+off\b/i,
-  /\bscrew\s+you\b/i,
-  /\bshut\s+the\s+f+[u*][c*]k\s+up\b/i,
-  /\bstick\s+it\s+up\s+your\b/i,
-  /\bup\s+your\s+ass\b/i,
-
-  // Body shaming / appearance attacks
-  /\b(you'?re?|ur)\s+(so\s+)?(fat|obese|gross|repulsive|hideous|fugly|butt[\s-]?ugly)\b/i,
-  /\blose\s+(some\s+)?weight\b/i,
-  /\bfat[\s-]?(ass|bitch|cow|pig|slob)\b/i,
-
-  // General degrading phrases
-  /\bnobody\s+(wants|likes|loves|cares\s+about)\s+you\b/i,
-  /\byou\s+(don'?t|dont)\s+deserve\s+to\s+(live|exist|be\s+here)\b/i,
-  /\byou\s+make\s+(me\s+)?sick\b/i,
-  /\byou\s+are\s+(a\s+)?(waste|loser|failure|joke)\b/i,
-  /\b(stupid|dumb|ugly)\s+(bitch|whore|slut|cow|pig)\b/i,
+  /\bsp[a4]z\b/i,
 ];
 
 function keywordFlagged(text: string): boolean {
