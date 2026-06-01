@@ -143,7 +143,7 @@ function keywordFlagged(text: string): boolean {
   return KEYWORD_PATTERNS.some((re) => re.test(text));
 }
 
-function moderateText(text: string): ModerationResult {
+async function moderateText(text: string): Promise<ModerationResult> {
   const trimmed = text.trim().slice(0, 5000);
   if (!trimmed) return { flagged: false, categories: {} };
 
