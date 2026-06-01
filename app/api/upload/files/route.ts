@@ -9,7 +9,10 @@ export async function POST(request: NextRequest) {
   const uploadType = formData.get('type') as 'photos' | 'files' | null;
   const files = formData.getAll('files') as File[];
 
+  console.log('[upload/files] called:', { loofaId, uploadType, fileCount: files.length });
+
   if (!loofaId || !uploadType || files.length === 0) {
+    console.log('[upload/files] rejected: missing params');
     return NextResponse.json({ error: 'Missing loofa_id, type, or files' }, { status: 400 });
   }
 
