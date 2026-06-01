@@ -15,14 +15,49 @@ interface ModerationResult {
 
 const HARASSMENT_SCORE_THRESHOLD = 0.2;
 
-// Catch explicit phrases that score just below API thresholds
+// Catch slurs and harassment phrases that score below API thresholds
 const KEYWORD_PATTERNS = [
+  // Self-harm / threats
   /\bjump off (a )?(bridge|cliff|building|roof)\b/i,
   /\bkill your?self\b/i,
+  /\bkys\b/i,
   /\bgo die\b/i,
+  /\byou should (be )?dead\b/i,
+  /\bi (will|'ll|gonna) (kill|hurt|find|stab|beat)\b/i,
+
+  // Harassment
   /\bi hate you\b/i,
+  /\bnobody likes you\b/i,
   /\byou('re| are) (the )?worst\b/i,
   /\byou('re| are) (so )?ugly\b/i,
+  /\byou('re| are) pathetic\b/i,
+  /\byou('re| are) worthless\b/i,
+  /\byou('re| are) disgusting\b/i,
+  /\bgo to hell\b/i,
+  /\bfuck (you|off|your)\b/i,
+
+  // Racial slurs (common spellings + leet substitutions)
+  /\bn[i1!][g9]+[ae3@][rs]?\b/i,   // n-word (nigga / nigger variants)
+  /\bch[i1!]nk/i,
+  /\bsp[i1!][ck]/i,
+  /\bk[i1!]k[e3]/i,
+  /\bg[o0]+k\b/i,
+  /\bw[e3]tb[a4]ck/i,
+  /\bs[a4]nd\s?n[i1!]g/i,
+  /\bc[o0]{2}n\b/i,
+  /\bj[a4]p\b/i,
+
+  // Homophobic slurs
+  /\bf[a4@]g+[o0]?t?s?\b/i,
+  /\bd[y1!]k[e3]\b/i,
+
+  // Sexist / misogynistic slurs
+  /\bc[u*]nt\b/i,
+  /\bsl[u*]t\b/i,
+  /\bwh[o0]r[e3]\b/i,
+
+  // Ableist slurs
+  /\br[e3]t[a4]rd/i,
 ];
 
 function keywordFlagged(text: string): boolean {
