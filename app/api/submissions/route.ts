@@ -58,6 +58,32 @@ const KEYWORD_PATTERNS = [
 
   // Ableist slurs
   /\br[e3]t[a4]rd/i,
+
+  // Crude insults directed at a person
+  /\b(you'?re?|ur|u\s+r)\s+(a\s+)?(dick|cock|prick|asshole|a[\s-]?hole|arsehole|bastard|bitch|douchebag|douche|jackass|jerk[\s-]?off|scumbag|shithead|dickhead|dumb[\s-]?ass|piece\s+of\s+shit|pos|twat|wanker|turd|piss[\s-]?off)\b/i,
+  /\bmother\s?f+[u*][c*]k/i,
+  /\bson\s+of\s+a\s+b[i1]tch\b/i,
+  /\bgo\s+f+[u*][c*]k\s+(your?self|off)\b/i,
+  /\bf+[u*][c*]k\s+(you|off|your)\b/i,
+  /\bwhat\s+the\s+f+[u*][c*]k\b/i,
+  /\bstfu\b/i,
+  /\bpiss\s+off\b/i,
+  /\bscrew\s+you\b/i,
+  /\bshut\s+the\s+f+[u*][c*]k\s+up\b/i,
+  /\bstick\s+it\s+up\s+your\b/i,
+  /\bup\s+your\s+ass\b/i,
+
+  // Body shaming / appearance attacks
+  /\b(you'?re?|ur)\s+(so\s+)?(fat|obese|gross|repulsive|hideous|fugly|butt[\s-]?ugly)\b/i,
+  /\blose\s+(some\s+)?weight\b/i,
+  /\bfat[\s-]?(ass|bitch|cow|pig|slob)\b/i,
+
+  // General degrading phrases
+  /\bnobody\s+(wants|likes|loves|cares\s+about)\s+you\b/i,
+  /\byou\s+(don'?t|dont)\s+deserve\s+to\s+(live|exist|be\s+here)\b/i,
+  /\byou\s+make\s+(me\s+)?sick\b/i,
+  /\byou\s+are\s+(a\s+)?(waste|loser|failure|joke)\b/i,
+  /\b(stupid|dumb|ugly)\s+(bitch|whore|slut|cow|pig)\b/i,
 ];
 
 function keywordFlagged(text: string): boolean {
