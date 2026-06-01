@@ -16,5 +16,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error?.message ?? 'Not found' }, { status: 404 });
   }
 
-  return NextResponse.redirect(data.signedUrl);
+  const fileRes = await fetch(data.signedUrl);
+  if (!fileRes.ok) {
+    return NextResponse.json({ error: 'Failed to fetch file' }, { status: 404 });
+  }
+
+  const contentType = fileRes.headers.get('content-type') ?? 'application/octet-stream';
+  return new NextResponse(fileRes.body, {
+    headers: {
+      'Content-Type': contentType,
+      'Cache-Control': 'private, max-age=3600',
+    },
+  });
 }

@@ -205,7 +205,7 @@ export default function SubmissionsPage() {
                           <span className="submission-label">Attachments</span>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                             {sub.file_paths.map((path) => {
-                              const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(path);
+                              const isImage = /\.(jpg|jpeg|png|gif|webp|heic|heif|avif)$/i.test(path);
                               return isImage ? (
                                 <img
                                   key={path}
