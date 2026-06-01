@@ -143,21 +143,14 @@ function keywordFlagged(text: string): boolean {
   return KEYWORD_PATTERNS.some((re) => re.test(text));
 }
 
-const MAX_MODERATION_CHARS = 5000;
-
-async function moderateText(text: string): Promise<ModerationResult> {
-  const trimmed = text.trim().slice(0, MAX_MODERATION_CHARS);
+function moderateText(text: string): ModerationResult {
+  const trimmed = text.trim().slice(0, 5000);
   if (!trimmed) return { flagged: false, categories: {} };
 
-  // Keyword gate runs regardless of whether OpenAI is configured
-  if (keywordFlagged(trimmed)) {
-    return { flagged: true, categories: { harassment: true } };
-  }
+  // Keyword/word filter runs first — skip OpenAI if already flagged
+  if (keywordFlagged(trimmed)) return { flagged: true, categories: { harassment: true } };
 
-  if (!openai) {
-    console.warn('[moderation] OPENAI_API_KEY not set, skipping API check');
-    return { flagged: false, categories: {} };
-  }
+  if (!openai) return { flagged: false, categories: {} };
   try {
     const res = await openai.moderations.create({
       model: 'text-moderation-latest',
@@ -165,22 +158,17 @@ async function moderateText(text: string): Promise<ModerationResult> {
     });
     const result = res.results[0];
     const scores = result.category_scores as unknown as Record<string, number>;
-
     const highScoreCategories = Object.entries(scores)
       .filter(([, score]) => score >= HARASSMENT_SCORE_THRESHOLD)
       .map(([cat]) => cat);
-
     const flagged = result.flagged || highScoreCategories.length > 0;
     const activeCategories = Object.fromEntries(
       Object.entries(result.categories as unknown as Record<string, boolean>).filter(([, v]) => v),
     );
     highScoreCategories.forEach((cat) => { activeCategories[cat] = true; });
-
-    console.log('[moderation] result:', { flagged: result.flagged, highScoreCategories, scores: Object.fromEntries(Object.entries(scores).filter(([, v]) => v > 0.01)) });
-
     return { flagged, categories: activeCategories };
   } catch (err) {
-    console.error('[moderation] OpenAI API error:', err);
+    console.error('[moderation] OpenAI error:', err);
     return { flagged: false, categories: {} };
   }
 }
