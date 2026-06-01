@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
       .upload(path, file, { contentType: file.type, upsert: true });
 
     if (error) {
+      console.error('[upload/files] storage error:', path, error.message);
       errors.push(`${file.name}: ${error.message}`);
     } else {
       paths.push(path);

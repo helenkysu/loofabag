@@ -95,10 +95,11 @@ export default function LoofahPage() {
             fd.append('type', f.type === 'photo' ? 'photos' : 'files');
             photoFiles[f.id].forEach((file) => fd.append('files', file));
             const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
-            const data = await res.json();
-            if (data.paths) uploadedPaths.push(...data.paths);
+            const data = await res.json() as { paths?: string[]; errors?: string[] };
+            if (data.errors?.length) console.error('[upload] errors:', data.errors);
+            if (data.paths?.length) uploadedPaths.push(...data.paths);
           }),
-      ).catch(console.error);
+      ).catch((err) => console.error('[upload] failed:', err));
     }
 
     const responses: Record<string, string> = {};
