@@ -299,6 +299,59 @@ async function verifyTurnstile(token: string, ip: string | null): Promise<boolea
   return data.success;
 }
 
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'avif']);
+
+function isImagePath(path: string): boolean {
+  const ext = path.split('.').pop()?.toLowerCase() ?? '';
+  return IMAGE_EXTENSIONS.has(ext);
+}
+
+async function checkImageNsfw(signedUrl: string): Promise<boolean> {
+  const apiUser = process.env.SIGHTENGINE_API_USER;
+  const apiSecret = process.env.SIGHTENGINE_API_SECRET;
+  if (!apiUser || !apiSecret) return false;
+
+  try {
+    const params = new URLSearchParams({
+      url: signedUrl,
+      models: 'nudity-2.1,offensive',
+      api_user: apiUser,
+      api_secret: apiSecret,
+    });
+    const res = await fetch(`https://api.sightengine.com/1.0/check.json?${params}`);
+    const data = await res.json() as {
+      status: string;
+      nudity?: { sexual_activity: number; sexual_display: number; erotica: number };
+      offensive?: { prob: number };
+    };
+    if (data.status !== 'success') return false;
+    const { nudity, offensive } = data;
+    return (
+      (nudity?.sexual_activity ?? 0) > 0.5 ||
+      (nudity?.sexual_display ?? 0) > 0.5 ||
+      (nudity?.erotica ?? 0) > 0.7 ||
+      (offensive?.prob ?? 0) > 0.8
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function moderateImages(filePaths: string[]): Promise<boolean> {
+  const supabase = createAdminClient();
+  const imagePaths = filePaths.filter(isImagePath);
+  if (imagePaths.length === 0) return false;
+
+  const results = await Promise.all(
+    imagePaths.map(async (path) => {
+      const { data } = await supabase.storage.from('loofabag-private').createSignedUrl(path, 60);
+      if (!data?.signedUrl) return false;
+      return checkImageNsfw(data.signedUrl);
+    }),
+  );
+  return results.some(Boolean);
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json() as {
     slug: string;
@@ -324,9 +377,17 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Moderate all text responses
+  // Moderate text and images in parallel
   const allText = Object.values(body.responses ?? {}).filter(Boolean).join('\n');
-  const moderation = await moderateText(allText);
+  const [moderation, imageFlagged] = await Promise.all([
+    moderateText(allText),
+    moderateImages(body.file_paths ?? []),
+  ]);
+
+  if (imageFlagged) {
+    moderation.flagged = true;
+    moderation.categories.nsfw_image = true;
+  }
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
