@@ -143,11 +143,14 @@ function keywordFlagged(text: string): boolean {
   return KEYWORD_PATTERNS.some((re) => re.test(text));
 }
 
+const MAX_MODERATION_CHARS = 5000;
+
 async function moderateText(text: string): Promise<ModerationResult> {
-  if (!text.trim()) return { flagged: false, categories: {} };
+  const trimmed = text.trim().slice(0, MAX_MODERATION_CHARS);
+  if (!trimmed) return { flagged: false, categories: {} };
 
   // Keyword gate runs regardless of whether OpenAI is configured
-  if (keywordFlagged(text)) {
+  if (keywordFlagged(trimmed)) {
     return { flagged: true, categories: { harassment: true } };
   }
 
@@ -158,7 +161,7 @@ async function moderateText(text: string): Promise<ModerationResult> {
   try {
     const res = await openai.moderations.create({
       model: 'text-moderation-latest',
-      input: text,
+      input: trimmed,
     });
     const result = res.results[0];
     const scores = result.category_scores as unknown as Record<string, number>;
