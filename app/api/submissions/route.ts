@@ -37,7 +37,10 @@ async function moderateText(text: string): Promise<ModerationResult> {
     return { flagged: true, categories: { harassment: true } };
   }
 
-  if (!openai) return { flagged: false, categories: {} };
+  if (!openai) {
+    console.warn('[moderation] OPENAI_API_KEY not set, skipping API check');
+    return { flagged: false, categories: {} };
+  }
   try {
     const res = await openai.moderations.create({
       model: 'omni-moderation-latest',
@@ -46,7 +49,6 @@ async function moderateText(text: string): Promise<ModerationResult> {
     const result = res.results[0];
     const scores = result.category_scores as Record<string, number>;
 
-    // Flag if OpenAI flags it, OR if any score exceeds our lower threshold
     const highScoreCategories = Object.entries(scores)
       .filter(([, score]) => score >= HARASSMENT_SCORE_THRESHOLD)
       .map(([cat]) => cat);
@@ -57,8 +59,11 @@ async function moderateText(text: string): Promise<ModerationResult> {
     );
     highScoreCategories.forEach((cat) => { activeCategories[cat] = true; });
 
+    console.log('[moderation] result:', { flagged: result.flagged, highScoreCategories, scores: Object.fromEntries(Object.entries(scores).filter(([, v]) => v > 0.01)) });
+
     return { flagged, categories: activeCategories };
-  } catch {
+  } catch (err) {
+    console.error('[moderation] OpenAI API error:', err);
     return { flagged: false, categories: {} };
   }
 }
