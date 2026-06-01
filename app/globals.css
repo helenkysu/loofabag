@@ -1818,7 +1818,8 @@ footer p {
   border-color: #FF6B6B;
 }
 
-.field-optional-label {
+.field-optional-label,
+.field-required-toggle {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -1829,7 +1830,8 @@ footer p {
   flex-shrink: 0;
 }
 
-.field-optional-label input[type="checkbox"] {
+.field-optional-label input[type="checkbox"],
+.field-required-toggle input[type="checkbox"] {
   width: 15px;
   height: 15px;
   cursor: pointer;

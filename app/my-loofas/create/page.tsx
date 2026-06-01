@@ -1515,6 +1515,14 @@ export default function CreateLoofaPage() {
                             <option value="video">Video</option>
                             <option value="file">File upload</option>
                           </select>
+                          <label className="field-required-toggle">
+                            <input
+                              type="checkbox"
+                              checked={!field.optional}
+                              onChange={(e) => updateField(idx, { optional: !e.target.checked })}
+                            />
+                            Required
+                          </label>
                           <button
                             type="button"
                             className="question-delete-btn"
@@ -1658,6 +1666,14 @@ export default function CreateLoofaPage() {
                             <option value="photo">Photo</option>
                             <option value="file">File upload</option>
                           </select>
+                          <label className="field-required-toggle">
+                            <input
+                              type="checkbox"
+                              checked={!field.optional}
+                              onChange={(e) => updateSubField(idx, { optional: !e.target.checked })}
+                            />
+                            Required
+                          </label>
                           <button type="button" className="question-delete-btn" onClick={() => removeSubField(idx)} aria-label="Remove field">×</button>
                         </div>
                         <div className="field-preview">
