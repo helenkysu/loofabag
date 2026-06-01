@@ -309,6 +309,9 @@ export async function POST(request: NextRequest) {
 
   if (!body.slug) return NextResponse.json({ error: 'Missing slug' }, { status: 400 });
 
+  const tooLong = Object.values(body.responses ?? {}).some((v) => String(v).length > 500);
+  if (tooLong) return NextResponse.json({ error: 'Response exceeds 500 character limit' }, { status: 400 });
+
   // Verify Turnstile token if secret key is configured
   if (process.env.TURNSTILE_SECRET_KEY) {
     if (!body.captchaToken) {

@@ -314,6 +314,7 @@ export default function LoofahPage() {
                           value={formData[field.id] ?? ''}
                           onChange={(e) => handleInputChange(field.id, e.target.value)}
                           required={!field.optional}
+                          maxLength={500}
                         />
                       )}
                       {field.type === 'url' && (
