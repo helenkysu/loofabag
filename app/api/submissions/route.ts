@@ -47,7 +47,7 @@ async function moderateText(text: string): Promise<ModerationResult> {
       input: text,
     });
     const result = res.results[0];
-    const scores = result.category_scores as Record<string, number>;
+    const scores = result.category_scores as unknown as Record<string, number>;
 
     const highScoreCategories = Object.entries(scores)
       .filter(([, score]) => score >= HARASSMENT_SCORE_THRESHOLD)
@@ -55,7 +55,7 @@ async function moderateText(text: string): Promise<ModerationResult> {
 
     const flagged = result.flagged || highScoreCategories.length > 0;
     const activeCategories = Object.fromEntries(
-      Object.entries(result.categories as Record<string, boolean>).filter(([, v]) => v),
+      Object.entries(result.categories as unknown as Record<string, boolean>).filter(([, v]) => v),
     );
     highScoreCategories.forEach((cat) => { activeCategories[cat] = true; });
 
