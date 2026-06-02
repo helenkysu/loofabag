@@ -82,6 +82,7 @@ export default function SubmissionsPage() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [tab, setTab] = useState<'submissions' | 'analytics'>('submissions');
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/loofas/${id}`)
@@ -111,6 +112,15 @@ export default function SubmissionsPage() {
       .catch(console.error)
       .finally(() => setAnalyticsLoading(false));
   }, [tab, loofa, analytics]);
+
+  const handleDelete = async (submissionId: string) => {
+    setDeleting(submissionId);
+    const res = await fetch(`/api/submissions?id=${encodeURIComponent(submissionId)}`, { method: 'DELETE' });
+    if (res.ok) {
+      setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
+    }
+    setDeleting(null);
+  };
 
   if (notFound) {
     return (
@@ -194,7 +204,18 @@ export default function SubmissionsPage() {
                   </div>
                   {submissions.map((sub) => (
                     <div key={sub.id} className="submission-card">
-                      <p className="submission-date">{formatDate(sub.submitted_at)}</p>
+                      <div className="submission-card-header">
+                        <p className="submission-date">{formatDate(sub.submitted_at)}</p>
+                        <button
+                          className="submission-delete-btn"
+                          onClick={() => handleDelete(sub.id)}
+                          disabled={deleting === sub.id}
+                          aria-label="Delete submission"
+                          title="Delete"
+                        >
+                          {deleting === sub.id ? '…' : '🗑'}
+                        </button>
+                      </div>
                       {Object.entries(sub.responses).map(([label, value]) => (
                         <div key={label} className="submission-field">
                           <span className="submission-label">{label}</span>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 const TABLE = 'loofabag_submissions';
 
@@ -412,4 +413,43 @@ const tooLong = Object.values(body.responses ?? {}).some((v) => String(v).length
   }
 
   return NextResponse.json({ submission: data });
+}
+
+export async function DELETE(request: NextRequest) {
+  const id = request.nextUrl.searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+
+  // Verify the caller owns the loofa this submission belongs to
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const admin = createAdminClient();
+
+  // Fetch the submission to get its slug
+  const { data: row, error: fetchError } = await admin
+    .from(TABLE)
+    .select('id, data')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Confirm the user owns the loofa with that slug
+  const slug = row.data?.slug as string | undefined;
+  if (!slug) return NextResponse.json({ error: 'Invalid submission' }, { status: 400 });
+
+  const { data: loofa } = await admin
+    .from('loofabag_loofas')
+    .select('id')
+    .eq('slug', slug)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (!loofa) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const { error: deleteError } = await admin.from(TABLE).delete().eq('id', id);
+  if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
+
+  return NextResponse.json({ ok: true });
 }
