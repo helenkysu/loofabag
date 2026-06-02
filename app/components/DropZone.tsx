@@ -130,6 +130,9 @@ export default function DropZone({ accept, multiple, maxFiles, maxSizeMB, maxDur
     setPreviews((prev) => [...prev, ...initialItems]);
     setFiles((prev) => [...prev, ...arr]);
 
+    // Notify immediately with raw files so parent ref is populated before conversion
+    onFiles?.([...files, ...arr]);
+
     // Convert HEIC → JPEG
     const converted = await Promise.all(
       arr.map(async (f, i) => {
