@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
+import { uploadFileDirect } from '@/lib/upload-direct';
 import QRDesigner, { renderQRToCanvas } from '@/app/components/QRDesigner';
 import type { QRDesignOptions } from '@/app/components/QRDesigner';
 import BagTextSelector from '@/app/components/BagTextSelector';
@@ -510,16 +511,12 @@ export default function CreateLoofaPage() {
       customFields
         .filter((f) => (f.type === 'photo' || f.type === 'video' || f.type === 'file') && pendingProfileFiles[f.id]?.length)
         .map(async (field) => {
-          const fd = new FormData();
-          fd.append('loofa_id', loofaId);
           const uploadType = field.type === 'photo' ? 'photos' : field.type === 'video' ? 'videos' : 'files';
-          fd.append('type', uploadType);
-          pendingProfileFiles[field.id].forEach((file) => fd.append('files', file));
-          const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
-          const data = await res.json();
-          if (data.paths?.length) {
-            updatedProfileData[field.id] = JSON.stringify(data.paths);
-          }
+          const paths = await Promise.all(
+            pendingProfileFiles[field.id].map((file) => uploadFileDirect(loofaId, file, uploadType)),
+          );
+          const uploaded = paths.filter((p): p is string => p !== null);
+          if (uploaded.length) updatedProfileData[field.id] = JSON.stringify(uploaded);
         }),
     ).catch(console.error);
 

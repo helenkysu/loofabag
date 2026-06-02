@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
+import { uploadFileDirect } from '@/lib/upload-direct';
 
 interface FormField {
   id: string;
@@ -105,29 +106,22 @@ export default function ProfileEditorPage() {
       fields
         .filter((f) => (f.type === 'photo' || f.type === 'video' || f.type === 'file') && pendingFiles[f.id]?.length)
         .map(async (field) => {
-          const fd = new FormData();
-          fd.append('loofa_id', loofa.id);
           const uploadType = field.type === 'photo' ? 'photos' : field.type === 'video' ? 'videos' : 'files';
-          fd.append('type', uploadType);
-          pendingFiles[field.id].forEach((file) => fd.append('files', file));
-          const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
-          const data = await res.json();
-          if (data.paths?.length) {
+          const paths = await Promise.all(
+            pendingFiles[field.id].map((file) => uploadFileDirect(loofa.id, file, uploadType)),
+          );
+          const uploaded = paths.filter((p): p is string => p !== null);
+          if (uploaded.length) {
             const existing = parsePaths(updatedData[field.id]);
-            updatedData[field.id] = JSON.stringify([...existing, ...data.paths]);
+            updatedData[field.id] = JSON.stringify([...existing, ...uploaded]);
           }
         }),
     );
 
     let newProfilePhotoUrl: string | null = profilePhoto ?? null;
     if (pendingProfilePhoto) {
-      const fd = new FormData();
-      fd.append('loofa_id', loofa.id);
-      fd.append('type', 'photos');
-      fd.append('files', pendingProfilePhoto);
-      const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (data.paths?.[0]) newProfilePhotoUrl = data.paths[0] as string;
+      const path = await uploadFileDirect(loofa.id, pendingProfilePhoto);
+      if (path) newProfilePhotoUrl = path;
     }
 
     await fetch(`/api/loofas/${id}`, {

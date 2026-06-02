@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
 import { Turnstile } from '@marsidev/react-turnstile';
+import { uploadFileDirect } from '@/lib/upload-direct';
 
 interface FormField {
   id: string;
@@ -87,27 +88,15 @@ export default function LoofahPage() {
     setSubmitting(true);
 
     const uploadedPaths: string[] = [];
-    const uploadDebug: { name: string; size: number; type: string; status: number; result: string }[] = [];
 
     if (loofa?.id) {
-      const currentFiles = photoFilesRef.current;
-      const fileEntries = Object.entries(currentFiles).filter(([, files]) => files.length > 0);
-      for (const [, files] of fileEntries) {
-        for (const file of files) {
-          try {
-            const fd = new FormData();
-            fd.append('loofa_id', loofa.id);
-            fd.append('type', 'photos');
-            fd.append('files', file);
-            const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
-            const data = await res.json() as { paths?: string[]; errors?: string[] };
-            uploadDebug.push({ name: file.name, size: file.size, type: file.type, status: res.status, result: JSON.stringify(data) });
-            if (data.paths?.length) uploadedPaths.push(...data.paths);
-          } catch (err) {
-            uploadDebug.push({ name: file.name, size: file.size, type: file.type, status: 0, result: String(err) });
-          }
-        }
-      }
+      const allFiles = Object.values(photoFilesRef.current).flat();
+      await Promise.all(
+        allFiles.map(async (file) => {
+          const path = await uploadFileDirect(loofa.id, file);
+          if (path) uploadedPaths.push(path);
+        }),
+      );
     }
 
     const responses: Record<string, string> = {};
@@ -123,12 +112,6 @@ export default function LoofahPage() {
         responses,
         file_paths: uploadedPaths,
         captchaToken,
-        _debug: {
-          loofa_id: loofa?.id ?? null,
-          submission_field_types: submissionFields.map((f) => ({ id: f.id, type: f.type })),
-          photo_ref_keys: Object.entries(photoFilesRef.current).map(([id, files]) => ({ id, count: files.length })),
-          upload_results: uploadDebug,
-        },
       }),
     }).catch(console.error);
 
