@@ -362,6 +362,7 @@ export async function POST(request: NextRequest) {
 
   if (!body.slug) return NextResponse.json({ error: 'Missing slug' }, { status: 400 });
 
+  console.log('[submissions] debug:', JSON.stringify((body as Record<string, unknown>)._debug ?? {}));
   console.log('[submissions] received file_paths:', body.file_paths ?? []);
 
   const tooLong = Object.values(body.responses ?? {}).some((v) => String(v).length > 500);

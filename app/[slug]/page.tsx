@@ -114,7 +114,17 @@ export default function LoofahPage() {
     await fetch('/api/submissions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: slugParam, responses, file_paths: uploadedPaths, captchaToken }),
+      body: JSON.stringify({
+        slug: slugParam,
+        responses,
+        file_paths: uploadedPaths,
+        captchaToken,
+        _debug: {
+          loofa_id: loofa?.id ?? null,
+          submission_field_types: submissionFields.map((f) => ({ id: f.id, type: f.type })),
+          photo_ref_keys: Object.entries(photoFilesRef.current).map(([id, files]) => ({ id, count: files.length })),
+        },
+      }),
     }).catch(console.error);
 
     setSubmitting(false);
