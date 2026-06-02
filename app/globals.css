@@ -2307,6 +2307,82 @@ footer p {
   gap: 12px;
 }
 
+.submissions-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.submission-select-all {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  user-select: none;
+}
+
+.submission-select-all input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #c8a97e;
+}
+
+.submission-bulk-delete-btn {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.submission-bulk-delete-btn:hover {
+  background: #fecaca;
+}
+
+.submission-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.submission-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: #c8a97e;
+}
+
+.submission-card-selected {
+  border-color: #c8a97e;
+  background: #fdf8f3;
+}
+
+.submission-confirm-delete-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+}
+
+.submission-confirm-delete-btn:hover {
+  background: #dc2626;
+}
+
+.submission-confirm-delete-btn:disabled {
+  opacity: 0.6;
+}
+
 .submission-card-header {
   display: flex;
   align-items: center;

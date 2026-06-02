@@ -82,7 +82,9 @@ export default function SubmissionsPage() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [tab, setTab] = useState<'submissions' | 'analytics'>('submissions');
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmIds, setConfirmIds] = useState<string[] | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetch(`/api/loofas/${id}`)
@@ -113,14 +115,26 @@ export default function SubmissionsPage() {
       .finally(() => setAnalyticsLoading(false));
   }, [tab, loofa, analytics]);
 
-  const handleDelete = async (submissionId: string) => {
-    setDeleting(submissionId);
-    const res = await fetch(`/api/submissions?id=${encodeURIComponent(submissionId)}`, { method: 'DELETE' });
-    if (res.ok) {
-      setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
-    }
-    setDeleting(null);
+  const confirmAndDelete = (ids: string[]) => setConfirmIds(ids);
+
+  const handleDelete = async () => {
+    if (!confirmIds?.length) return;
+    setDeleting(true);
+    await Promise.all(
+      confirmIds.map((id) => fetch(`/api/submissions?id=${encodeURIComponent(id)}`, { method: 'DELETE' })),
+    );
+    setSubmissions((prev) => prev.filter((s) => !confirmIds.includes(s.id)));
+    setSelected((prev) => { const n = new Set(prev); confirmIds.forEach((id) => n.delete(id)); return n; });
+    setDeleting(false);
+    setConfirmIds(null);
   };
+
+  const toggleSelect = (subId: string) =>
+    setSelected((prev) => { const n = new Set(prev); n.has(subId) ? n.delete(subId) : n.add(subId); return n; });
+
+  const allSelected = submissions.length > 0 && submissions.every((s) => selected.has(s.id));
+  const toggleAll = () =>
+    setSelected(allSelected ? new Set() : new Set(submissions.map((s) => s.id)));
 
   if (notFound) {
     return (
@@ -192,28 +206,48 @@ export default function SubmissionsPage() {
                 </div>
               ) : (
                 <div className="submissions-list">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                    <p className="question-editor-label" style={{ margin: 0 }}>
-                      {submissions.length} response{submissions.length !== 1 ? 's' : ''}
-                    </p>
-                    {flaggedCount > 0 && (
-                      <span className="flagged-count-badge" title="Submissions hidden due to policy violations">
-                        {flaggedCount} flagged
-                      </span>
+                  <div className="submissions-toolbar">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <label className="submission-select-all">
+                        <input type="checkbox" checked={allSelected} onChange={toggleAll} />
+                        <span>Select all</span>
+                      </label>
+                      <p className="question-editor-label" style={{ margin: 0 }}>
+                        {submissions.length} response{submissions.length !== 1 ? 's' : ''}
+                      </p>
+                      {flaggedCount > 0 && (
+                        <span className="flagged-count-badge" title="Submissions hidden due to policy violations">
+                          {flaggedCount} flagged
+                        </span>
+                      )}
+                    </div>
+                    {selected.size > 0 && (
+                      <button
+                        className="btn submission-bulk-delete-btn"
+                        onClick={() => confirmAndDelete([...selected])}
+                      >
+                        Delete {selected.size} selected
+                      </button>
                     )}
                   </div>
                   {submissions.map((sub) => (
-                    <div key={sub.id} className="submission-card">
+                    <div key={sub.id} className={`submission-card${selected.has(sub.id) ? ' submission-card-selected' : ''}`}>
                       <div className="submission-card-header">
-                        <p className="submission-date">{formatDate(sub.submitted_at)}</p>
+                        <label className="submission-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selected.has(sub.id)}
+                            onChange={() => toggleSelect(sub.id)}
+                          />
+                          <p className="submission-date">{formatDate(sub.submitted_at)}</p>
+                        </label>
                         <button
                           className="submission-delete-btn"
-                          onClick={() => handleDelete(sub.id)}
-                          disabled={deleting === sub.id}
+                          onClick={() => confirmAndDelete([sub.id])}
                           aria-label="Delete submission"
                           title="Delete"
                         >
-                          {deleting === sub.id ? '…' : '🗑'}
+                          🗑
                         </button>
                       </div>
                       {Object.entries(sub.responses).map(([label, value]) => (
@@ -380,6 +414,27 @@ export default function SubmissionsPage() {
           )}
         </div>
       </section>
+
+      {confirmIds && (
+        <div className="report-modal-backdrop" onClick={() => !deleting && setConfirmIds(null)}>
+          <div className="report-modal" style={{ maxWidth: 380 }} onClick={(e) => e.stopPropagation()}>
+            <h2 className="report-modal-title" style={{ fontSize: 18 }}>Delete submission{confirmIds.length > 1 ? 's' : ''}?</h2>
+            <p className="report-modal-body">
+              {confirmIds.length === 1
+                ? 'This submission will be permanently deleted.'
+                : `${confirmIds.length} submissions will be permanently deleted.`}
+            </p>
+            <div className="report-modal-footer" style={{ marginTop: 24 }}>
+              <button className="btn btn-secondary" onClick={() => setConfirmIds(null)} disabled={deleting}>
+                No, keep it
+              </button>
+              <button className="btn submission-confirm-delete-btn" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Deleting…' : 'Yes, delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
