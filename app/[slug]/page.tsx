@@ -92,17 +92,19 @@ export default function LoofahPage() {
       const currentFiles = photoFilesRef.current;
       const fileEntries = Object.entries(currentFiles).filter(([, files]) => files.length > 0);
       for (const [, files] of fileEntries) {
-        try {
-          const fd = new FormData();
-          fd.append('loofa_id', loofa.id);
-          fd.append('type', 'photos');
-          files.forEach((file) => fd.append('files', file));
-          const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
-          const data = await res.json() as { paths?: string[]; errors?: string[] };
-          if (data.errors?.length) console.error('[upload] errors:', data.errors);
-          if (data.paths?.length) uploadedPaths.push(...data.paths);
-        } catch (err) {
-          console.error('[upload] fetch error:', err);
+        for (const file of files) {
+          try {
+            const fd = new FormData();
+            fd.append('loofa_id', loofa.id);
+            fd.append('type', 'photos');
+            fd.append('files', file);
+            const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
+            const data = await res.json() as { paths?: string[]; errors?: string[] };
+            if (data.errors?.length) console.error('[upload] errors:', data.errors);
+            if (data.paths?.length) uploadedPaths.push(...data.paths);
+          } catch (err) {
+            console.error('[upload] fetch error:', err);
+          }
         }
       }
     }
