@@ -8,11 +8,15 @@ export async function GET(
   const { token } = await params;
   const supabase = createAdminClient();
 
-  const { data: qr } = await supabase
+  console.log('[qr-scan] token:', token);
+
+  const { data: qr, error: qrError } = await supabase
     .from('qr_redirects')
     .select('slug, is_active')
     .eq('token', token)
     .single();
+
+  console.log('[qr-scan] redirect lookup:', { found: !!qr, is_active: qr?.is_active, slug: qr?.slug, error: qrError?.message });
 
   if (!qr || !qr.is_active) {
     return NextResponse.redirect(new URL('/', req.url));
@@ -23,14 +27,14 @@ export async function GET(
     req.headers.get('x-real-ip') ??
     null;
 
-  // Await before redirecting — serverless functions terminate on response,
-  // so fire-and-forget inserts never complete.
-  await supabase.from('qr_scans').insert({
+  const { error: insertError } = await supabase.from('qr_scans').insert({
     token,
     user_agent: req.headers.get('user-agent'),
     referer: req.headers.get('referer'),
     ip_address: ip,
   });
+
+  console.log('[qr-scan] insert result:', { error: insertError?.message ?? null });
 
   // 302 so every scan is tracked (not cached by CDN)
   return NextResponse.redirect(new URL(`/${qr.slug}`, req.url), { status: 302 });
