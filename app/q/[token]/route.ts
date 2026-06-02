@@ -23,8 +23,9 @@ export async function GET(
     req.headers.get('x-real-ip') ??
     null;
 
-  // Log the scan — fire and forget, don't block the redirect
-  void supabase.from('qr_scans').insert({
+  // Await before redirecting — serverless functions terminate on response,
+  // so fire-and-forget inserts never complete.
+  await supabase.from('qr_scans').insert({
     token,
     user_agent: req.headers.get('user-agent'),
     referer: req.headers.get('referer'),
