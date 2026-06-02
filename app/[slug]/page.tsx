@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
@@ -35,6 +35,7 @@ export default function LoofahPage() {
   const [isActive, setIsActive] = useState(true);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [photoFiles, setPhotoFiles] = useState<Record<string, File[]>>({});
+  const photoFilesRef = useRef<Record<string, File[]>>({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
@@ -76,8 +77,10 @@ export default function LoofahPage() {
   const handleInputChange = (fieldId: string, value: string) =>
     setFormData((prev) => ({ ...prev, [fieldId]: value }));
 
-  const handlePhotoChange = (fieldId: string, files: File[]) =>
+  const handlePhotoChange = (fieldId: string, files: File[]) => {
+    photoFilesRef.current = { ...photoFilesRef.current, [fieldId]: files };
     setPhotoFiles((prev) => ({ ...prev, [fieldId]: files }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,14 +89,15 @@ export default function LoofahPage() {
     const uploadedPaths: string[] = [];
 
     if (loofa?.id) {
+      const currentFiles = photoFilesRef.current;
       await Promise.all(
         submissionFields
-          .filter((f) => (f.type === 'photo' || f.type === 'file') && photoFiles[f.id]?.length)
+          .filter((f) => (f.type === 'photo' || f.type === 'file') && currentFiles[f.id]?.length)
           .map(async (f) => {
             const fd = new FormData();
             fd.append('loofa_id', loofa.id);
             fd.append('type', f.type === 'photo' ? 'photos' : 'files');
-            photoFiles[f.id].forEach((file) => fd.append('files', file));
+            currentFiles[f.id].forEach((file) => fd.append('files', file));
             const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
             const data = await res.json() as { paths?: string[]; errors?: string[] };
             if (data.errors?.length) console.error('[upload] errors:', data.errors);
