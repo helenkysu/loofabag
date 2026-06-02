@@ -87,6 +87,7 @@ export default function LoofahPage() {
     setSubmitting(true);
 
     const uploadedPaths: string[] = [];
+    const uploadDebug: { name: string; size: number; type: string; status: number; result: string }[] = [];
 
     if (loofa?.id) {
       const currentFiles = photoFilesRef.current;
@@ -100,10 +101,10 @@ export default function LoofahPage() {
             fd.append('files', file);
             const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
             const data = await res.json() as { paths?: string[]; errors?: string[] };
-            if (data.errors?.length) console.error('[upload] errors:', data.errors);
+            uploadDebug.push({ name: file.name, size: file.size, type: file.type, status: res.status, result: JSON.stringify(data) });
             if (data.paths?.length) uploadedPaths.push(...data.paths);
           } catch (err) {
-            console.error('[upload] fetch error:', err);
+            uploadDebug.push({ name: file.name, size: file.size, type: file.type, status: 0, result: String(err) });
           }
         }
       }
@@ -126,6 +127,7 @@ export default function LoofahPage() {
           loofa_id: loofa?.id ?? null,
           submission_field_types: submissionFields.map((f) => ({ id: f.id, type: f.type })),
           photo_ref_keys: Object.entries(photoFilesRef.current).map(([id, files]) => ({ id, count: files.length })),
+          upload_results: uploadDebug,
         },
       }),
     }).catch(console.error);
