@@ -6,6 +6,7 @@ import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { uploadFileDirect } from '@/lib/upload-direct';
+import PhotoGallery from '@/app/components/PhotoGallery';
 
 interface FormField {
   id: string;
@@ -178,16 +179,7 @@ export default function LoofahPage() {
                         <div key={field.id} className="profile-field-row profile-field-col">
                           <span className="profile-field-label">{field.label}</span>
                           {paths.length > 0 ? (
-                            <div className="profile-photo-grid">
-                              {paths.map((path) => (
-                                <img
-                                  key={path}
-                                  src={`/api/files/proxy?path=${encodeURIComponent(path)}`}
-                                  alt={field.label}
-                                  className="profile-photo-thumb"
-                                />
-                              ))}
-                            </div>
+                            <PhotoGallery paths={paths} />
                           ) : (
                             <span className="profile-field-value profile-field-blank">—</span>
                           )}

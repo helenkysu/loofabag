@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
+import PhotoGallery from '@/app/components/PhotoGallery';
 
 interface Loofa {
   id: string;
@@ -200,35 +201,27 @@ export default function SubmissionsPage() {
                           <span className="submission-value">{value}</span>
                         </div>
                       ))}
-                      {sub.file_paths.length > 0 && (
-                        <div className="submission-field">
-                          <span className="submission-label">Attachments</span>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            {sub.file_paths.map((path) => {
-                              const isImage = /\.(jpg|jpeg|png|gif|webp|heic|heif|avif)$/i.test(path);
-                              return isImage ? (
-                                <img
-                                  key={path}
-                                  src={`/api/files/proxy?path=${encodeURIComponent(path)}`}
-                                  alt=""
-                                  className="profile-photo-thumb"
-                                  style={{ maxWidth: 120 }}
-                                />
-                              ) : (
-                                <a
-                                  key={path}
-                                  href={`/api/files/proxy?path=${encodeURIComponent(path)}`}
-                                  className="profile-field-link"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  {path.split('/').pop()}
-                                </a>
-                              );
-                            })}
+                      {sub.file_paths.length > 0 && (() => {
+                        const imagePaths = sub.file_paths.filter((p) => /\.(jpg|jpeg|png|gif|webp|heic|heif|avif)$/i.test(p));
+                        const filePaths = sub.file_paths.filter((p) => !/\.(jpg|jpeg|png|gif|webp|heic|heif|avif)$/i.test(p));
+                        return (
+                          <div className="submission-field">
+                            <span className="submission-label">Attachments</span>
+                            {imagePaths.length > 0 && <PhotoGallery paths={imagePaths} />}
+                            {filePaths.map((path) => (
+                              <a
+                                key={path}
+                                href={`/api/files/proxy?path=${encodeURIComponent(path)}`}
+                                className="profile-field-link"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {path.split('/').pop()}
+                              </a>
+                            ))}
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   ))}
                 </div>
