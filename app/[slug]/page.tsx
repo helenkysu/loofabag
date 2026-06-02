@@ -90,20 +90,21 @@ export default function LoofahPage() {
 
     if (loofa?.id) {
       const currentFiles = photoFilesRef.current;
-      await Promise.all(
-        submissionFields
-          .filter((f) => (f.type === 'photo' || f.type === 'file') && currentFiles[f.id]?.length)
-          .map(async (f) => {
-            const fd = new FormData();
-            fd.append('loofa_id', loofa.id);
-            fd.append('type', f.type === 'photo' ? 'photos' : 'files');
-            currentFiles[f.id].forEach((file) => fd.append('files', file));
-            const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
-            const data = await res.json() as { paths?: string[]; errors?: string[] };
-            if (data.errors?.length) console.error('[upload] errors:', data.errors);
-            if (data.paths?.length) uploadedPaths.push(...data.paths);
-          }),
-      ).catch((err) => console.error('[upload] failed:', err));
+      const fileEntries = Object.entries(currentFiles).filter(([, files]) => files.length > 0);
+      for (const [, files] of fileEntries) {
+        try {
+          const fd = new FormData();
+          fd.append('loofa_id', loofa.id);
+          fd.append('type', 'photos');
+          files.forEach((file) => fd.append('files', file));
+          const res = await fetch('/api/upload/files', { method: 'POST', body: fd });
+          const data = await res.json() as { paths?: string[]; errors?: string[] };
+          if (data.errors?.length) console.error('[upload] errors:', data.errors);
+          if (data.paths?.length) uploadedPaths.push(...data.paths);
+        } catch (err) {
+          console.error('[upload] fetch error:', err);
+        }
+      }
     }
 
     const responses: Record<string, string> = {};
