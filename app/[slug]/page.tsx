@@ -41,6 +41,7 @@ export default function LoofahPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
@@ -343,6 +344,18 @@ export default function LoofahPage() {
 
                   {submissionFields.length > 0 && (
                     <>
+                      <label className="submission-terms-label">
+                        <input
+                          type="checkbox"
+                          checked={agreedToTerms}
+                          onChange={(e) => setAgreedToTerms(e.target.checked)}
+                        />
+                        <span>
+                          By submitting, you agree to Loofabag&apos;s{' '}
+                          <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
+                          {' '}and confirm your message complies with our policies.
+                        </span>
+                      </label>
                       <Turnstile
                         siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA'}
                         onSuccess={(token) => setCaptchaToken(token)}
@@ -350,7 +363,7 @@ export default function LoofahPage() {
                         onError={() => setCaptchaToken(null)}
                         options={{ theme: 'light', size: 'normal' }}
                       />
-                      <button type="submit" className="btn btn-primary loofa-submit-btn" disabled={submitting || !captchaToken}>
+                      <button type="submit" className="btn btn-primary loofa-submit-btn" disabled={submitting || !captchaToken || !agreedToTerms}>
                         {submitting ? 'Submitting…' : 'Submit'}
                       </button>
                     </>

@@ -357,6 +357,7 @@ export default function CreateLoofaPage() {
   const [qrToken, setQrToken] = useState('');
   const [backDesign, setBackDesign] = useState<'blank' | 'duplicate' | 'universe' | 'grass'>('blank');
   const [checkoutPreviewSide, setCheckoutPreviewSide] = useState<'front' | 'back'>('front');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Notification settings
   const [notifEnabled, setNotifEnabled] = useState(true);
@@ -1325,10 +1326,24 @@ export default function CreateLoofaPage() {
                     )}
                   </div>
 
+                  <label className="checkout-terms-label">
+                    <input
+                      type="checkbox"
+                      checked={agreedToTerms}
+                      onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    />
+                    <span>
+                      I agree to the Loofabag{' '}
+                      <a href="/terms" target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</a>
+                      {' '}and{' '}
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+                    </span>
+                  </label>
+
                   <button
                     className="btn btn-primary checkout-btn"
                     onClick={handleCheckout}
-                    disabled={checkingOut || !selectedRateId}
+                    disabled={checkingOut || !selectedRateId || !agreedToTerms}
                   >
                     {checkingOut ? 'Redirecting to payment…' : 'Complete Purchase'}
                   </button>
