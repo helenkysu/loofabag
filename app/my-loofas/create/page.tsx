@@ -601,7 +601,7 @@ export default function CreateLoofaPage() {
     ctx.fillRect(0, 0, PX, PX);
 
     const cx = PX / 2;
-    let y = Math.round(PX * 0.10);
+    let y = Math.round(PX * 0.22);
 
     // 1. Bag text
     if (bagText) {
@@ -662,7 +662,7 @@ export default function CreateLoofaPage() {
     ctx.fillRect(0, 0, PX, PX);
 
     const cx = PX / 2;
-    let y = Math.round(PX * 0.10);
+    let y = Math.round(PX * 0.22);
 
     if (bagText) {
       const lines = bagText.split('\n');

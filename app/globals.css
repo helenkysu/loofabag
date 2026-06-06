@@ -3419,7 +3419,7 @@ footer p {
 /* Centered overlay column sitting in the bag body area */
 .bag-preview-overlay {
   position: absolute;
-  top: 38%;
+  top: 48%;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
