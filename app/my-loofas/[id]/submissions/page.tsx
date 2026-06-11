@@ -98,6 +98,7 @@ export default function SubmissionsPage() {
   const [deleting, setDeleting] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [clearAllConfirm, setClearAllConfirm] = useState(false);
 
   useEffect(() => {
     fetch(`/api/loofas/${id}`)
@@ -140,6 +141,17 @@ export default function SubmissionsPage() {
     setSelected((prev) => { const n = new Set(prev); confirmIds.forEach((id) => n.delete(id)); return n; });
     setDeleting(false);
     setConfirmIds(null);
+  };
+
+  const handleClearAll = async () => {
+    setDeleting(true);
+    await Promise.all(
+      submissions.map((s) => fetch(`/api/submissions?id=${encodeURIComponent(s.id)}`, { method: 'DELETE' })),
+    );
+    setSubmissions([]);
+    setSelected(new Set());
+    setDeleting(false);
+    setClearAllConfirm(false);
   };
 
   const toggleSelect = (subId: string) =>
@@ -267,14 +279,22 @@ export default function SubmissionsPage() {
                         </span>
                       )}
                     </div>
-                    {selected.size > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {selected.size > 0 && (
+                        <button
+                          className="btn submission-bulk-delete-btn"
+                          onClick={() => confirmAndDelete([...selected])}
+                        >
+                          Delete {selected.size} selected
+                        </button>
+                      )}
                       <button
-                        className="btn submission-bulk-delete-btn"
-                        onClick={() => confirmAndDelete([...selected])}
+                        className="btn submission-clear-all-btn"
+                        onClick={() => setClearAllConfirm(true)}
                       >
-                        Delete {selected.size} selected
+                        Clear all
                       </button>
-                    )}
+                    </div>
                   </div>
                   {filteredSubmissions.length === 0 ? (
                     <p className="submissions-empty">No submissions match this filter.</p>
@@ -478,6 +498,25 @@ export default function SubmissionsPage() {
               </button>
               <button className="btn submission-confirm-delete-btn" onClick={handleDelete} disabled={deleting}>
                 {deleting ? 'Deleting…' : 'Yes, delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {clearAllConfirm && (
+        <div className="report-modal-backdrop" onClick={() => !deleting && setClearAllConfirm(false)}>
+          <div className="report-modal" style={{ maxWidth: 380 }} onClick={(e) => e.stopPropagation()}>
+            <h2 className="report-modal-title" style={{ fontSize: 18 }}>Delete all submissions?</h2>
+            <p className="report-modal-body">
+              Are you sure you want to permanently delete all your submissions? This cannot be undone.
+            </p>
+            <div className="report-modal-footer" style={{ marginTop: 24 }}>
+              <button className="btn btn-secondary" onClick={() => setClearAllConfirm(false)} disabled={deleting}>
+                No, keep them
+              </button>
+              <button className="btn submission-confirm-delete-btn" onClick={handleClearAll} disabled={deleting}>
+                {deleting ? 'Deleting…' : 'Yes, delete all'}
               </button>
             </div>
           </div>

@@ -2356,6 +2356,21 @@ footer p {
   background: #fecaca;
 }
 
+.submission-clear-all-btn {
+  background: transparent;
+  color: #b91c1c;
+  border: 1.5px solid #fecaca;
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.submission-clear-all-btn:hover {
+  background: #fee2e2;
+}
+
 .submission-checkbox {
   display: flex;
   align-items: center;
