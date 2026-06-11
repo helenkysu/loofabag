@@ -72,6 +72,17 @@ function parseUserAgent(ua: string | null): { device: string; browser: string } 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HOUR_LABELS = ['12a','1a','2a','3a','4a','5a','6a','7a','8a','9a','10a','11a','12p','1p','2p','3p','4p','5p','6p','7p','8p','9p','10p','11p'];
 
+type SortOrder = 'newest' | 'oldest';
+type DateFilter = 'all' | '3days' | 'week' | 'month' | 'year';
+
+const DATE_FILTER_DAYS: Record<DateFilter, number | null> = {
+  all: null,
+  '3days': 3,
+  week: 7,
+  month: 30,
+  year: 365,
+};
+
 export default function SubmissionsPage() {
   const { id } = useParams<{ id: string }>();
   const [loofa, setLoofa] = useState<Loofa | null>(null);
@@ -85,6 +96,8 @@ export default function SubmissionsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmIds, setConfirmIds] = useState<string[] | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
 
   useEffect(() => {
     fetch(`/api/loofas/${id}`)
@@ -132,9 +145,21 @@ export default function SubmissionsPage() {
   const toggleSelect = (subId: string) =>
     setSelected((prev) => { const n = new Set(prev); n.has(subId) ? n.delete(subId) : n.add(subId); return n; });
 
-  const allSelected = submissions.length > 0 && submissions.every((s) => selected.has(s.id));
+  const filteredSubmissions = submissions
+    .filter((s) => {
+      const days = DATE_FILTER_DAYS[dateFilter];
+      if (days == null) return true;
+      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+      return new Date(s.submitted_at).getTime() >= cutoff;
+    })
+    .sort((a, b) => {
+      const diff = new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
+      return sortOrder === 'newest' ? -diff : diff;
+    });
+
+  const allSelected = filteredSubmissions.length > 0 && filteredSubmissions.every((s) => selected.has(s.id));
   const toggleAll = () =>
-    setSelected(allSelected ? new Set() : new Set(submissions.map((s) => s.id)));
+    setSelected(allSelected ? new Set() : new Set(filteredSubmissions.map((s) => s.id)));
 
   if (notFound) {
     return (
@@ -206,6 +231,27 @@ export default function SubmissionsPage() {
                 </div>
               ) : (
                 <div className="submissions-list">
+                  <div className="submissions-filters">
+                    <select
+                      className="field-type-select"
+                      value={dateFilter}
+                      onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+                    >
+                      <option value="all">All time</option>
+                      <option value="3days">Last 3 days</option>
+                      <option value="week">Last week</option>
+                      <option value="month">Last month</option>
+                      <option value="year">Last year</option>
+                    </select>
+                    <select
+                      className="field-type-select"
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                    >
+                      <option value="newest">Newest first</option>
+                      <option value="oldest">Oldest first</option>
+                    </select>
+                  </div>
                   <div className="submissions-toolbar">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <label className="submission-select-all">
@@ -213,7 +259,7 @@ export default function SubmissionsPage() {
                         <span>Select all</span>
                       </label>
                       <p className="question-editor-label" style={{ margin: 0 }}>
-                        {submissions.length} response{submissions.length !== 1 ? 's' : ''}
+                        {filteredSubmissions.length} response{filteredSubmissions.length !== 1 ? 's' : ''}
                       </p>
                       {flaggedCount > 0 && (
                         <span className="flagged-count-badge" title="Submissions hidden due to policy violations">
@@ -230,7 +276,9 @@ export default function SubmissionsPage() {
                       </button>
                     )}
                   </div>
-                  {submissions.map((sub) => (
+                  {filteredSubmissions.length === 0 ? (
+                    <p className="submissions-empty">No submissions match this filter.</p>
+                  ) : filteredSubmissions.map((sub) => (
                     <div key={sub.id} className={`submission-card${selected.has(sub.id) ? ' submission-card-selected' : ''}`}>
                       <div className="submission-card-header">
                         <label className="submission-checkbox">

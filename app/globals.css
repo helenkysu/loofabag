@@ -2307,6 +2307,14 @@ footer p {
   gap: 12px;
 }
 
+.submissions-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
 .submissions-toolbar {
   display: flex;
   align-items: center;
