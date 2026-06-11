@@ -48,6 +48,11 @@ export default function TransferLoofaPage() {
     }
   }, [showConfirm]);
 
+  const isSelfTransfer =
+    !!recipientEmail.trim() &&
+    !!senderEmail.trim() &&
+    recipientEmail.trim().toLowerCase() === senderEmail.trim().toLowerCase();
+
   const handleTransfer = async () => {
     if (!loofa) return;
     setTransferring(true);
@@ -155,6 +160,10 @@ export default function TransferLoofaPage() {
                   />
                 </div>
 
+                {isSelfTransfer && (
+                  <p className="rates-error">Loofas cannot be transferred to the same account it belongs to.</p>
+                )}
+
                 {error && <p className="rates-error">{error}</p>}
 
                 <button
@@ -162,7 +171,7 @@ export default function TransferLoofaPage() {
                   className="btn btn-primary"
                   style={{ marginTop: 8 }}
                   onClick={() => setShowConfirm(true)}
-                  disabled={!recipientEmail || transferring}
+                  disabled={!recipientEmail || transferring || isSelfTransfer}
                 >
                   Transfer Loofa
                 </button>

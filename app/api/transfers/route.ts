@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 function generateToken() {
   const arr = new Uint8Array(16);
@@ -80,6 +81,15 @@ export async function POST(req: NextRequest) {
 
     if (!loofaId || !loofaData || !recipientEmail) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const supabaseAuth = await createClient();
+    const { data: { user } } = await supabaseAuth.auth.getUser();
+    if (user?.email && user.email.toLowerCase() === recipientEmail.trim().toLowerCase()) {
+      return NextResponse.json(
+        { error: 'Loofas cannot be transferred to the same account it belongs to.' },
+        { status: 400 },
+      );
     }
 
     const claimToken = generateToken();
