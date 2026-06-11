@@ -86,6 +86,8 @@ export default function TransferLoofaPage() {
           transferredAt: new Date().toISOString(),
         }),
       }).catch(console.error);
+      setTransferring(false);
+      setShowConfirm(false);
       setDone(true);
     } catch {
       setError('Transfer failed. Check your connection and try again.');
