@@ -9,3 +9,4 @@ yarn-error.log*
 .env*.local
 .env
 tsconfig.tsbuildinfo
+supabase/.temp
