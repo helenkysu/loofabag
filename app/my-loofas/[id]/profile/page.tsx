@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
 import { uploadFileDirect } from '@/lib/upload-direct';
+import { ALLOWED_REDIRECT_DOMAINS, isAllowedRedirectUrl, normalizeRedirectUrl } from '@/lib/redirect-url';
 
 interface FormField {
   id: string;
@@ -19,11 +20,13 @@ interface Loofa {
   name: string;
   slug: string;
   emoji: string;
+  template?: string;
   fields?: FormField[];
   profileFields?: FormField[];
   profileData?: Record<string, string>;
   profilePhotoUrl?: string | null;
   isActive?: boolean;
+  redirectUrl?: string | null;
 }
 
 function makeId() {
@@ -45,6 +48,8 @@ export default function ProfileEditorPage() {
   const [pendingFiles, setPendingFiles] = useState<Record<string, File[]>>({});
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [pendingProfilePhoto, setPendingProfilePhoto] = useState<File | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState('');
+  const [redirectUrlError, setRedirectUrlError] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -60,6 +65,7 @@ export default function ProfileEditorPage() {
         setFields(seed.map((f: FormField) => ({ ...f })));
         setProfileData(data.loofa.profileData ?? {});
         setProfilePhoto(data.loofa.profilePhotoUrl ?? null);
+        setRedirectUrl(data.loofa.redirectUrl ?? '');
       })
       .catch(() => setNotFound(true));
   }, [id]);
@@ -99,6 +105,29 @@ export default function ProfileEditorPage() {
   const handleSave = async () => {
     if (!loofa) return;
     setSaving(true);
+
+    if (loofa.template === 'redirect') {
+      const normalized = normalizeRedirectUrl(redirectUrl);
+      if (normalized && !isAllowedRedirectUrl(normalized)) {
+        setSaving(false);
+        setRedirectUrlError('That link isn\'t from a supported platform.');
+        return;
+      }
+      const res = await fetch(`/api/loofas/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ redirectUrl: normalized || null }),
+      });
+      setSaving(false);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setRedirectUrlError(data.error ?? 'Failed to save. Please try again.');
+        return;
+      }
+      setSaved(true);
+      setTimeout(() => router.push(`/my-loofas/${id}`), 800);
+      return;
+    }
 
     const updatedData = { ...profileData };
 
@@ -164,6 +193,36 @@ export default function ProfileEditorPage() {
           <h1>QR Page Editor</h1>
           <p className="step-subtitle">Edit your profile fields and fill in your info.</p>
 
+          {loofa?.template === 'redirect' ? (
+            <div className="redirect-url-section">
+              <p className="shipping-section-title">Custom URL redirect</p>
+              <p className="step-subtitle" style={{ marginBottom: 10 }}>
+                When someone scans your loofabag QR code, they&apos;ll be taken to this URL.
+                Only links to the platforms below are allowed.
+              </p>
+              <input
+                type="url"
+                className={`shipping-input redirect-url-input${redirectUrlError ? ' shipping-input-error' : ''}`}
+                placeholder="https://youtube.com/@yourchannel"
+                value={redirectUrl}
+                onChange={(e) => { setRedirectUrl(e.target.value); setRedirectUrlError(''); }}
+              />
+              {redirectUrlError && <p className="shipping-field-error">{redirectUrlError}</p>}
+              <p className="redirect-url-allowed">
+                Supported: {ALLOWED_REDIRECT_DOMAINS.join(', ')}
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ marginTop: 16 }}
+                onClick={handleSave}
+                disabled={saving || saved || !redirectUrl.trim()}
+              >
+                {saved ? 'Saved!' : saving ? 'Saving…' : 'Save URL'}
+              </button>
+            </div>
+          ) : (
+          <>
           <div className="profile-photo-editor">
             <p className="question-editor-label">Profile Photo</p>
             <div className="profile-photo-editor-row">
@@ -330,6 +389,8 @@ export default function ProfileEditorPage() {
               {saved ? 'Saved!' : saving ? 'Saving…' : 'Save'}
             </button>
           </div>
+          </>
+          )}
         </div>
       </section>
     </main>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isAllowedRedirectUrl } from '@/lib/redirect-url';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function dbToClient(loofa: any, slug: string | null, profileData: Record<string, string> | null) {
@@ -21,6 +22,7 @@ function dbToClient(loofa: any, slug: string | null, profileData: Record<string,
     transferRecipientEmail: (loofa.transfer_recipient_email ?? null) as string | null,
     transferToken: (loofa.transfer_token ?? null) as string | null,
     transferredAt: (loofa.transferred_at ?? null) as string | null,
+    redirectUrl: (loofa.redirect_url ?? null) as string | null,
   };
 }
 
@@ -62,6 +64,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json();
+
+  if (body.redirectUrl && !isAllowedRedirectUrl(body.redirectUrl)) {
+    return NextResponse.json({ error: "That link isn't from a supported platform." }, { status: 400 });
+  }
+
   const admin = createAdminClient();
 
   const updates: Record<string, unknown> = {};
@@ -75,6 +82,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if ('transferToken' in body) updates.transfer_token = body.transferToken;
   if ('transferredAt' in body) updates.transferred_at = body.transferredAt;
   if ('profilePhotoUrl' in body) updates.profile_photo_url = body.profilePhotoUrl;
+  if ('redirectUrl' in body) updates.redirect_url = body.redirectUrl ?? null;
 
   const { data: loofa, error } = Object.keys(updates).length
     ? await admin
@@ -98,6 +106,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       { loofa_id: id, data: body.profileData, updated_at: new Date().toISOString() },
       { onConflict: 'loofa_id' },
     );
+  }
+
+  // Keep qr_redirects.redirect_url in sync when the redirect URL changes
+  if ('redirectUrl' in body && loofa?.qr_token) {
+    await admin
+      .from('qr_redirects')
+      .update({ redirect_url: body.redirectUrl ?? null, updated_at: new Date().toISOString() })
+      .eq('token', loofa.qr_token);
   }
 
   const { slug, profileData } = await getSlugAndProfileData(admin, id);

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
 import DropZone from '@/app/components/DropZone';
+import LoadingSpinner from '@/app/components/LoadingSpinner';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { uploadFileDirect } from '@/lib/upload-direct';
 import PhotoGallery from '@/app/components/PhotoGallery';
@@ -27,6 +28,7 @@ interface Loofa {
   profileData?: Record<string, string>;
   profilePhotoUrl?: string | null;
   questions?: string[];
+  redirectUrl?: string | null;
 }
 
 
@@ -34,6 +36,7 @@ export default function LoofahPage() {
   const { slug: slugParam } = useParams<{ slug: string }>();
   const [activeTab, setActiveTab] = useState<'profile' | 'submissions'>('profile');
   const [loofa, setLoofa] = useState<Loofa | null>(null);
+  const [loadingLoofa, setLoadingLoofa] = useState(true);
   const [isActive, setIsActive] = useState(true);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [photoFiles, setPhotoFiles] = useState<Record<string, File[]>>({});
@@ -55,9 +58,14 @@ export default function LoofahPage() {
         if (data.loofa) {
           setLoofa(data.loofa);
           setIsActive(data.loofa.isActive ?? true);
+          if (data.loofa.redirectUrl) {
+            window.location.href = data.loofa.redirectUrl;
+            return;
+          }
         }
+        setLoadingLoofa(false);
       })
-      .catch(console.error);
+      .catch(() => setLoadingLoofa(false));
   }, [slugParam]);
 
   // Profile tab: owner's filled-in info
@@ -127,6 +135,19 @@ export default function LoofahPage() {
   // Find the owner's name from their profile data (first field labeled "name" or "nickname")
   const ownerNameField = loofa?.profileFields?.find((f) => /name/i.test(f.label));
   const ownerName = (ownerNameField ? loofa?.profileData?.[ownerNameField.id] : null) || displayName;
+
+  if (loadingLoofa) {
+    return (
+      <main>
+        <NavBar />
+        <section className="loofa-page-section">
+          <div className="loofa-page-container">
+            <LoadingSpinner fullPage label="Loading…" />
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main>

@@ -40,7 +40,11 @@ export default function TermsPage() {
             <li>You are fully responsible for what you choose to display publicly</li>
           </ul>
 
-          <h2>6. Private Submissions</h2>
+          <h2>6. Custom URL Redirects</h2>
+          <p>Loofa Bag allows you to configure your Loofa to redirect visitors directly to an external link instead of displaying a profile page. To prevent misuse, redirect URLs are limited to an allowlist of supported platforms (including major social media, video, audio, payment, scheduling, and link-in-bio services). The current list of supported platforms is shown when you set up a redirect.</p>
+          <p>Attempting to circumvent this restriction, or submitting a redirect URL outside the supported platforms, may result in removal of the redirect or suspension of your account.</p>
+
+          <h2>7. Private Submissions</h2>
           <p>Submissions sent to Loofa pages are private and only visible to the Loofa owner. By submitting content, you acknowledge that:</p>
           <ul>
             <li>Your submission will be delivered to the intended recipient</li>
@@ -49,16 +53,16 @@ export default function TermsPage() {
           </ul>
           <p>We are not responsible for how Loofa owners use or respond to submissions.</p>
 
-          <h2>7. User Responsibility</h2>
+          <h2>8. User Responsibility</h2>
           <p>You are solely responsible for content you upload to your Loofa, content you submit to others, and any personal or identifying information you choose to share.</p>
 
-          <h2>8. Content Control</h2>
+          <h2>9. Content Control</h2>
           <p>Users may update or delete their Loofa content at any time. However, cached or previously accessed content may remain visible to others who have already viewed it.</p>
 
-          <h2>9. Prohibited Content</h2>
+          <h2>10. Prohibited Content</h2>
           <p>You may not upload or submit content that is illegal or harmful, harassing, threatening, or defamatory, spam or malicious, or infringing intellectual property rights.</p>
 
-          <h2>10. NSFW &amp; Media Policy</h2>
+          <h2>11. NSFW &amp; Media Policy</h2>
           <p>You agree not to upload or submit content containing:</p>
           <ul>
             <li>Nudity or sexually explicit material</li>
@@ -69,25 +73,25 @@ export default function TermsPage() {
           </ul>
           <p>We may remove content and suspend accounts at our discretion.</p>
 
-          <h2>11. Content Moderation &amp; Automated Systems</h2>
+          <h2>12. Content Moderation &amp; Automated Systems</h2>
           <p>We may use automated systems and human review to detect and enforce safety rules. By using the Service, you agree that we may process, analyze, and review content using automated systems. We do not guarantee all violations will be detected before content is viewed.</p>
 
-          <h2>12. Enforcement Rights</h2>
+          <h2>13. Enforcement Rights</h2>
           <p>We reserve the right to remove violating content, restrict or suspend accounts, and remove or disable Loofa pages. This may occur with or without notice depending on severity.</p>
 
-          <h2>13. No Refund Policy</h2>
+          <h2>14. No Refund Policy</h2>
           <p>If your account, content, or Loofa is removed due to a violation of these Terms, no refunds will be issued. Enforcement actions do not entitle you to compensation.</p>
 
-          <h2>14. No Responsibility for User Interactions</h2>
+          <h2>15. No Responsibility for User Interactions</h2>
           <p>Loofa Bag is not responsible for interactions between users, messages or responses from Loofa owners, or relationships, disputes, or outcomes resulting from use of the Service. All interactions are at users' own discretion and risk.</p>
 
-          <h2>15. Disclaimer</h2>
+          <h2>16. Disclaimer</h2>
           <p>The Service is provided "as is" without warranties of any kind.</p>
 
-          <h2>16. Limitation of Liability</h2>
+          <h2>17. Limitation of Liability</h2>
           <p>Loofa Bag is not liable for user-generated content, data loss, user interactions, or third-party actions.</p>
 
-          <h2>17. Changes to Terms</h2>
+          <h2>18. Changes to Terms</h2>
           <p>We may update these Terms at any time. Continued use of the Service constitutes acceptance of changes.</p>
 
           <p className="legal-back">

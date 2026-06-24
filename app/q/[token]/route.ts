@@ -10,7 +10,7 @@ export async function GET(
 
   const { data: qr } = await supabase
     .from('qr_redirects')
-    .select('slug, is_active')
+    .select('slug, is_active, redirect_url')
     .eq('token', token)
     .single();
 
@@ -30,6 +30,11 @@ export async function GET(
     ip_address: ip,
   });
 
+  // Custom URL redirect takes precedence over the loofa profile page.
   // 302 so every scan is tracked (not cached by CDN)
-  return NextResponse.redirect(new URL(`/${qr.slug}`, req.url), { status: 302 });
+  const destination = qr.redirect_url ?? `/${qr.slug}`;
+  return NextResponse.redirect(
+    destination.startsWith('http') ? destination : new URL(destination, req.url).href,
+    { status: 302 },
+  );
 }

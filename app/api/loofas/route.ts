@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isAllowedRedirectUrl } from '@/lib/redirect-url';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function dbToClient(loofa: any, slug: string | null, profileData: Record<string, string> | null) {
@@ -69,7 +70,12 @@ export async function POST(request: NextRequest) {
     qrToken?: string;
     storageId?: string;
     isActive?: boolean;
+    redirectUrl?: string | null;
   };
+
+  if (body.redirectUrl && !isAllowedRedirectUrl(body.redirectUrl)) {
+    return NextResponse.json({ error: "That link isn't from a supported platform." }, { status: 400 });
+  }
 
   const admin = createAdminClient();
 
@@ -93,6 +99,7 @@ export async function POST(request: NextRequest) {
       template_type: body.template ?? 'custom',
       qr_token: body.qrToken ?? null,
       storage_id: body.storageId ?? null,
+      redirect_url: body.redirectUrl ?? null,
     })
     .select()
     .single();

@@ -5003,6 +5003,40 @@ footer p {
   text-decoration: underline;
 }
 
+/* ── Custom URL redirect template ─────────────────────────── */
+
+.redirect-url-section {
+  margin-top: 24px;
+  padding: 24px;
+  background: #f8f0ff;
+  border: 1.5px solid #d9ccf5;
+  border-radius: 16px;
+}
+
+.redirect-url-input {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 15px;
+}
+
+.redirect-url-allowed {
+  font-size: 12px;
+  color: #9b59b6;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+.redirect-template-note {
+  font-size: 13px;
+  color: #7a5c9e;
+  background: #f8f0ff;
+  border: 1px solid #e8d9fa;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 16px 0;
+  line-height: 1.5;
+}
+
 /* ── Order tracking page ───────────────────────────────────── */
 
 .orders-empty {
