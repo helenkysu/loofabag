@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -41,15 +43,25 @@ async function getAvailableVariantId(printfulProductId: number): Promise<number 
 
 export async function POST(req: NextRequest) {
   try {
-    const { stripeSessionId, productId, variantId: explicitVariantId, customerName, address, printFileUrl } =
-      await req.json() as {
-        stripeSessionId: string;
-        productId: string;
-        variantId?: number;
-        customerName: string;
-        address: { country: string; state: string; address1: string; address2: string; city: string; zip: string };
-        printFileUrl: string;
-      };
+    const supabaseAuth = await createClient();
+    const { data: { user } } = await supabaseAuth.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const {
+      stripeSessionId, productId, variantId: explicitVariantId, customerName, address, printFileUrl,
+      slug, productName, productImage, checkoutDraft,
+    } = await req.json() as {
+      stripeSessionId: string;
+      productId: string;
+      variantId?: number;
+      customerName: string;
+      address: { country: string; state: string; address1: string; address2: string; city: string; zip: string };
+      printFileUrl: string;
+      slug: string;
+      productName: string;
+      productImage?: string;
+      checkoutDraft?: object;
+    };
 
     // Verify Stripe payment before placing order
     const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
@@ -110,6 +122,30 @@ export async function POST(req: NextRequest) {
     }
 
     const order = data.result;
+
+    const admin = createAdminClient();
+    const { error: dbError } = await admin.from('loofabag_orders').upsert({
+      user_id: user.id,
+      slug,
+      product_id: productId,
+      product_name: productName,
+      product_image: productImage ?? null,
+      variant_id: variantId,
+      stripe_session_id: stripeSessionId,
+      amount_total: session.amount_total,
+      currency: session.currency,
+      shipping_label: (session.metadata?.shippingService as string | undefined) ?? null,
+      address,
+      printful_order_id: order.id,
+      printful_order_number: `#${order.id}`,
+      status: order.status,
+      checkout_draft: checkoutDraft ?? null,
+    }, { onConflict: 'stripe_session_id' });
+
+    if (dbError) {
+      console.error('[orders/printful] Failed to persist order:', dbError);
+    }
+
     return NextResponse.json({
       orderId: order.id,
       orderNumber: `#${order.id}`,

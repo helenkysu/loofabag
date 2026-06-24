@@ -246,12 +246,11 @@ export default function LoofaManagementPage() {
               </div>
             )}
 
-            <button type="button" className="mgmt-tile">
+            <Link href={`/my-loofas/${id}/orders`} className="mgmt-tile">
               <div className="mgmt-tile-icon">📦</div>
               <h3>Order Tracking</h3>
-              <p>Track your physical loofa orders</p>
-              <span className="tile-badge tile-badge-soon">Coming soon</span>
-            </button>
+              <p>View your orders and tracking info</p>
+            </Link>
           </div>
 
           <div className="danger-zone">

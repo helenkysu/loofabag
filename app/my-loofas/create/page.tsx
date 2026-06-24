@@ -9,6 +9,7 @@ import { uploadFileDirect } from '@/lib/upload-direct';
 import QRDesigner, { renderQRToCanvas } from '@/app/components/QRDesigner';
 import type { QRDesignOptions } from '@/app/components/QRDesigner';
 import BagTextSelector from '@/app/components/BagTextSelector';
+import { ALLOWED_REDIRECT_DOMAINS, isAllowedRedirectUrl, normalizeRedirectUrl } from '@/lib/redirect-url';
 
 type ProductVariant = { id: string; label: string; image: string };
 type Product = {
@@ -277,6 +278,12 @@ const templateDefs: Array<{ id: string; name: string; emoji: string; fields: Fie
     emoji: '📝',
     fields: [],
   },
+  {
+    id: 'redirect',
+    name: 'Custom URL',
+    emoji: '🔗',
+    fields: [],
+  },
 ];
 
 const submissionTemplateDefs: Array<{ id: string; name: string; emoji: string; fields: FieldDef[] }> = [
@@ -317,6 +324,12 @@ const submissionTemplateDefs: Array<{ id: string; name: string; emoji: string; f
     emoji: '📝',
     fields: [],
   },
+  {
+    id: 'redirect',
+    name: 'Custom URL',
+    emoji: '🔗',
+    fields: [],
+  },
 ];
 
 export default function CreateLoofaPage() {
@@ -346,6 +359,9 @@ export default function CreateLoofaPage() {
   const [printfulOrder, setPrintfulOrder] = useState<{ orderId: number; orderNumber: string; status: string } | null>(null);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderError, setOrderError] = useState('');
+  const [isReorder, setIsReorder] = useState(false);
+  const [reorderLoofaId, setReorderLoofaId] = useState<string | null>(null);
+  const [customRedirectUrl, setCustomRedirectUrl] = useState('');
   const [finished, setFinished] = useState(false);
   const [createError, setCreateError] = useState('');
   const [creating, setCreating] = useState(false);
@@ -396,6 +412,7 @@ export default function CreateLoofaPage() {
 
     if (resume) {
       // Post-Stripe restore path
+      if (params.get('reorder') === '1') setIsReorder(true);
       const sessionId = params.get('session_id');
       if (sessionId) setStripeSessionId(sessionId);
       const saved = sessionStorage.getItem('loofabag_checkout_draft');
@@ -408,6 +425,7 @@ export default function CreateLoofaPage() {
           if (draft.address) setAddress(draft.address);
           if (draft.qrDesign) setRestoredQrDesign(draft.qrDesign);
           if (draft.qrToken) setQrToken(draft.qrToken);
+          if (draft.reorder) setIsReorder(true);
         } catch {}
       }
       setStep(Number(resume));
@@ -521,6 +539,17 @@ export default function CreateLoofaPage() {
         }),
     ).catch(console.error);
 
+    const normalizedRedirectUrl = selectedTemplate.id === 'redirect' && customRedirectUrl.trim()
+      ? normalizeRedirectUrl(customRedirectUrl)
+      : null;
+
+    if (normalizedRedirectUrl && !isAllowedRedirectUrl(normalizedRedirectUrl)) {
+      setCreating(false);
+      didSave.current = false;
+      setCreateError('That link isn\'t from a supported platform.');
+      return;
+    }
+
     const newLoofa = {
       id: loofaId,
       name: name || 'My Loofa',
@@ -532,6 +561,7 @@ export default function CreateLoofaPage() {
       fields: submissionFields.filter((f) => f.label.trim()),
       profileData: updatedProfileData,
       isActive: true,
+      redirectUrl: normalizedRedirectUrl,
     };
     const createRes = await fetch('/api/loofas', {
       method: 'POST',
@@ -548,12 +578,12 @@ export default function CreateLoofaPage() {
       return;
     }
 
-    // Register the QR token → slug mapping
+    // Register the QR token → slug mapping (include redirect_url for custom URL loofas)
     if (qrToken) {
       fetch('/api/qr-redirect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: qrToken, loofa_id: loofaId, slug }),
+        body: JSON.stringify({ token: qrToken, loofa_id: loofaId, slug, redirect_url: normalizedRedirectUrl }),
       }).catch(console.error);
     }
 
@@ -724,6 +754,7 @@ export default function CreateLoofaPage() {
       }
 
       // 3. Place the Printful order with the signed URL
+      const checkoutDraft = JSON.parse(sessionStorage.getItem('loofabag_checkout_draft') ?? 'null');
       const res = await fetch('/api/orders/printful', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -734,6 +765,10 @@ export default function CreateLoofaPage() {
           customerName: address.customerName,
           address,
           printFileUrl: uploadData.signedUrl,
+          slug,
+          productName: PRODUCTS.find((p) => p.id === selectedProductId)?.name ?? '',
+          productImage: getBagImageUrl(selectedProductId),
+          checkoutDraft,
         }),
       });
       const data = await res.json();
@@ -780,6 +815,16 @@ export default function CreateLoofaPage() {
     placeOrder(stripeSessionId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, stripeSessionId]);
+
+  // In reorder mode, resolve the existing loofa's id once the order is placed,
+  // so we can link back to its order tracking page.
+  useEffect(() => {
+    if (!isReorder || !printfulOrder || reorderLoofaId || !slug) return;
+    fetch(`/api/loofas/by-slug?slug=${encodeURIComponent(slug)}`)
+      .then((r) => r.json())
+      .then((data) => { if (data.loofa?.id) setReorderLoofaId(data.loofa.id); })
+      .catch(() => {});
+  }, [isReorder, printfulOrder, reorderLoofaId, slug]);
 
   const fetchShippingRates = async () => {
     // Validate required fields
@@ -828,6 +873,7 @@ export default function CreateLoofaPage() {
       qrToken,
       // Save design options (logoFile is a File object — can't be serialized)
       qrDesign: design ? { fgColor: design.fgColor, bgColor: design.bgColor, gradient: design.gradient, shape: design.shape, logoFile: null } : null,
+      reorder: isReorder,
     }));
     const selectedRate = shippingRates.find((r) => r.id === selectedRateId);
     try {
@@ -871,7 +917,7 @@ export default function CreateLoofaPage() {
 
       <section className="my-loofas-section">
         <div className="my-loofas-container">
-          <h1>Create a New Loofa</h1>
+          <h1>{isReorder ? 'Order Again' : 'Create a New Loofa'}</h1>
 
           {finished ? (
             <div className="success-message">
@@ -1446,7 +1492,11 @@ export default function CreateLoofaPage() {
                           <strong style={{ textTransform: 'capitalize' }}>{printfulOrder.status}</strong>
                         </div>
                       </div>
-                      <p className="order-next-step">Next, set up your loofa profile — this is what people see when they scan your QR code.</p>
+                      <p className="order-next-step">
+                        {isReorder
+                          ? 'Your reorder has been placed — check your order history for tracking updates.'
+                          : 'Next, set up your loofa profile — this is what people see when they scan your QR code.'}
+                      </p>
                     </div>
                   )}
                   {!placingOrder && orderError && (
@@ -1486,6 +1536,8 @@ export default function CreateLoofaPage() {
                               <li key={i}>{f.label}</li>
                             ))}
                           </ul>
+                        ) : template.id === 'redirect' ? (
+                          <p className="template-blank-hint">QR code links to your URL</p>
                         ) : (
                           <p className="template-blank-hint">Pick your own fields</p>
                         )}
@@ -1493,6 +1545,35 @@ export default function CreateLoofaPage() {
                     ))}
                   </div>
 
+                  <p className="redirect-template-note">
+                    🔗 Picking <strong>Custom URL</strong>? Your QR code can redirect to: {ALLOWED_REDIRECT_DOMAINS.join(', ')}.
+                    Other links aren&apos;t supported.
+                  </p>
+
+                  {selectedTemplate.id === 'redirect' ? (
+                    <div className="redirect-url-section">
+                      <p className="shipping-section-title">Where should your QR code go?</p>
+                      <p className="step-subtitle" style={{ marginBottom: 10 }}>
+                        When someone scans your loofabag, they&apos;ll be taken directly to this URL — no profile page shown.
+                        Only links to the platforms listed above are allowed.
+                      </p>
+                      <input
+                        type="url"
+                        className={`shipping-input redirect-url-input${
+                          customRedirectUrl.trim() && !isAllowedRedirectUrl(customRedirectUrl) ? ' shipping-input-error' : ''
+                        }`}
+                        placeholder="https://youtube.com/@yourchannel"
+                        value={customRedirectUrl}
+                        onChange={(e) => setCustomRedirectUrl(e.target.value)}
+                        autoFocus
+                      />
+                      {customRedirectUrl.trim() && !isAllowedRedirectUrl(customRedirectUrl) && (
+                        <p className="shipping-field-error">
+                          That link isn&apos;t from a supported platform.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
                   <div className="question-editor">
                     <p className="question-editor-label">Profile Fields <span className="drag-hint">drag and drop to reorder</span></p>
                     {customFields.map((field, idx) => (
@@ -1616,6 +1697,7 @@ export default function CreateLoofaPage() {
                       </button>
                     </div>
                   </div>
+                  )}
                 </div>
               )}
 
@@ -1736,11 +1818,20 @@ export default function CreateLoofaPage() {
                 {step === 4 ? (
                   <>
                     <div />
-                    <div className="step-indicator">Step {step} of 6</div>
+                    {!isReorder && <div className="step-indicator">Step {step} of 6</div>}
                     {printfulOrder && (
-                      <button className="btn btn-primary" onClick={handleNext}>
-                        Set up my profile →
-                      </button>
+                      isReorder ? (
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => router.push(reorderLoofaId ? `/my-loofas/${reorderLoofaId}/orders` : '/my-loofas')}
+                        >
+                          View Order Tracking →
+                        </button>
+                      ) : (
+                        <button className="btn btn-primary" onClick={handleNext}>
+                          Set up my profile →
+                        </button>
+                      )
                     )}
                     {(placingOrder || orderError) && <div />}
                   </>
@@ -1761,7 +1852,10 @@ export default function CreateLoofaPage() {
                       <button
                         className="btn btn-primary"
                         onClick={handleNext}
-                        disabled={step === 1 && !step1Valid}
+                        disabled={
+                          (step === 1 && !step1Valid) ||
+                          (step === 5 && selectedTemplate.id === 'redirect' && !isAllowedRedirectUrl(customRedirectUrl))
+                        }
                       >
                         Next
                       </button>
