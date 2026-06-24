@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import NavBar from '@/app/components/NavBar';
+import LoadingSpinner from '@/app/components/LoadingSpinner';
 
 interface Loofa {
   id: string;
@@ -17,6 +18,7 @@ interface Loofa {
 
 export default function MyLoofas() {
   const [loofas, setLoofas] = useState<Loofa[]>([]);
+  const [loadingLoofas, setLoadingLoofas] = useState(true);
   const [preferredName, setPreferredName] = useState('');
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -47,7 +49,8 @@ export default function MyLoofas() {
     fetch('/api/loofas')
       .then((r) => r.json())
       .then((data) => { if (data.loofas) setLoofas(data.loofas); })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setLoadingLoofas(false));
   }, []);
 
   const startEditing = () => {
@@ -113,7 +116,9 @@ export default function MyLoofas() {
             <span className="plus-icon">+</span>
           </Link>
 
-          {loofas.length === 0 ? (
+          {loadingLoofas ? (
+            <LoadingSpinner label="Loading your loofas…" />
+          ) : loofas.length === 0 ? (
             <div className="empty-state">
               <p>You currently have no loofas created</p>
             </div>
