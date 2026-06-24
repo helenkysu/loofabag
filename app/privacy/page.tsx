@@ -55,6 +55,7 @@ export default function PrivacyPage() {
 
           <h2>7. Data Retention</h2>
           <p>We retain data as long as necessary to provide the Service, while your account is active, or as required by legal or safety obligations. You may request deletion of your data.</p>
+          <p>Private submissions sent to a Loofa (including any attached files) are automatically and permanently deleted 60 days after they are submitted. Aggregate usage metrics (such as QR scan counts) are not affected by this and are retained separately.</p>
 
           <h2>8. Security</h2>
           <p>We use reasonable safeguards, but no system is fully secure.</p>

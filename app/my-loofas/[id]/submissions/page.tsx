@@ -228,6 +228,9 @@ export default function SubmissionsPage() {
           {/* Submissions tab */}
           {tab === 'submissions' && (
             <>
+              <p className="submissions-retention-note">
+                🗑️ Submissions are automatically deleted after 60 days to save space. Save anything important before then — this doesn&apos;t affect your QR scan analytics.
+              </p>
               {loading ? (
                 <p className="submissions-empty">Loading…</p>
               ) : submissions.length === 0 && flaggedCount === 0 ? (
