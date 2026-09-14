@@ -3549,19 +3549,26 @@ footer p {
   margin: 0;
 }
 
-.download-design-btn {
+.download-btns-row {
+  display: flex;
+  gap: 8px;
   margin-top: 4px;
-  padding: 10px 18px;
+  width: 100%;
+}
+
+.download-design-btn {
+  padding: 10px 12px;
   border: 2px solid #FF6B6B;
   border-radius: 10px;
   background: transparent;
   color: #FF6B6B;
   -webkit-text-fill-color: #FF6B6B;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.18s, color 0.18s;
-  width: 100%;
+  flex: 1;
+  white-space: nowrap;
 }
 
 .download-design-btn:hover:not(:disabled) {

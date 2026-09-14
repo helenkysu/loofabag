@@ -686,6 +686,114 @@ export default function CreateLoofaPage() {
     }, 'image/png');
   };
 
+  // Printful main bag: 21" × 37" at 150 DPI (3150 × 5550 px)
+  // Design placed centred in the front panel zone (~15%–55% of height)
+  const downloadMainBagTemplate = async () => {
+    const design = qrDesignRef.current;
+    const W = Math.round(21 * 150);   // 3150
+    const H = Math.round(37 * 150);   // 5550
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    const cx = W / 2;
+    // Front panel zone: top 15% is flap, next 40% is front panel
+    const frontTop = Math.round(H * 0.15);
+    const frontH   = Math.round(H * 0.40);
+    let y = frontTop + Math.round(frontH * 0.05);
+    const designW = Math.round(W * 0.80);
+
+    if (bagText) {
+      const lines = bagText.split('\n');
+      const fs = Math.round(designW * 0.11);
+      ctx.font = `900 ${fs}px "Arial Black", Arial, sans-serif`;
+      ctx.fillStyle = '#000000';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for (const line of lines) {
+        ctx.fillText(line, cx, y);
+        y += Math.round(fs * 1.2);
+      }
+      y += Math.round(designW * 0.05);
+    }
+
+    if (design) {
+      const qrPx = Math.round(designW * 0.55);
+      const qrCanvas = document.createElement('canvas');
+      qrCanvas.width = qrPx;
+      qrCanvas.height = qrPx;
+      const qrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
+      await renderQRToCanvas(qrCanvas, qrUrl, design);
+      ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
+      y += qrPx + Math.round(designW * 0.04);
+    }
+
+    const urlFs = Math.round(designW * 0.036);
+    ctx.font = `700 ${urlFs}px Arial, sans-serif`;
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`loofabag.com/${slug || 'your-name'}`, cx, y);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.download = `loofabag-${slug || 'design'}-main-21x37.png`;
+      a.href = url;
+      a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  };
+
+  // Printful pocket: 10" × 17.5" at 150 DPI (1500 × 2625 px)
+  // Simple centred QR + URL — no bag text (pocket is small)
+  const downloadPocketTemplate = async () => {
+    const design = qrDesignRef.current;
+    const W = Math.round(10   * 150);  // 1500
+    const H = Math.round(17.5 * 150);  // 2625
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    const cx = W / 2;
+    const qrPx = Math.round(W * 0.60);
+    let y = Math.round((H - qrPx) / 2) - Math.round(W * 0.04);
+
+    if (design) {
+      const qrCanvas = document.createElement('canvas');
+      qrCanvas.width = qrPx;
+      qrCanvas.height = qrPx;
+      const qrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
+      await renderQRToCanvas(qrCanvas, qrUrl, design);
+      ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
+      y += qrPx + Math.round(W * 0.04);
+    }
+
+    const urlFs = Math.round(W * 0.04);
+    ctx.font = `700 ${urlFs}px Arial, sans-serif`;
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`loofabag.com/${slug || 'your-name'}`, cx, y);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.download = `loofabag-${slug || 'design'}-pocket-10x17.png`;
+      a.href = url;
+      a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  };
+
   const generatePrintFileBlob = async (): Promise<Blob | null> => {
     const design = qrDesignRef.current ?? restoredQrDesign;
     if (!design) return null;
@@ -1002,14 +1110,32 @@ export default function CreateLoofaPage() {
                       </div>
                     </div>
                     <p className="bag-preview-name">{selectedProduct.name} · Front</p>
-                    <button
-                      type="button"
-                      className="download-design-btn"
-                      onClick={downloadDesignPNG}
-                      disabled={!qrRenderedDataUrl}
-                    >
-                      ↓ Download print file (9.5" PNG)
-                    </button>
+                    <div className="download-btns-row">
+                      <button
+                        type="button"
+                        className="download-design-btn"
+                        onClick={downloadDesignPNG}
+                        disabled={!qrRenderedDataUrl}
+                      >
+                        ↓ Square (9.5")
+                      </button>
+                      <button
+                        type="button"
+                        className="download-design-btn"
+                        onClick={downloadMainBagTemplate}
+                        disabled={!qrRenderedDataUrl}
+                      >
+                        ↓ Main bag (21×37")
+                      </button>
+                      <button
+                        type="button"
+                        className="download-design-btn"
+                        onClick={downloadPocketTemplate}
+                        disabled={!qrRenderedDataUrl}
+                      >
+                        ↓ Pocket (10×17.5")
+                      </button>
+                    </div>
                   </div>
                 );
 
