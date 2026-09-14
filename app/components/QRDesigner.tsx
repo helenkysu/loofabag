@@ -219,6 +219,13 @@ export default function QRDesigner({ url, onDataUrl, hidePreview, onDesignChange
     update({ logoFile: file });
   };
 
+  const removeLogo = () => {
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoPreview('');
+    update({ logoFile: null });
+    if (logoInputRef.current) logoInputRef.current.value = '';
+  };
+
   return (
     <div className="qr-designer">
       <div className="qr-design-controls">
@@ -249,6 +256,9 @@ export default function QRDesigner({ url, onDataUrl, hidePreview, onDesignChange
                   ? <img src={logoPreview} alt="logo" className={`qr-logo-thumb${design.shape === 'heart' ? ' qr-logo-thumb-circle' : ''}`} />
                   : '+ Upload center image (optional)'}
               </button>
+              {logoPreview && (
+                <button type="button" className="qr-logo-remove-btn" onClick={removeLogo} aria-label="Remove logo">✕</button>
+              )}
               <input ref={logoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoFile} />
             </div>
           )}

@@ -3165,6 +3165,30 @@ footer p {
 /* Logo upload */
 .qr-logo-upload {
   margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qr-logo-remove-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: #eee;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.qr-logo-remove-btn:hover {
+  background: #FF6B6B;
+  color: #fff;
 }
 
 .qr-logo-btn {
