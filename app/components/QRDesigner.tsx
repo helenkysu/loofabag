@@ -146,11 +146,12 @@ export async function renderQRToCanvas(
     const logo = new Image();
     logo.src = logoUrl;
     await new Promise<void>((res) => { logo.onload = () => res(); logo.onerror = () => res(); });
-    const ls = Math.round(SIZE * 0.22);
+    const ls = Math.round(SIZE * 0.30);
     const lx = Math.round((SIZE - ls) / 2);
     const ly = Math.round((SIZE - ls) / 2);
+    const pad = Math.round(SIZE * 0.025);
     ctx.fillStyle = design.bgColor;
-    ctx.fillRect(lx - 6, ly - 6, ls + 12, ls + 12);
+    ctx.fillRect(lx - pad, ly - pad, ls + pad * 2, ls + pad * 2);
     ctx.drawImage(logo, lx, ly, ls, ls);
     URL.revokeObjectURL(logoUrl);
   }
