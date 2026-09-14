@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Lobster&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -3527,13 +3529,26 @@ footer p {
 }
 
 .bag-preview-url-overlay {
-  font-size: clamp(4px, 2.5cqw, 13px);
-  font-weight: 700;
-  color: #1a1a1a;
-  -webkit-text-fill-color: #1a1a1a;
-  letter-spacing: 0.04em;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1px, 0.8cqw, 4px);
   white-space: nowrap;
+}
+
+.bag-preview-url-logo {
+  height: clamp(4px, 2.8cqw, 15px);
+  width: auto;
+  display: block;
+  mix-blend-mode: multiply;
+}
+
+.bag-preview-url-slug {
+  font-family: 'Lobster', cursive;
+  font-size: clamp(4px, 2.8cqw, 15px);
+  color: #00B5AD;
+  -webkit-text-fill-color: #00B5AD;
+  line-height: 1;
 }
 
 .bag-preview-name {

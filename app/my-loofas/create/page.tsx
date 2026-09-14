@@ -1129,7 +1129,10 @@ export default function CreateLoofaPage() {
                         {qrRenderedDataUrl && (
                           <>
                             <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
-                            <div className="bag-preview-url-overlay">loofabag.com/{slug || 'your-name'}</div>
+                            <div className="bag-preview-url-overlay">
+                              <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
+                              <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
+                            </div>
                           </>
                         )}
                       </div>
@@ -1179,7 +1182,10 @@ export default function CreateLoofaPage() {
                             {qrRenderedDataUrl && (
                               <>
                                 <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
-                                <div className="bag-preview-url-overlay">loofabag.com/{slug || 'your-name'}</div>
+                                <div className="bag-preview-url-overlay">
+                              <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
+                              <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
+                            </div>
                               </>
                             )}
                           </>
@@ -1580,7 +1586,10 @@ export default function CreateLoofaPage() {
                                 {qrRenderedDataUrl && (
                                   <>
                                     <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
-                                    <div className="bag-preview-url-overlay">loofabag.com/{slug || 'your-name'}</div>
+                                    <div className="bag-preview-url-overlay">
+                              <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
+                              <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
+                            </div>
                                   </>
                                 )}
                               </div>
@@ -1597,7 +1606,10 @@ export default function CreateLoofaPage() {
                                     {qrRenderedDataUrl && (
                                       <>
                                         <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
-                                        <div className="bag-preview-url-overlay">loofabag.com/{slug || 'your-name'}</div>
+                                        <div className="bag-preview-url-overlay">
+                              <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
+                              <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
+                            </div>
                                       </>
                                     )}
                                   </>
