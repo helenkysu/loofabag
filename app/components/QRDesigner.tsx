@@ -146,7 +146,7 @@ export async function renderQRToCanvas(
     const logo = new Image();
     logo.src = logoUrl;
     await new Promise<void>((res) => { logo.onload = () => res(); logo.onerror = () => res(); });
-    const ls = Math.round(SIZE * 0.42);
+    const ls = Math.round(SIZE * 0.30);
     const lx = Math.round((SIZE - ls) / 2);
     // Heart's visual center is slightly below canvas center
     const logoCy = design.shape === 'heart' ? Math.round(SIZE * 0.47) : Math.round(SIZE / 2);
