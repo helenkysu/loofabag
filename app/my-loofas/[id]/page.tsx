@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import NavBar from '@/app/components/NavBar';
@@ -81,6 +81,18 @@ export default function LoofaManagementPage() {
       body: JSON.stringify({ isActive: !isActive }),
     }).catch(console.error);
   };
+
+  const orderNewLoofa = useCallback(() => {
+    if (!loofa) return;
+    try {
+      sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify({
+        slug: loofa.slug,
+        step: 3,
+        reorder: true,
+      }));
+    } catch {}
+    router.push('/my-loofas/create?resume=3&reorder=1');
+  }, [loofa, router]);
 
   const deleteLoofa = async () => {
     await fetch(`/api/loofas/${id}`, { method: 'DELETE' }).catch(console.error);
@@ -231,6 +243,18 @@ export default function LoofaManagementPage() {
               <p>Edit the fields visitors fill in</p>
             </Link>
 
+            <button type="button" className="mgmt-tile mgmt-tile-btn" onClick={orderNewLoofa}>
+              <div className="mgmt-tile-icon">🛍️</div>
+              <h3>Order New Loofa</h3>
+              <p>Order another bag with this QR</p>
+            </button>
+
+            <Link href={`/my-loofas/${id}/orders`} className="mgmt-tile">
+              <div className="mgmt-tile-icon">📦</div>
+              <h3>Order Tracking</h3>
+              <p>View your orders and tracking info</p>
+            </Link>
+
             {!isTransferPending ? (
               <Link href={`/my-loofas/transfer/${id}`} className="mgmt-tile">
                 <div className="mgmt-tile-icon">📨</div>
@@ -245,12 +269,6 @@ export default function LoofaManagementPage() {
                 <span className="tile-badge">Pending</span>
               </div>
             )}
-
-            <Link href={`/my-loofas/${id}/orders`} className="mgmt-tile">
-              <div className="mgmt-tile-icon">📦</div>
-              <h3>Order Tracking</h3>
-              <p>View your orders and tracking info</p>
-            </Link>
           </div>
 
           <div className="danger-zone">

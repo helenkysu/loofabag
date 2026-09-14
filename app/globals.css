@@ -2682,6 +2682,14 @@ footer p {
   border-color: #ddd;
 }
 
+.mgmt-tile-btn {
+  background: white;
+  border: 2px solid #f0f0f0;
+  font-family: inherit;
+  font-size: inherit;
+  width: 100%;
+}
+
 .mgmt-tile-blue {
   border-color: #c5dcff;
   background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
