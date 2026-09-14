@@ -638,12 +638,12 @@ export default function CreateLoofaPage() {
     ctx.fillRect(0, 0, PX, PX);
 
     const cx = PX / 2;
-    let y = Math.round(PX * 0.18);
+    let y = Math.round(PX * 0.10);
 
     // 1. Bag text
     if (bagText) {
       const lines = bagText.split('\n');
-      const fs = Math.round(PX * 0.065);
+      const fs = Math.round(PX * 0.075);
       ctx.font = `900 ${fs}px "Arial Black", Arial, sans-serif`;
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
@@ -652,23 +652,23 @@ export default function CreateLoofaPage() {
         ctx.fillText(line, cx, y);
         y += Math.round(fs * 1.2);
       }
-      y += Math.round(PX * 0.04);
+      y += Math.round(PX * 0.03);
     }
 
     // 2. QR code at full print resolution
     if (qrDesignRef.current) {
-      const qrPx = Math.round(PX * 0.42);
+      const qrPx = Math.round(PX * 0.52);
       const qrCanvas = document.createElement('canvas');
       qrCanvas.width = qrPx;
       qrCanvas.height = qrPx;
       const qrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
       await renderQRToCanvas(qrCanvas, qrUrl, qrDesignRef.current);
       ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
-      y += qrPx + Math.round(PX * 0.03);
+      y += qrPx + Math.round(PX * 0.025);
     }
 
     // 3. URL (shows friendly slug URL for human readability)
-    const urlFs = Math.round(PX * 0.03);
+    const urlFs = Math.round(PX * 0.032);
     ctx.font = `700 ${urlFs}px Arial, sans-serif`;
     ctx.fillStyle = '#000000';
     ctx.textAlign = 'center';
@@ -699,11 +699,11 @@ export default function CreateLoofaPage() {
     ctx.fillRect(0, 0, PX, PX);
 
     const cx = PX / 2;
-    let y = Math.round(PX * 0.18);
+    let y = Math.round(PX * 0.10);
 
     if (bagText) {
       const lines = bagText.split('\n');
-      const fs = Math.round(PX * 0.065);
+      const fs = Math.round(PX * 0.075);
       ctx.font = `900 ${fs}px "Arial Black", Arial, sans-serif`;
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
@@ -712,19 +712,19 @@ export default function CreateLoofaPage() {
         ctx.fillText(line, cx, y);
         y += Math.round(fs * 1.2);
       }
-      y += Math.round(PX * 0.04);
+      y += Math.round(PX * 0.03);
     }
 
-    const qrPx = Math.round(PX * 0.42);
+    const qrPx = Math.round(PX * 0.52);
     const qrCanvas = document.createElement('canvas');
     qrCanvas.width = qrPx;
     qrCanvas.height = qrPx;
     const printQrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
     await renderQRToCanvas(qrCanvas, printQrUrl, design);
     ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
-    y += qrPx + Math.round(PX * 0.03);
+    y += qrPx + Math.round(PX * 0.025);
 
-    const urlFs = Math.round(PX * 0.03);
+    const urlFs = Math.round(PX * 0.032);
     ctx.font = `700 ${urlFs}px Arial, sans-serif`;
     ctx.fillStyle = '#000000';
     ctx.textAlign = 'center';
