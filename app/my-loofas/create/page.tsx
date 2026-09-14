@@ -10,6 +10,7 @@ import QRDesigner, { renderQRToCanvas } from '@/app/components/QRDesigner';
 import type { QRDesignOptions } from '@/app/components/QRDesigner';
 import BagTextSelector from '@/app/components/BagTextSelector';
 import { ALLOWED_REDIRECT_DOMAINS, isAllowedRedirectUrl, normalizeRedirectUrl } from '@/lib/redirect-url';
+import { isReservedSlug } from '@/lib/reserved-slugs';
 
 type ProductVariant = { id: string; label: string; image: string };
 type Product = {
@@ -901,7 +902,8 @@ export default function CreateLoofaPage() {
     }
   };
 
-  const step1Valid = !!name && !slugTaken;
+  const slugReserved = !!slug && isReservedSlug(slug);
+  const step1Valid = !!name && !slugTaken && !slugReserved;
 
   const handleNext = () => {
     if (step < 6) setStep(step + 1);
@@ -952,15 +954,18 @@ export default function CreateLoofaPage() {
                       placeholder="your-name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className={`name-input url-suffix-input${slugTaken ? ' input-error' : ''}`}
+                      className={`name-input url-suffix-input${(slugTaken || slugReserved) ? ' input-error' : ''}`}
                       autoFocus
                     />
                   </div>
-                  {name && !slugTaken && (
+                  {name && !slugTaken && !slugReserved && (
                     <p className="slug-available">✓ loofabag.com/{slug} is available</p>
                   )}
                   {slugTaken && (
                     <p className="slug-taken">✗ loofabag.com/{slug} is already taken — try another name</p>
+                  )}
+                  {slugReserved && (
+                    <p className="slug-taken">✗ "{slug}" is a reserved name — try something more unique</p>
                   )}
                 </div>
               )}
