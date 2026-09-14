@@ -10,7 +10,7 @@ import QRDesigner, { renderQRToCanvas } from '@/app/components/QRDesigner';
 import type { QRDesignOptions } from '@/app/components/QRDesigner';
 import BagTextSelector from '@/app/components/BagTextSelector';
 import { ALLOWED_REDIRECT_DOMAINS, isAllowedRedirectUrl, normalizeRedirectUrl } from '@/lib/redirect-url';
-import { isReservedSlug } from '@/lib/reserved-slugs';
+import { isReservedSlug, isProfaneSlug } from '@/lib/reserved-slugs';
 
 type ProductVariant = { id: string; label: string; image: string };
 type Product = {
@@ -902,7 +902,7 @@ export default function CreateLoofaPage() {
     }
   };
 
-  const slugReserved = !!slug && isReservedSlug(slug);
+  const slugReserved = !!slug && (isReservedSlug(slug) || isProfaneSlug(slug));
   const step1Valid = !!name && !slugTaken && !slugReserved;
 
   const handleNext = () => {

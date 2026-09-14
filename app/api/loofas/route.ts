@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isAllowedRedirectUrl } from '@/lib/redirect-url';
-import { isReservedSlug } from '@/lib/reserved-slugs';
+import { isReservedSlug, isProfaneSlug } from '@/lib/reserved-slugs';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function dbToClient(loofa: any, slug: string | null, profileData: Record<string, string> | null) {
@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "That link isn't from a supported platform." }, { status: 400 });
   }
 
-  if (isReservedSlug(body.slug)) {
-    return NextResponse.json({ error: 'That slug is reserved and cannot be used.' }, { status: 409 });
+  if (isReservedSlug(body.slug) || isProfaneSlug(body.slug)) {
+    return NextResponse.json({ error: 'That slug is not allowed.' }, { status: 409 });
   }
 
   const admin = createAdminClient();
