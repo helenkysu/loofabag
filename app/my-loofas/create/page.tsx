@@ -202,7 +202,13 @@ function getSiteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
 }
 
-function getBagImageUrl(productId: string): string {
+function getBagImageUrl(productId: string, variantLabel?: string | null): string {
+  if (productId === 'premium-large-tote' && variantLabel) {
+    const color = variantLabel.toLowerCase();
+    if (color.includes('red')) return '/bagimages/premiumtote-red.webp';
+    if (color.includes('yellow')) return '/bagimages/premiumtote-yellow.webp';
+    return '/bagimages/premiumtote-black.webp';
+  }
   return PRODUCTS.find((p) => p.id === productId)?.image ?? '';
 }
 
@@ -768,7 +774,7 @@ export default function CreateLoofaPage() {
           printFileUrl: uploadData.signedUrl,
           slug,
           productName: PRODUCTS.find((p) => p.id === selectedProductId)?.name ?? '',
-          productImage: getBagImageUrl(selectedProductId),
+          productImage: getBagImageUrl(selectedProductId, availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label),
           checkoutDraft,
         }),
       });
@@ -974,7 +980,8 @@ export default function CreateLoofaPage() {
               {/* Step 2: Design */}
               {step === 2 && (() => {
                 const selectedProduct = PRODUCTS.find((p) => p.id === selectedProductId)!;
-                const bagImageUrl = getBagImageUrl(selectedProductId);
+                const selectedVariantLabel = availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label ?? null;
+                const bagImageUrl = getBagImageUrl(selectedProductId, selectedVariantLabel);
 
                 const frontPreview = bagImageUrl && (
                   <div className="bag-preview-sticky">
@@ -1211,7 +1218,8 @@ export default function CreateLoofaPage() {
               {/* Step 3: Checkout */}
               {step === 3 && (() => {
                 const checkoutProduct = PRODUCTS.find((p) => p.id === selectedProductId)!;
-                const checkoutBagUrl = getBagImageUrl(selectedProductId);
+                const checkoutVariantLabel = availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label ?? null;
+                const checkoutBagUrl = getBagImageUrl(selectedProductId, checkoutVariantLabel);
                 return (
                 <div className="step-content step-content-wide">
                   <div className="checkout-two-col">
