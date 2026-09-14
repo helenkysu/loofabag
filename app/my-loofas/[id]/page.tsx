@@ -33,6 +33,7 @@ export default function LoofaManagementPage() {
   const [notFound, setNotFound] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [submissionCount, setSubmissionCount] = useState<number | null>(null);
+  const [cancellingTransfer, setCancellingTransfer] = useState(false);
 
   useEffect(() => {
     fetch(`/api/loofas/${id}`)
@@ -94,6 +95,18 @@ export default function LoofaManagementPage() {
     } catch {}
     router.push('/my-loofas/create?resume=2&reorder=1');
   }, [loofa, router]);
+
+  const cancelTransfer = async () => {
+    if (!loofa || cancellingTransfer) return;
+    setCancellingTransfer(true);
+    await fetch('/api/transfers', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ loofaId: id }),
+    }).catch(console.error);
+    setLoofa({ ...loofa, transferStatus: undefined, transferRecipientEmail: undefined });
+    setCancellingTransfer(false);
+  };
 
   const deleteLoofa = async () => {
     await fetch(`/api/loofas/${id}`, { method: 'DELETE' }).catch(console.error);
@@ -209,9 +222,19 @@ export default function LoofaManagementPage() {
           {isTransferPending && (
             <div className="pending-transfer-banner">
               <span className="pending-transfer-icon">⏳</span>
-              <div>
-                <strong>Pending transfer</strong> to {loofa.transferRecipientEmail}
-                <span className="pending-transfer-sub"> — waiting for them to claim it.</span>
+              <div className="pending-transfer-body">
+                <div>
+                  <strong>Pending transfer</strong> to {loofa.transferRecipientEmail}
+                  <span className="pending-transfer-sub"> — waiting for them to claim it.</span>
+                </div>
+                <button
+                  type="button"
+                  className="cancel-transfer-btn"
+                  onClick={cancelTransfer}
+                  disabled={cancellingTransfer}
+                >
+                  {cancellingTransfer ? 'Cancelling…' : 'Cancel Transfer'}
+                </button>
               </div>
             </div>
           )}

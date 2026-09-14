@@ -119,3 +119,47 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { loofaId } = await req.json() as { loofaId: string };
+    if (!loofaId) return NextResponse.json({ error: 'Missing loofaId' }, { status: 400 });
+
+    const supabaseAuth = await createClient();
+    const { data: { user } } = await supabaseAuth.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const supabase = createAdminClient();
+
+    // Verify the loofa belongs to this user
+    const { data: loofa } = await supabase
+      .from('loofabag_loofas')
+      .select('id, user_id')
+      .eq('id', loofaId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (!loofa) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+    // Cancel any pending transfer rows
+    await supabase
+      .from('loofa_transfers')
+      .update({ status: 'cancelled' })
+      .eq('loofa_id', loofaId)
+      .eq('status', 'pending');
+
+    // Clear transfer fields on the loofa
+    await supabase
+      .from('loofabag_loofas')
+      .update({
+        transfer_status: null,
+        transfer_recipient_email: null,
+        transfer_token: null,
+      })
+      .eq('id', loofaId);
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
