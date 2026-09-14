@@ -86,12 +86,13 @@ export default function LoofaManagementPage() {
     if (!loofa) return;
     try {
       sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify({
+        name: loofa.name,
         slug: loofa.slug,
-        step: 3,
+        step: 2,
         reorder: true,
       }));
     } catch {}
-    router.push('/my-loofas/create?resume=3&reorder=1');
+    router.push('/my-loofas/create?resume=2&reorder=1');
   }, [loofa, router]);
 
   const deleteLoofa = async () => {

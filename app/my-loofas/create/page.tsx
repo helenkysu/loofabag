@@ -910,7 +910,8 @@ export default function CreateLoofaPage() {
   };
 
   const handlePrev = () => {
-    if (step > 1) setStep(step - 1);
+    const minStep = isReorder ? 2 : 1;
+    if (step > minStep) setStep(step - 1);
   };
 
   return (
@@ -1842,7 +1843,7 @@ export default function CreateLoofaPage() {
                   </>
                 ) : (
                   <>
-                    <button className="btn btn-secondary" onClick={handlePrev} disabled={step === 1}>
+                    <button className="btn btn-secondary" onClick={handlePrev} disabled={step === (isReorder ? 2 : 1)}>
                       Back
                     </button>
                     <div className="step-indicator">Step {step} of 6</div>
