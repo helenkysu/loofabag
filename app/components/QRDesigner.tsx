@@ -149,7 +149,7 @@ export async function renderQRToCanvas(
     const ls = Math.round(SIZE * 0.42);
     const lx = Math.round((SIZE - ls) / 2);
     // Heart's visual center is slightly below canvas center
-    const logoCy = design.shape === 'heart' ? Math.round(SIZE * 0.543) : Math.round(SIZE / 2);
+    const logoCy = design.shape === 'heart' ? Math.round(SIZE * 0.47) : Math.round(SIZE / 2);
     const ly = Math.round(logoCy - ls / 2);
     const pad = Math.round(SIZE * 0.025);
 
