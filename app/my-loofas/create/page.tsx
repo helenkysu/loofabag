@@ -748,81 +748,121 @@ export default function CreateLoofaPage() {
     }, 'image/png');
   };
 
-  // Printful main bag: 21" × 37" at 150 DPI (3150 × 5550 px)
-  // Front panel: ~15–55% of canvas height. Back panel: ~55–100%.
+  // Printful main bag: 21" x 37" at 150 DPI (3150 x 5550 px)
+  // Layout per Printful spec: front face (top half) + back face ROTATED 180deg (bottom half).
   const downloadMainBagTemplate = async () => {
     const design = qrDesignRef.current;
     const [dotcomImg, tealLogoImg] = await Promise.all([loadImg('/dotcom.jpg'), loadImg('/loofabagteal.jpg')]);
     await ensureLobster();
 
-    const W = Math.round(21 * 150);   // 3150
-    const H = Math.round(37 * 150);   // 5550
+    const W = 3150;   // 21" x 150 DPI
+    const H = 5550;   // 37" x 150 DPI
     const canvas = document.createElement('canvas');
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d')!;
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, W, H);
 
-    const cx      = W / 2;
-    const designW = Math.round(W * 0.80);
+    const cx = W / 2;
 
-    // ── Helper: draw the front design block starting at y, returns new y ──
-    const drawFrontBlock = async (startY: number): Promise<number> => {
+    // Printful large tote zone boundaries
+    const FRONT_TOP = Math.round(H * 0.10);  // 555px  -- below front handle area
+    const FRONT_BOT = Math.round(H * 0.50);  // 2775px -- fold / seam line
+    const BACK_TOP  = Math.round(H * 0.52);  // 2886px -- start of back printable zone
+    const BACK_BOT  = Math.round(H * 0.95);  // 5273px -- above bottom handle area
+    const BACK_H    = BACK_BOT - BACK_TOP;
+
+    // Content proportions sized to fit within the ~40% zone height
+    const contentW   = Math.round(W * 0.55);          // 1733px content width
+    const textFS     = Math.round(contentW * 0.10);   // font size for bag text
+    const qrSize     = Math.round(contentW * 0.44);   // QR code pixel size
+    const urlDesignW = Math.round(contentW * 0.60);   // drives URL row + teal logo sizes
+
+    // Draws the design block at (drawCx, startY) in CURRENT transform space.
+    // Works correctly in identity transform (front) and after rotate(PI) (back).
+    const drawPrintBlock = async (drawCx: number, startY: number) => {
       let y = startY;
+
       if (bagText) {
         const lines = bagText.split('\n');
-        const fs = Math.round(designW * 0.11);
-        ctx.font = `900 ${fs}px "Arial Black", Arial, sans-serif`;
+        ctx.font = `900 ${textFS}px "Arial Black", Arial, sans-serif`;
         ctx.fillStyle = '#000000';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         for (const line of lines) {
-          ctx.fillText(line, cx, y);
-          y += Math.round(fs * 1.2);
+          ctx.fillText(line, drawCx, y);
+          y += Math.round(textFS * 1.2);
         }
-        y += Math.round(designW * 0.05);
+        y += Math.round(contentW * 0.04);
       }
+
       if (design) {
-        const qrPx = Math.round(designW * 0.55);
         const qrCanvas = document.createElement('canvas');
-        qrCanvas.width = qrPx; qrCanvas.height = qrPx;
-        const qrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
+        qrCanvas.width = qrSize; qrCanvas.height = qrSize;
+        const qrUrl = qrToken
+          ? `${getSiteUrl()}/q/${qrToken}`
+          : `${getSiteUrl()}/${slug || 'your-name'}`;
         await renderQRToCanvas(qrCanvas, qrUrl, design);
-        ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
-        y += qrPx + Math.round(designW * 0.04);
+        ctx.drawImage(qrCanvas, Math.round(drawCx - qrSize / 2), y, qrSize, qrSize);
+        y += qrSize + Math.round(contentW * 0.03);
       }
-      y = await drawUrlAndLogo(ctx, cx, y, designW, dotcomImg, tealLogoImg);
-      return y;
+
+      // URL row: dotcom.jpg + /slug in Lobster teal
+      const urlH   = Math.round(urlDesignW * 0.038);
+      const dcW    = Math.round(urlH * dotcomImg.width / dotcomImg.height);
+      const urlGap = Math.round(urlH * 0.25);
+      const slugTxt = `/${slug || 'your-name'}`;
+      ctx.font = `400 ${urlH}px Lobster, cursive`;
+      const slugPx = ctx.measureText(slugTxt).width;
+      const rowW   = dcW + urlGap + slugPx;
+      const rowX   = Math.round(drawCx - rowW / 2);
+      ctx.drawImage(dotcomImg, rowX, y, dcW, urlH);
+      ctx.fillStyle    = '#00B5AD';
+      ctx.textAlign    = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(slugTxt, rowX + dcW + urlGap, y);
+      y += urlH + Math.round(urlDesignW * 0.05);
+
+      // Teal Loofabag logo at bottom of block
+      const logoW = Math.round(urlDesignW * 0.90);
+      const logoH = Math.round(logoW * tealLogoImg.height / tealLogoImg.width);
+      ctx.drawImage(tealLogoImg, Math.round(drawCx - logoW / 2), y, logoW, logoH);
     };
 
-    // ── Front panel ────────────────────────────────────────────────────────
-    await drawFrontBlock(Math.round(H * 0.15) + Math.round(H * 0.02));
+    // Front panel
+    const frontMargin = Math.round((FRONT_BOT - FRONT_TOP) * 0.05);
+    await drawPrintBlock(cx, FRONT_TOP + frontMargin);
 
-    // ── Back panel ─────────────────────────────────────────────────────────
-    const backTop = Math.round(H * 0.55);
-    const backH   = H - backTop;
-
+    // Back panel -- content rotated 180deg per Printful spec.
+    // After translate(W, BACK_BOT) + rotate(PI), transform point (tx, ty) maps to
+    // canvas (W - tx, BACK_BOT - ty). So drawCx = cx centers correctly, and the
+    // design flows upward in canvas space (upside-down in the file = right-side-up
+    // on the assembled bag when Printful folds the back panel into place).
     if (backDesign === 'duplicate') {
-      // Mirror the front design centred in the back panel zone
-      await drawFrontBlock(backTop + Math.round(backH * 0.03));
+      ctx.save();
+      ctx.translate(W, BACK_BOT);
+      ctx.rotate(Math.PI);
+      await drawPrintBlock(cx, Math.round(BACK_H * 0.05));
+      ctx.restore();
 
     } else if (backDesign === 'universe') {
-      const grad = ctx.createRadialGradient(cx, backTop + backH / 2, 0, cx, backTop + backH / 2, backH * 0.75);
+      const gradCy = BACK_TOP + BACK_H / 2;
+      const grad = ctx.createRadialGradient(cx, gradCy, 0, cx, gradCy, BACK_H * 0.75);
       grad.addColorStop(0, '#1a0533');
       grad.addColorStop(0.6, '#0d0221');
       grad.addColorStop(1, '#000000');
       ctx.fillStyle = grad;
-      ctx.fillRect(0, backTop, W, backH);
+      ctx.fillRect(0, BACK_TOP, W, BACK_H);
 
     } else if (backDesign === 'grass') {
-      const grad = ctx.createLinearGradient(0, backTop, W * 0.8, H);
+      const grad = ctx.createLinearGradient(0, BACK_TOP, W * 0.8, BACK_BOT);
       grad.addColorStop(0, '#2d5a27');
       grad.addColorStop(0.4, '#4a8c3f');
       grad.addColorStop(1, '#6abf69');
       ctx.fillStyle = grad;
-      ctx.fillRect(0, backTop, W, backH);
+      ctx.fillRect(0, BACK_TOP, W, BACK_H);
     }
-    // blank → already white from fillRect
+    // 'blank' stays white from the initial fillRect
 
     canvas.toBlob((blob) => {
       if (!blob) return;
