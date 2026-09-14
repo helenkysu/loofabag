@@ -28,12 +28,21 @@ const SIZE = 280;
 
 // Returns true if canvas-space point (cx, cy) is inside the heart shape.
 // Heart equation: (x²+y²−1)³ − x²y³ ≤ 0  (y up)
-// Scale=0.44 + cy=0.543 ensures both top finder patterns land inside the bumps.
 function insideHeart(cx: number, cy: number): boolean {
   const nx =  (cx - SIZE * 0.5)  / (SIZE * 0.44);
-  const ny = -(cy - SIZE * 0.543) / (SIZE * 0.44);
+  const ny = -(cy - SIZE * 0.47) / (SIZE * 0.44);
   const a = nx * nx + ny * ny - 1;
   return a * a * a - nx * nx * ny * ny * ny <= 0;
+}
+
+// Returns true if (row, col) belongs to one of the three finder patterns
+// (7×7 pattern + 1-wide separator = 8 modules). These must always be rendered
+// regardless of heart clipping, otherwise scanners cannot orient the QR code.
+function isFinderPattern(row: number, col: number, n: number): boolean {
+  if (row <= 7 && col <= 7) return true;          // top-left
+  if (row <= 7 && col >= n - 8) return true;       // top-right
+  if (row >= n - 8 && col <= 7) return true;       // bottom-left
+  return false;
 }
 
 export async function renderQRToCanvas(
@@ -118,10 +127,12 @@ export async function renderQRToCanvas(
       const cx = mx + modSize / 2;           // centre x
       const cy = my + modSize / 2;           // centre y
 
-      if (design.shape === 'heart' && !insideHeart(cx, cy)) continue;
+      // For heart shape: skip modules outside the heart UNLESS they are part of a
+      // finder pattern — those must always render so scanners can orient the code.
+      if (design.shape === 'heart' && !insideHeart(cx, cy) && !isFinderPattern(row, col, numModules)) continue;
 
       if (!isDark(row, col)) {
-        // Light module: fill with bgColor only for heart (outside is transparent)
+        // Light module: fill with bgColor inside heart or for finder patterns
         if (design.shape === 'heart') {
           ctx.fillStyle = design.bgColor;
           ctx.fillRect(mx, my, modSize, modSize);

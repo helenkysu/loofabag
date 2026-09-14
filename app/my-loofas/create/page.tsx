@@ -780,7 +780,7 @@ export default function CreateLoofaPage() {
 
     // Draws the design block at (drawCx, startY) in CURRENT transform space.
     // Works correctly in identity transform (front) and after rotate(PI) (back).
-    const drawPrintBlock = async (drawCx: number, startY: number) => {
+    const drawPrintBlock = async (drawCx: number, startY: number, includeLogo = true) => {
       let y = startY;
 
       if (bagText) {
@@ -823,10 +823,12 @@ export default function CreateLoofaPage() {
       ctx.fillText(slugTxt, rowX + dcW + urlGap, y);
       y += urlH + Math.round(urlDesignW * 0.05);
 
-      // Teal Loofabag logo at bottom of block
-      const logoW = Math.round(urlDesignW * 0.90);
-      const logoH = Math.round(logoW * tealLogoImg.height / tealLogoImg.width);
-      ctx.drawImage(tealLogoImg, Math.round(drawCx - logoW / 2), y, logoW, logoH);
+      // Teal Loofabag logo — front only (bottom of bag branding, not on back)
+      if (includeLogo) {
+        const logoW = Math.round(urlDesignW * 0.90);
+        const logoH = Math.round(logoW * tealLogoImg.height / tealLogoImg.width);
+        ctx.drawImage(tealLogoImg, Math.round(drawCx - logoW / 2), y, logoW, logoH);
+      }
     };
 
     // Front panel
@@ -842,7 +844,7 @@ export default function CreateLoofaPage() {
       ctx.save();
       ctx.translate(W, BACK_BOT);
       ctx.rotate(Math.PI);
-      await drawPrintBlock(cx, Math.round(BACK_H * 0.05));
+      await drawPrintBlock(cx, Math.round(BACK_H * 0.05), false);
       ctx.restore();
 
     } else if (backDesign === 'universe') {
