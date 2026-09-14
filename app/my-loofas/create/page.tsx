@@ -643,7 +643,7 @@ export default function CreateLoofaPage() {
     // 1. Bag text
     if (bagText) {
       const lines = bagText.split('\n');
-      const fs = Math.round(PX * 0.09);
+      const fs = Math.round(PX * 0.11);
       ctx.font = `900 ${fs}px "Arial Black", Arial, sans-serif`;
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
@@ -657,7 +657,7 @@ export default function CreateLoofaPage() {
 
     // 2. QR code at full print resolution
     if (qrDesignRef.current) {
-      const qrPx = Math.round(PX * 0.60);
+      const qrPx = Math.round(PX * 0.55);
       const qrCanvas = document.createElement('canvas');
       qrCanvas.width = qrPx;
       qrCanvas.height = qrPx;
@@ -703,7 +703,7 @@ export default function CreateLoofaPage() {
 
     if (bagText) {
       const lines = bagText.split('\n');
-      const fs = Math.round(PX * 0.09);
+      const fs = Math.round(PX * 0.11);
       ctx.font = `900 ${fs}px "Arial Black", Arial, sans-serif`;
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
@@ -715,7 +715,7 @@ export default function CreateLoofaPage() {
       y += Math.round(PX * 0.05);
     }
 
-    const qrPx = Math.round(PX * 0.60);
+    const qrPx = Math.round(PX * 0.55);
     const qrCanvas = document.createElement('canvas');
     qrCanvas.width = qrPx;
     qrCanvas.height = qrPx;
