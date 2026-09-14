@@ -652,11 +652,12 @@ export default function CreateLoofaPage() {
   const drawUrlAndLogo = async (
     ctx: CanvasRenderingContext2D,
     cx: number,
-    y: number,
+    startY: number,
     designW: number,
     dotcomImg: HTMLImageElement,
     tealLogoImg: HTMLImageElement,
   ): Promise<number> => {
+    let y = startY;
     const urlH   = Math.round(designW * 0.038);
     const logoW  = Math.round(designW * 0.90);
     const logoH  = Math.round(logoW * tealLogoImg.height / tealLogoImg.width);
@@ -748,6 +749,7 @@ export default function CreateLoofaPage() {
   };
 
   // Printful main bag: 21" × 37" at 150 DPI (3150 × 5550 px)
+  // Front panel: ~15–55% of canvas height. Back panel: ~55–100%.
   const downloadMainBagTemplate = async () => {
     const design = qrDesignRef.current;
     const [dotcomImg, tealLogoImg] = await Promise.all([loadImg('/dotcom.jpg'), loadImg('/loofabagteal.jpg')]);
@@ -763,34 +765,64 @@ export default function CreateLoofaPage() {
 
     const cx      = W / 2;
     const designW = Math.round(W * 0.80);
-    // Front panel: top 15% is flap, design occupies next ~40%
-    let y = Math.round(H * 0.15) + Math.round(H * 0.02);
 
-    if (bagText) {
-      const lines = bagText.split('\n');
-      const fs = Math.round(designW * 0.11);
-      ctx.font = `900 ${fs}px "Arial Black", Arial, sans-serif`;
-      ctx.fillStyle = '#000000';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      for (const line of lines) {
-        ctx.fillText(line, cx, y);
-        y += Math.round(fs * 1.2);
+    // ── Helper: draw the front design block starting at y, returns new y ──
+    const drawFrontBlock = async (startY: number): Promise<number> => {
+      let y = startY;
+      if (bagText) {
+        const lines = bagText.split('\n');
+        const fs = Math.round(designW * 0.11);
+        ctx.font = `900 ${fs}px "Arial Black", Arial, sans-serif`;
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        for (const line of lines) {
+          ctx.fillText(line, cx, y);
+          y += Math.round(fs * 1.2);
+        }
+        y += Math.round(designW * 0.05);
       }
-      y += Math.round(designW * 0.05);
-    }
+      if (design) {
+        const qrPx = Math.round(designW * 0.55);
+        const qrCanvas = document.createElement('canvas');
+        qrCanvas.width = qrPx; qrCanvas.height = qrPx;
+        const qrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
+        await renderQRToCanvas(qrCanvas, qrUrl, design);
+        ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
+        y += qrPx + Math.round(designW * 0.04);
+      }
+      y = await drawUrlAndLogo(ctx, cx, y, designW, dotcomImg, tealLogoImg);
+      return y;
+    };
 
-    if (design) {
-      const qrPx = Math.round(designW * 0.55);
-      const qrCanvas = document.createElement('canvas');
-      qrCanvas.width = qrPx; qrCanvas.height = qrPx;
-      const qrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
-      await renderQRToCanvas(qrCanvas, qrUrl, design);
-      ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
-      y += qrPx + Math.round(designW * 0.04);
-    }
+    // ── Front panel ────────────────────────────────────────────────────────
+    await drawFrontBlock(Math.round(H * 0.15) + Math.round(H * 0.02));
 
-    await drawUrlAndLogo(ctx, cx, y, designW, dotcomImg, tealLogoImg);
+    // ── Back panel ─────────────────────────────────────────────────────────
+    const backTop = Math.round(H * 0.55);
+    const backH   = H - backTop;
+
+    if (backDesign === 'duplicate') {
+      // Mirror the front design centred in the back panel zone
+      await drawFrontBlock(backTop + Math.round(backH * 0.03));
+
+    } else if (backDesign === 'universe') {
+      const grad = ctx.createRadialGradient(cx, backTop + backH / 2, 0, cx, backTop + backH / 2, backH * 0.75);
+      grad.addColorStop(0, '#1a0533');
+      grad.addColorStop(0.6, '#0d0221');
+      grad.addColorStop(1, '#000000');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, backTop, W, backH);
+
+    } else if (backDesign === 'grass') {
+      const grad = ctx.createLinearGradient(0, backTop, W * 0.8, H);
+      grad.addColorStop(0, '#2d5a27');
+      grad.addColorStop(0.4, '#4a8c3f');
+      grad.addColorStop(1, '#6abf69');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, backTop, W, backH);
+    }
+    // blank → already white from fillRect
 
     canvas.toBlob((blob) => {
       if (!blob) return;
