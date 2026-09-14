@@ -140,19 +140,37 @@ export async function renderQRToCanvas(
     }
   }
 
-  // ── Center logo (square-logo only) ─────────────────────────────────────────
-  if (design.shape === 'square-logo' && design.logoFile) {
+  // ── Center logo (square-logo and heart) ───────────────────────────────────
+  if ((design.shape === 'square-logo' || design.shape === 'heart') && design.logoFile) {
     const logoUrl = URL.createObjectURL(design.logoFile);
     const logo = new Image();
     logo.src = logoUrl;
     await new Promise<void>((res) => { logo.onload = () => res(); logo.onerror = () => res(); });
     const ls = Math.round(SIZE * 0.30);
     const lx = Math.round((SIZE - ls) / 2);
-    const ly = Math.round((SIZE - ls) / 2);
+    // Heart's visual center is slightly below canvas center
+    const logoCy = design.shape === 'heart' ? Math.round(SIZE * 0.543) : Math.round(SIZE / 2);
+    const ly = Math.round(logoCy - ls / 2);
     const pad = Math.round(SIZE * 0.025);
-    ctx.fillStyle = design.bgColor;
-    ctx.fillRect(lx - pad, ly - pad, ls + pad * 2, ls + pad * 2);
-    ctx.drawImage(logo, lx, ly, ls, ls);
+
+    if (design.shape === 'heart') {
+      // Circular white background + circular clip for heart
+      const r = ls / 2 + pad;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(SIZE / 2, logoCy, r, 0, Math.PI * 2);
+      ctx.fillStyle = design.bgColor;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(SIZE / 2, logoCy, ls / 2, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(logo, lx, ly, ls, ls);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = design.bgColor;
+      ctx.fillRect(lx - pad, ly - pad, ls + pad * 2, ls + pad * 2);
+      ctx.drawImage(logo, lx, ly, ls, ls);
+    }
     URL.revokeObjectURL(logoUrl);
   }
 }
@@ -224,12 +242,12 @@ export default function QRDesigner({ url, onDataUrl, hidePreview, onDesignChange
               </button>
             ))}
           </div>
-          {design.shape === 'square-logo' && (
+          {(design.shape === 'square-logo' || design.shape === 'heart') && (
             <div className="qr-logo-upload">
               <button type="button" className="qr-logo-btn" onClick={() => logoInputRef.current?.click()}>
                 {logoPreview
-                  ? <img src={logoPreview} alt="logo" className="qr-logo-thumb" />
-                  : '+ Upload center image'}
+                  ? <img src={logoPreview} alt="logo" className={`qr-logo-thumb${design.shape === 'heart' ? ' qr-logo-thumb-circle' : ''}`} />
+                  : '+ Upload center image (optional)'}
               </button>
               <input ref={logoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoFile} />
             </div>

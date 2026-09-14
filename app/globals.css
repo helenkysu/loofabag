@@ -3190,6 +3190,10 @@ footer p {
   border-radius: 4px;
 }
 
+.qr-logo-thumb-circle {
+  border-radius: 50%;
+}
+
 /* Color pickers */
 .qr-color-row {
   display: flex;
