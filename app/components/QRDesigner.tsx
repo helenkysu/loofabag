@@ -28,9 +28,11 @@ const SIZE = 280;
 
 // Returns true if canvas-space point (cx, cy) is inside the heart shape.
 // Heart equation: (x²+y²−1)³ − x²y³ ≤ 0  (y up)
+// Vertical center 0.543 keeps the heart bottom below the QR code so the
+// bottom-left finder area is covered; the logo is placed separately at 0.47.
 function insideHeart(cx: number, cy: number): boolean {
   const nx =  (cx - SIZE * 0.5)  / (SIZE * 0.44);
-  const ny = -(cy - SIZE * 0.47) / (SIZE * 0.44);
+  const ny = -(cy - SIZE * 0.543) / (SIZE * 0.44);
   const a = nx * nx + ny * ny - 1;
   return a * a * a - nx * nx * ny * ny * ny <= 0;
 }
