@@ -463,7 +463,7 @@ export default function CreateLoofaPage() {
       if (savedToken) {
         setQrToken(savedToken);
       } else {
-        const newToken = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+        const newToken = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
         sessionStorage.setItem('loofabag_qr_token', newToken);
         setQrToken(newToken);
       }
