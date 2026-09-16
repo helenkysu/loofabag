@@ -28,8 +28,6 @@ const SIZE = 280;
 
 // Returns true if canvas-space point (cx, cy) is inside the heart shape.
 // Heart equation: (x²+y²−1)³ − x²y³ ≤ 0  (y up)
-// Vertical center 0.543 keeps the heart bottom below the QR code so the
-// bottom-left finder area is covered; the logo is placed separately at 0.47.
 function insideHeart(cx: number, cy: number): boolean {
   const nx =  (cx - SIZE * 0.5)  / (SIZE * 0.44);
   const ny = -(cy - SIZE * 0.543) / (SIZE * 0.44);
@@ -37,15 +35,6 @@ function insideHeart(cx: number, cy: number): boolean {
   return a * a * a - nx * nx * ny * ny * ny <= 0;
 }
 
-// Returns true if (row, col) belongs to one of the three finder patterns
-// (7×7 pattern + 1-wide separator = 8 modules). These must always be rendered
-// regardless of heart clipping, otherwise scanners cannot orient the QR code.
-function isFinderPattern(row: number, col: number, n: number): boolean {
-  if (row <= 7 && col <= 7) return true;          // top-left
-  if (row <= 7 && col >= n - 8) return true;       // top-right
-  if (row >= n - 8 && col <= 7) return true;       // bottom-left
-  return false;
-}
 
 export async function renderQRToCanvas(
   canvas: HTMLCanvasElement,
@@ -131,34 +120,27 @@ export async function renderQRToCanvas(
 
       const heartMode = design.shape === 'heart';
       const inHeart   = !heartMode || insideHeart(cx, cy);
-      // Bottom-left finder (BL) is outside the heart but must render for scanning.
-      // TL and TR finders land inside the heart bumps naturally.
-      const inBLFinder = heartMode && row >= numModules - 8 && col <= 7;
-      const inFinder   = isFinderPattern(row, col, numModules);
-
-      // Skip outside-heart modules that are not part of any finder pattern
-      if (heartMode && !inHeart && !inFinder) continue;
 
       if (!isDark(row, col)) {
-        // Light module: fill with bgColor inside heart or for finder patterns
-        if (heartMode) {
+        // Light module: only fill bgColor inside the heart.
+        // Outside the heart, leave transparent — the heart is defined by where
+        // the white background appears, not by clipping dark modules.
+        if (!heartMode || inHeart) {
           ctx.fillStyle = design.bgColor;
           ctx.fillRect(mx, my, modSize, modSize);
         }
         continue;
       }
 
+      // Dark module: ALWAYS draw — inside or outside the heart.
+      // This keeps all QR data intact so scanning never fails.
       let r = fr, g = fg, b = fb;
       if (gradPixels) {
         const pi = (Math.round(cy) * SIZE + Math.round(cx)) * 4;
         r = gradPixels[pi]; g = gradPixels[pi + 1]; b = gradPixels[pi + 2];
       }
 
-      // BL finder modules outside the heart: 75% opacity so the corner reads as a
-      // soft shadow rather than a hard square, while staying detectable (4:1 contrast).
-      ctx.fillStyle = (inBLFinder && !inHeart)
-        ? `rgba(${r},${g},${b},0.75)`
-        : `rgb(${r},${g},${b})`;
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
       ctx.fillRect(mx, my, modSize - 0.5, modSize - 0.5);
     }
   }
@@ -169,8 +151,7 @@ export async function renderQRToCanvas(
     const logo = new Image();
     logo.src = logoUrl;
     await new Promise<void>((res) => { logo.onload = () => res(); logo.onerror = () => res(); });
-    // Heart already clips ~20% of data modules; smaller logo keeps total ECC load <30%
-    const ls = Math.round(SIZE * (design.shape === 'heart' ? 0.22 : 0.30));
+    const ls = Math.round(SIZE * 0.30);
     const lx = Math.round((SIZE - ls) / 2);
     // Heart's visual center is slightly below canvas center
     const logoCy = design.shape === 'heart' ? Math.round(SIZE * 0.47) : Math.round(SIZE / 2);

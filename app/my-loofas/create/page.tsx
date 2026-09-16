@@ -1377,7 +1377,7 @@ export default function CreateLoofaPage() {
                           <div className="design-left">
                             <p className="step-subtitle" style={{ marginBottom: 12 }}>Customize your QR code and add bag text.</p>
                             <QRDesigner
-                              url={qrToken ? `${getSiteUrl()}/q/${qrToken}` : getSiteUrl()}
+                              url={qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`}
                               onDataUrl={setQrRenderedDataUrl}
                               onDesignChange={(d) => { qrDesignRef.current = d; }}
                             />
