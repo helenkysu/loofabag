@@ -129,13 +129,19 @@ export async function renderQRToCanvas(
       const cx = mx + modSize / 2;           // centre x
       const cy = my + modSize / 2;           // centre y
 
-      // For heart shape: skip modules outside the heart UNLESS they are part of a
-      // finder pattern — those must always render so scanners can orient the code.
-      if (design.shape === 'heart' && !insideHeart(cx, cy) && !isFinderPattern(row, col, numModules)) continue;
+      const heartMode = design.shape === 'heart';
+      const inHeart   = !heartMode || insideHeart(cx, cy);
+      // Bottom-left finder (BL) is outside the heart but must render for scanning.
+      // TL and TR finders land inside the heart bumps naturally.
+      const inBLFinder = heartMode && row >= numModules - 8 && col <= 7;
+      const inFinder   = isFinderPattern(row, col, numModules);
+
+      // Skip outside-heart modules that are not part of any finder pattern
+      if (heartMode && !inHeart && !inFinder) continue;
 
       if (!isDark(row, col)) {
         // Light module: fill with bgColor inside heart or for finder patterns
-        if (design.shape === 'heart') {
+        if (heartMode) {
           ctx.fillStyle = design.bgColor;
           ctx.fillRect(mx, my, modSize, modSize);
         }
@@ -148,7 +154,11 @@ export async function renderQRToCanvas(
         r = gradPixels[pi]; g = gradPixels[pi + 1]; b = gradPixels[pi + 2];
       }
 
-      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      // BL finder modules outside the heart: 75% opacity so the corner reads as a
+      // soft shadow rather than a hard square, while staying detectable (4:1 contrast).
+      ctx.fillStyle = (inBLFinder && !inHeart)
+        ? `rgba(${r},${g},${b},0.75)`
+        : `rgb(${r},${g},${b})`;
       ctx.fillRect(mx, my, modSize - 0.5, modSize - 0.5);
     }
   }
@@ -159,7 +169,8 @@ export async function renderQRToCanvas(
     const logo = new Image();
     logo.src = logoUrl;
     await new Promise<void>((res) => { logo.onload = () => res(); logo.onerror = () => res(); });
-    const ls = Math.round(SIZE * 0.30);
+    // Heart already clips ~20% of data modules; smaller logo keeps total ECC load <30%
+    const ls = Math.round(SIZE * (design.shape === 'heart' ? 0.22 : 0.30));
     const lx = Math.round((SIZE - ls) / 2);
     // Heart's visual center is slightly below canvas center
     const logoCy = design.shape === 'heart' ? Math.round(SIZE * 0.47) : Math.round(SIZE / 2);
