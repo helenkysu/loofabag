@@ -4652,6 +4652,126 @@ footer p {
   background: #b8956a;
 }
 
+/* ── Design progress tracker ── */
+.design-progress {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 32px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  scrollbar-width: none;
+}
+.design-progress::-webkit-scrollbar { display: none; }
+
+.design-progress-step-wrap {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.design-progress-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: default;
+  padding: 6px 4px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.design-progress-step.done { cursor: pointer; }
+.design-progress-step.done:hover { background: #f5f0eb; }
+
+.design-progress-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: #e8e0d8;
+  color: #888;
+  transition: background 0.2s, color 0.2s;
+}
+.design-progress-step.active .design-progress-num {
+  background: #c8a97e;
+  color: #fff;
+}
+.design-progress-step.done .design-progress-num {
+  background: #7cb9a8;
+  color: #fff;
+}
+
+.design-progress-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #bbb;
+  transition: color 0.2s;
+}
+.design-progress-step.active .design-progress-label { color: #1a1a1a; font-weight: 600; }
+.design-progress-step.done .design-progress-label { color: #7cb9a8; }
+
+.design-progress-line {
+  width: 28px;
+  height: 2px;
+  background: #e8e0d8;
+  flex-shrink: 0;
+  margin: 0 2px;
+  border-radius: 1px;
+  transition: background 0.3s;
+}
+.design-progress-line.done { background: #7cb9a8; }
+
+/* ── Design panel wrapper ── */
+.design-panel {
+  padding-top: 4px;
+}
+
+/* ── Review step ── */
+.review-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.review-sparkle {
+  font-size: 40px;
+  margin-bottom: 6px;
+}
+.review-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px;
+}
+.review-subtitle {
+  font-size: 15px;
+  color: #888;
+  margin: 0;
+}
+.review-bags {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.review-bag {
+  flex: 1;
+  min-width: 220px;
+  max-width: 360px;
+}
+.review-bag .bag-preview-overlay-wrap {
+  width: 100%;
+}
+.review-bag .bag-preview-img {
+  width: 100%;
+  height: auto;
+}
+
 /* ── Back placeholder overlays ── */
 .back-placeholder {
   position: absolute;

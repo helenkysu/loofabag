@@ -400,6 +400,7 @@ export default function CreateLoofaPage() {
   const [qrToken, setQrToken] = useState('');
   const [backDesign, setBackDesign] = useState<'blank' | 'duplicate' | 'universe' | 'grass'>('blank');
   const [checkoutPreviewSide, setCheckoutPreviewSide] = useState<'front' | 'back'>('front');
+  const [designStep, setDesignStep] = useState(1); // 1=Pick Bag, 2=Front, 3=Back, 4=Review
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Notification settings
@@ -415,8 +416,6 @@ export default function CreateLoofaPage() {
   const loofaIdRef = useRef(Date.now().toString());
   const qrDesignRef = useRef<QRDesignOptions | null>(null);
   const orderPlacedRef = useRef(false);
-  const designStep2Ref = useRef<HTMLDivElement>(null);
-  const designStep3Ref = useRef<HTMLDivElement>(null);
 
   const slug = name
     .toLowerCase()
@@ -1119,10 +1118,20 @@ export default function CreateLoofaPage() {
   const step1Valid = !!name && !slugTaken && !slugReserved;
 
   const handleNext = () => {
+    if (step === 2) {
+      if (designStep < 4) { setDesignStep(designStep + 1); return; }
+      setStep(3); return;
+    }
     if (step < 6) setStep(step + 1);
   };
 
   const handlePrev = () => {
+    if (step === 2) {
+      if (designStep > 1) { setDesignStep(designStep - 1); return; }
+      const minStep = isReorder ? 2 : 1;
+      if (step > minStep) setStep(step - 1); return;
+    }
+    if (step === 3) { setStep(2); setDesignStep(4); return; }
     const minStep = isReorder ? 2 : 1;
     if (step > minStep) setStep(step - 1);
   };
@@ -1184,103 +1193,70 @@ export default function CreateLoofaPage() {
                 </div>
               )}
 
-              {/* Step 2: Design */}
+              {/* Step 2: Design — 4 sub-steps with progress tracker */}
               {step === 2 && (() => {
                 const selectedProduct = PRODUCTS.find((p) => p.id === selectedProductId)!;
                 const selectedVariantLabel = availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label ?? null;
                 const bagImageUrl = getBagImageUrl(selectedProductId, selectedVariantLabel);
 
-                const frontPreview = bagImageUrl && (
-                  <div className="bag-preview-sticky">
-                    <div className="bag-preview-overlay-wrap">
-                      <img src={bagImageUrl} alt={selectedProduct.name} className="bag-preview-img" />
-                      <div className="bag-preview-overlay">
-                        {bagText && (
-                          <div className="bag-preview-text-overlay">
-                            {bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+                const DESIGN_STEPS = [
+                  { num: 1, label: 'Pick Your Bag' },
+                  { num: 2, label: 'Front Design' },
+                  { num: 3, label: 'Back Design' },
+                  { num: 4, label: 'Review' },
+                ];
+
+                const BagFrontOverlay = (
+                  <div className="bag-preview-overlay-wrap">
+                    <img src={bagImageUrl!} alt={selectedProduct.name} className="bag-preview-img" />
+                    <div className="bag-preview-overlay">
+                      {bagText && <div className="bag-preview-text-overlay">{bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}</div>}
+                      {qrRenderedDataUrl && (
+                        <>
+                          <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
+                          <div className="bag-preview-url-overlay">
+                            <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
+                            <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
                           </div>
-                        )}
-                        {qrRenderedDataUrl && (
-                          <>
-                            <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
-                            <div className="bag-preview-url-overlay">
-                              <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
-                              <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <p className="bag-preview-name">{selectedProduct.name} · Front</p>
-                    <div className="download-btns-row">
-                      <button
-                        type="button"
-                        className="download-design-btn"
-                        onClick={downloadDesignPNG}
-                        disabled={!qrRenderedDataUrl}
-                      >
-                        ↓ Square (9.5")
-                      </button>
-                      <button
-                        type="button"
-                        className="download-design-btn"
-                        onClick={downloadMainBagTemplate}
-                        disabled={!qrRenderedDataUrl}
-                      >
-                        ↓ Main bag (21×37")
-                      </button>
-                      <button
-                        type="button"
-                        className="download-design-btn"
-                        onClick={downloadPocketTemplate}
-                        disabled={!qrRenderedDataUrl}
-                      >
-                        ↓ Pocket (10×17.5")
-                      </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
 
-                const backPreview = bagImageUrl && (
-                  <div className="bag-preview-sticky">
-                    <div className="bag-preview-overlay-wrap">
-                      <img src={bagImageUrl} alt={selectedProduct.name} className="bag-preview-img" />
-                      <div className="bag-preview-overlay">
-                        {backDesign === 'duplicate' && (
-                          <>
-                            {bagText && (
-                              <div className="bag-preview-text-overlay">
-                                {bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+                const BagBackOverlay = (
+                  <div className="bag-preview-overlay-wrap">
+                    <img src={bagImageUrl!} alt={selectedProduct.name} className="bag-preview-img" />
+                    <div className="bag-preview-overlay">
+                      {backDesign === 'duplicate' && (
+                        <>
+                          {bagText && <div className="bag-preview-text-overlay">{bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}</div>}
+                          {qrRenderedDataUrl && (
+                            <>
+                              <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
+                              <div className="bag-preview-url-overlay">
+                                <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
+                                <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
                               </div>
-                            )}
-                            {qrRenderedDataUrl && (
-                              <>
-                                <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
-                                <div className="bag-preview-url-overlay">
-                              <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
-                              <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
-                            </div>
-                              </>
-                            )}
-                          </>
-                        )}
-                        {backDesign === 'universe' && (
-                          <div className="back-placeholder back-placeholder-universe">
-                            <span className="back-placeholder-emoji">🌌</span>
-                            <span className="back-placeholder-text">Universe do your thing</span>
-                            <span className="back-placeholder-sub">Design coming soon</span>
-                          </div>
-                        )}
-                        {backDesign === 'grass' && (
-                          <div className="back-placeholder back-placeholder-grass">
-                            <span className="back-placeholder-emoji">🌿</span>
-                            <span className="back-placeholder-text">I&apos;m touching grass</span>
-                            <span className="back-placeholder-sub">Design coming soon</span>
-                          </div>
-                        )}
-                      </div>
+                            </>
+                          )}
+                        </>
+                      )}
+                      {backDesign === 'universe' && (
+                        <div className="back-placeholder back-placeholder-universe">
+                          <span className="back-placeholder-emoji">🌌</span>
+                          <span className="back-placeholder-text">Universe do your thing</span>
+                          <span className="back-placeholder-sub">Design coming soon</span>
+                        </div>
+                      )}
+                      {backDesign === 'grass' && (
+                        <div className="back-placeholder back-placeholder-grass">
+                          <span className="back-placeholder-emoji">🌿</span>
+                          <span className="back-placeholder-text">I&apos;m touching grass</span>
+                          <span className="back-placeholder-sub">Design coming soon</span>
+                        </div>
+                      )}
                     </div>
-                    <p className="bag-preview-name">{selectedProduct.name} · Back</p>
                   </div>
                 );
 
@@ -1288,55 +1264,65 @@ export default function CreateLoofaPage() {
                   <div className="step-content step-content-wide">
                     <h2>Design Your Loofa</h2>
 
-                    {/* ── Sub-step 1: Pick your bag ── */}
-                    <div className="design-substep">
-                      <div className="design-substep-header">
-                        <span className="design-substep-num">1</span>
-                        <h3 className="design-substep-title">Pick Your Bag</h3>
-                      </div>
-                      <div className="design-substep-body">
+                    {/* Progress tracker */}
+                    <div className="design-progress">
+                      {DESIGN_STEPS.map((s, i) => (
+                        <div key={s.num} className="design-progress-step-wrap">
+                          <button
+                            type="button"
+                            className={`design-progress-step${designStep === s.num ? ' active' : ''}${designStep > s.num ? ' done' : ''}`}
+                            onClick={() => { if (s.num <= designStep) setDesignStep(s.num); }}
+                          >
+                            <span className="design-progress-num">
+                              {designStep > s.num ? '✓' : s.num}
+                            </span>
+                            <span className="design-progress-label">{s.label}</span>
+                          </button>
+                          {i < DESIGN_STEPS.length - 1 && (
+                            <div className={`design-progress-line${designStep > s.num ? ' done' : ''}`} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Design step 1: Pick Your Bag */}
+                    {designStep === 1 && (
+                      <div className="design-panel">
                         <div className="product-selector">
                           {PRODUCTS.map((product) => {
-                              const avail = availability[product.id];
-                              const oos = avail ? !avail.inStock : false;
-                              return (
-                                <button
-                                  key={product.id}
-                                  type="button"
-                                  disabled={oos}
-                                  className={`product-card${selectedProductId === product.id ? ' selected' : ''}${oos ? ' product-card-oos' : ''}`}
-                                  onClick={() => {
-                                    setSelectedProductId(product.id);
-                                    const def = availability[product.id]?.defaultVariantId ?? null;
-                                    setSelectedVariantId(def);
-                                  }}
-                                >
-                                  <div className="product-card-img-wrap">
-                                    {product.image && (
-                                      <img src={product.image} alt={product.name} className="product-card-img" />
-                                    )}
-                                    {oos && <div className="product-card-oos-badge">Out of stock</div>}
+                            const avail = availability[product.id];
+                            const oos = avail ? !avail.inStock : false;
+                            return (
+                              <button
+                                key={product.id}
+                                type="button"
+                                disabled={oos}
+                                className={`product-card${selectedProductId === product.id ? ' selected' : ''}${oos ? ' product-card-oos' : ''}`}
+                                onClick={() => {
+                                  setSelectedProductId(product.id);
+                                  const def = availability[product.id]?.defaultVariantId ?? null;
+                                  setSelectedVariantId(def);
+                                }}
+                              >
+                                <div className="product-card-img-wrap">
+                                  {product.image && <img src={product.image} alt={product.name} className="product-card-img" />}
+                                  {oos && <div className="product-card-oos-badge">Out of stock</div>}
+                                </div>
+                                <div className="product-card-info">
+                                  <div className="product-card-title-row">
+                                    <span className="product-card-name">{product.name}</span>
+                                    {product.dimensions && <span className="product-card-dims">{product.dimensions}</span>}
                                   </div>
-                                  <div className="product-card-info">
-                                    <div className="product-card-title-row">
-                                      <span className="product-card-name">{product.name}</span>
-                                      {product.dimensions && (
-                                        <span className="product-card-dims">{product.dimensions}</span>
-                                      )}
+                                  {product.specs && (
+                                    <div className="product-card-specs">
+                                      {product.specs.map((s) => <span key={s} className="product-card-spec">{s}</span>)}
                                     </div>
-                                    {product.specs && (
-                                      <div className="product-card-specs">
-                                        {product.specs.map((s) => (
-                                          <span key={s} className="product-card-spec">{s}</span>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </button>
-                              );
+                                  )}
+                                </div>
+                              </button>
+                            );
                           })}
                         </div>
-                        {/* Handle colour picker for premium tote */}
                         {(() => {
                           const variants = availability[selectedProductId]?.variants;
                           if (!variants?.length) return null;
@@ -1364,83 +1350,97 @@ export default function CreateLoofaPage() {
                           );
                         })()}
                       </div>
-                    </div>
+                    )}
 
-                    {/* ── Sub-step 2: Front design ── */}
-                    <div className="design-substep" ref={designStep2Ref}>
-                      <div className="design-substep-header">
-                        <span className="design-substep-num">2</span>
-                        <h3 className="design-substep-title">Front Design</h3>
-                      </div>
-                      <div className="design-substep-body">
-                        <div className="design-two-col">
-                          <div className="design-left">
-                            <p className="step-subtitle" style={{ marginBottom: 12 }}>Customize your QR code and add bag text.</p>
-                            <QRDesigner
-                              url={qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`}
-                              onDataUrl={setQrRenderedDataUrl}
-                              onDesignChange={(d) => { qrDesignRef.current = d; }}
-                            />
-                            <div style={{ marginTop: 20 }}>
-                              <p className="step-subtitle" style={{ marginBottom: 8 }}>Bag text <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span></p>
-                              <BagTextSelector
-                                templateId={selectedTemplate.id}
-                                onChange={setBagText}
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              className="design-substep-next"
-                              onClick={() => {
-                                setTimeout(() => designStep3Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
-                              }}
-                            >
-                              Next: Back Design ↓
-                            </button>
-                          </div>
-                          <div className="design-right">
-                            {frontPreview}
+                    {/* Design step 2: Front Design */}
+                    {designStep === 2 && (
+                      <div className="design-panel design-two-col">
+                        <div className="design-left">
+                          <p className="step-subtitle" style={{ marginBottom: 12 }}>Customize your QR code and add bag text.</p>
+                          <QRDesigner
+                            url={qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`}
+                            onDataUrl={setQrRenderedDataUrl}
+                            onDesignChange={(d) => { qrDesignRef.current = d; }}
+                          />
+                          <div style={{ marginTop: 20 }}>
+                            <p className="step-subtitle" style={{ marginBottom: 8 }}>Bag text <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span></p>
+                            <BagTextSelector templateId={selectedTemplate.id} onChange={setBagText} />
                           </div>
                         </div>
-                      </div>
-                    </div>
-
-                    {/* ── Sub-step 3: Back design ── */}
-                    <div className="design-substep design-substep-last" ref={designStep3Ref}>
-                      <div className="design-substep-header">
-                        <span className="design-substep-num">3</span>
-                        <h3 className="design-substep-title">Back Design</h3>
-                      </div>
-                      <div className="design-substep-body">
-                        <div className="design-two-col">
-                          <div className="design-left">
-                            <p className="step-subtitle" style={{ marginBottom: 12 }}>Choose what goes on the back of your bag.</p>
-                            <div className="back-design-grid">
-                              {([
-                                { id: 'blank', label: 'Blank', desc: 'Nothing on the back', emoji: '◻️' },
-                                { id: 'duplicate', label: 'Duplicate front', desc: 'Same QR on the back', emoji: '🔁' },
-                                { id: 'universe', label: 'Universe do your thing', desc: 'Cosmic surprise', emoji: '🌌' },
-                                { id: 'grass', label: "I'm touching grass", desc: 'Nature vibes', emoji: '🌿' },
-                              ] as const).map((opt) => (
-                                <button
-                                  key={opt.id}
-                                  type="button"
-                                  className={`back-design-card${backDesign === opt.id ? ' selected' : ''}`}
-                                  onClick={() => setBackDesign(opt.id)}
-                                >
-                                  <span className="back-design-emoji">{opt.emoji}</span>
-                                  <span className="back-design-label">{opt.label}</span>
-                                  <span className="back-design-desc">{opt.desc}</span>
-                                </button>
-                              ))}
+                        {bagImageUrl && (
+                          <div className="design-right">
+                            <div className="bag-preview-sticky">
+                              {BagFrontOverlay}
+                              <p className="bag-preview-name">{selectedProduct.name} · Front</p>
                             </div>
                           </div>
-                          <div className="design-right">
-                            {backPreview}
+                        )}
+                      </div>
+                    )}
+
+                    {/* Design step 3: Back Design */}
+                    {designStep === 3 && (
+                      <div className="design-panel design-two-col">
+                        <div className="design-left">
+                          <p className="step-subtitle" style={{ marginBottom: 12 }}>Choose what goes on the back of your bag.</p>
+                          <div className="back-design-grid">
+                            {([
+                              { id: 'blank', label: 'Blank', desc: 'Nothing on the back', emoji: '◻️' },
+                              { id: 'duplicate', label: 'Duplicate front', desc: 'Same QR on the back', emoji: '🔁' },
+                              { id: 'universe', label: 'Universe do your thing', desc: 'Cosmic surprise', emoji: '🌌' },
+                              { id: 'grass', label: "I'm touching grass", desc: 'Nature vibes', emoji: '🌿' },
+                            ] as const).map((opt) => (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                className={`back-design-card${backDesign === opt.id ? ' selected' : ''}`}
+                                onClick={() => setBackDesign(opt.id)}
+                              >
+                                <span className="back-design-emoji">{opt.emoji}</span>
+                                <span className="back-design-label">{opt.label}</span>
+                                <span className="back-design-desc">{opt.desc}</span>
+                              </button>
+                            ))}
                           </div>
                         </div>
+                        {bagImageUrl && (
+                          <div className="design-right">
+                            <div className="bag-preview-sticky">
+                              {BagBackOverlay}
+                              <p className="bag-preview-name">{selectedProduct.name} · Back</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    )}
+
+                    {/* Design step 4: Review */}
+                    {designStep === 4 && (
+                      <div className="design-panel">
+                        <div className="review-header">
+                          <div className="review-sparkle">✨</div>
+                          <h3 className="review-title">Your masterpiece</h3>
+                          <p className="review-subtitle">Here&apos;s how your bag will look — front and back. Love it? Let&apos;s order!</p>
+                        </div>
+                        {bagImageUrl && (
+                          <div className="review-bags">
+                            <div className="review-bag">
+                              {BagFrontOverlay}
+                              <p className="bag-preview-name">{selectedProduct.name} · Front</p>
+                            </div>
+                            <div className="review-bag">
+                              {BagBackOverlay}
+                              <p className="bag-preview-name">{selectedProduct.name} · Back</p>
+                            </div>
+                          </div>
+                        )}
+                        <div className="download-btns-row" style={{ justifyContent: 'center', marginTop: 24 }}>
+                          <button type="button" className="download-design-btn" onClick={downloadDesignPNG} disabled={!qrRenderedDataUrl}>↓ Square (9.5")</button>
+                          <button type="button" className="download-design-btn" onClick={downloadMainBagTemplate} disabled={!qrRenderedDataUrl}>↓ Main bag (21×37")</button>
+                          <button type="button" className="download-design-btn" onClick={downloadPocketTemplate} disabled={!qrRenderedDataUrl}>↓ Pocket (10×17.5")</button>
+                        </div>
+                      </div>
+                    )}
 
                   </div>
                 );
@@ -2088,10 +2088,12 @@ export default function CreateLoofaPage() {
                   </>
                 ) : (
                   <>
-                    <button className="btn btn-secondary" onClick={handlePrev} disabled={step === (isReorder ? 2 : 1)}>
+                    <button className="btn btn-secondary" onClick={handlePrev} disabled={step === (isReorder ? 2 : 1) && designStep === 1}>
                       Back
                     </button>
-                    <div className="step-indicator">Step {step} of 6</div>
+                    <div className="step-indicator">
+                      {step === 2 ? `Design ${designStep} of 4` : `Step ${step} of 6`}
+                    </div>
                     {step === 6 ? (
                       <>
                         {createError && <p style={{ color: 'red', fontSize: 13, margin: '0 8px' }}>{createError}</p>}
