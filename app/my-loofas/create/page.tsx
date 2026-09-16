@@ -1305,7 +1305,14 @@ export default function CreateLoofaPage() {
                                 }}
                               >
                                 <div className="product-card-img-wrap">
-                                  {product.image && <img src={product.image} alt={product.name} className="product-card-img" />}
+                                  <img
+                                    src={getBagImageUrl(
+                                      product.id,
+                                      product.id === selectedProductId ? selectedVariantLabel : null,
+                                    )}
+                                    alt={product.name}
+                                    className="product-card-img"
+                                  />
                                   {oos && <div className="product-card-oos-badge">Out of stock</div>}
                                 </div>
                                 <div className="product-card-info">
