@@ -3799,6 +3799,13 @@ footer p {
   -webkit-text-fill-color: #888;
 }
 
+.product-card-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: #c8a97e;
+  margin: 4px 0 6px;
+}
+
 .product-card-specs {
   display: flex;
   flex-direction: column;

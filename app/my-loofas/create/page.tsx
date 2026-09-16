@@ -411,6 +411,7 @@ export default function CreateLoofaPage() {
   type VariantOption = { id: number; label: string; colorCode: string | null };
   type ProductAvailability = { inStock: boolean; defaultVariantId: number | null; variants: VariantOption[] | null };
   const [availability, setAvailability] = useState<Record<string, ProductAvailability>>({});
+  const [productPrices, setProductPrices] = useState<Record<string, { amount: number; currency: string }>>({});
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
   const didSave = useRef(false);
   const loofaIdRef = useRef(Date.now().toString());
@@ -1001,7 +1002,7 @@ export default function CreateLoofaPage() {
   };
 
   // Auto-place order when arriving at step 4 after Stripe payment
-  // Fetch availability once when reaching the design step
+  // Fetch availability + prices once when reaching the design step
   useEffect(() => {
     if (step !== 2 || Object.keys(availability).length > 0) return;
     fetch('/api/products/availability')
@@ -1014,6 +1015,10 @@ export default function CreateLoofaPage() {
           setSelectedVariantId(avail.defaultVariantId);
         }
       })
+      .catch(() => {});
+    fetch('/api/products/prices')
+      .then((r) => r.json())
+      .then((data: Record<string, { amount: number; currency: string }>) => setProductPrices(data))
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
@@ -1320,6 +1325,12 @@ export default function CreateLoofaPage() {
                                     <span className="product-card-name">{product.name}</span>
                                     {product.dimensions && <span className="product-card-dims">{product.dimensions}</span>}
                                   </div>
+                                  {productPrices[product.id] && (
+                                    <div className="product-card-price">
+                                      {productPrices[product.id].currency}{' '}
+                                      ${(productPrices[product.id].amount / 100).toFixed(2)}
+                                    </div>
+                                  )}
                                   {product.specs && (
                                     <div className="product-card-specs">
                                       {product.specs.map((s) => <span key={s} className="product-card-spec">{s}</span>)}
@@ -1332,7 +1343,7 @@ export default function CreateLoofaPage() {
                         </div>
                         {(() => {
                           const variants = availability[selectedProductId]?.variants;
-                          if (!variants?.length) return null;
+                          if (!variants?.length || selectedProductId !== 'premium-large-tote') return null;
                           return (
                             <div className="handle-color-picker">
                               <p className="handle-color-label">Handle colour</p>
