@@ -672,7 +672,7 @@ export default function CreateLoofaPage() {
       logoH = Math.round(logoW * tealLogo.height / tealLogo.width);
     }
 
-    let h = Math.round(W * 0.02);
+    let h = Math.round(W * 0.07);
     if (textLines.length) h += textLines.length * Math.round(textFS * 1.2) + Math.round(W * 0.04);
     h += qrPx + Math.round(W * 0.04);
     h += urlH + (tealLogo ? Math.round(W * 0.05) + logoH : 0) + Math.round(W * 0.02);
@@ -683,7 +683,7 @@ export default function CreateLoofaPage() {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, W, h);
 
-    let y = Math.round(W * 0.02);
+    let y = Math.round(W * 0.07);
 
     if (textLines.length) {
       ctx.font = `900 ${textFS}px "Arial Black", Arial, sans-serif`;
