@@ -453,6 +453,7 @@ export default function CreateLoofaPage() {
           if (draft.address) setAddress(draft.address);
           if (draft.qrDesign) setRestoredQrDesign(draft.qrDesign);
           if (draft.qrToken) setQrToken(draft.qrToken);
+          if (draft.backDesign) setBackDesign(draft.backDesign);
           if (draft.reorder) setIsReorder(true);
         } catch {}
       }
@@ -1008,8 +1009,9 @@ export default function CreateLoofaPage() {
       bagText,
       address,
       qrToken,
-      // Save design options (logoFile is a File object — can't be serialized)
-      qrDesign: effectiveDesign ? { fgColor: effectiveDesign.fgColor, bgColor: effectiveDesign.bgColor, gradient: effectiveDesign.gradient, shape: effectiveDesign.shape, logoFile: null } : null,
+      backDesign,
+      // logoFile is a File object (not serializable) but logoDataUrl is a base64 string
+      qrDesign: effectiveDesign ? { fgColor: effectiveDesign.fgColor, bgColor: effectiveDesign.bgColor, gradient: effectiveDesign.gradient, shape: effectiveDesign.shape, logoFile: null, logoDataUrl: effectiveDesign.logoDataUrl ?? null } : null,
       reorder: isReorder,
     }));
     const selectedRate = shippingRates.find((r) => r.id === selectedRateId);

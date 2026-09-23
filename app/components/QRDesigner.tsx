@@ -8,6 +8,7 @@ export interface QRDesignOptions {
   gradient: { from: string; to: string; label: string } | null;
   shape: 'square' | 'heart' | 'square-logo';
   logoFile: File | null;
+  logoDataUrl?: string | null; // serializable fallback for logoFile (used in reorder flow)
 }
 
 const GRADIENT_PRESETS = [
@@ -146,10 +147,10 @@ export async function renderQRToCanvas(
   }
 
   // ── Center logo (square-logo and heart) ───────────────────────────────────
-  if ((design.shape === 'square-logo' || design.shape === 'heart') && design.logoFile) {
-    const logoUrl = URL.createObjectURL(design.logoFile);
+  const logoSrc = design.logoFile ? URL.createObjectURL(design.logoFile) : (design.logoDataUrl ?? null);
+  if ((design.shape === 'square-logo' || design.shape === 'heart') && logoSrc) {
     const logo = new Image();
-    logo.src = logoUrl;
+    logo.src = logoSrc;
     await new Promise<void>((res) => { logo.onload = () => res(); logo.onerror = () => res(); });
     const ls = Math.round(SIZE * 0.30);
     const lx = Math.round((SIZE - ls) / 2);
@@ -176,7 +177,7 @@ export async function renderQRToCanvas(
       ctx.fillRect(lx - pad, ly - pad, ls + pad * 2, ls + pad * 2);
       ctx.drawImage(logo, lx, ly, ls, ls);
     }
-    URL.revokeObjectURL(logoUrl);
+    if (design.logoFile) URL.revokeObjectURL(logoSrc!);
   }
 }
 
@@ -221,13 +222,19 @@ export default function QRDesigner({ url, onDataUrl, hidePreview, onDesignChange
     const file = e.target.files?.[0] ?? null;
     if (logoPreview) URL.revokeObjectURL(logoPreview);
     setLogoPreview(file ? URL.createObjectURL(file) : '');
-    update({ logoFile: file });
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => update({ logoFile: file, logoDataUrl: reader.result as string });
+      reader.readAsDataURL(file);
+    } else {
+      update({ logoFile: null, logoDataUrl: null });
+    }
   };
 
   const removeLogo = () => {
     if (logoPreview) URL.revokeObjectURL(logoPreview);
     setLogoPreview('');
-    update({ logoFile: null });
+    update({ logoFile: null, logoDataUrl: null });
     if (logoInputRef.current) logoInputRef.current.value = '';
   };
 

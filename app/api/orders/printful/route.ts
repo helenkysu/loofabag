@@ -109,7 +109,10 @@ export async function POST(req: NextRequest) {
         items: [{
           variant_id: variantId,
           quantity: 1,
-          files: [{ type: 'default', url: printFileUrl }],
+          files: [
+            { type: 'default', url: printFileUrl },
+            { type: 'pocket1', url: `${process.env.NEXT_PUBLIC_BASE_URL}/pocket1design.jpg` },
+          ],
         }],
       }),
     });
