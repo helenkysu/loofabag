@@ -768,7 +768,7 @@ export default function CreateLoofaPage() {
 
     const cx = W / 2;
 
-    // Printful large tote zone boundaries
+    // Printful large tote zone boundaries (21"×37" at 150 DPI)
     const FRONT_TOP = Math.round(H * 0.10);
     const FRONT_BOT = Math.round(H * 0.50);
     const BACK_TOP  = Math.round(H * 0.52);
@@ -776,19 +776,22 @@ export default function CreateLoofaPage() {
     const BACK_H    = BACK_BOT - BACK_TOP;
 
     // Use same renderDesignCanvas so template exactly matches preview (no logo — logo goes in bottom strip)
-    const contentW = Math.round(W * 0.55);
+    // 70% of W fills the Printful safe zone properly
+    const contentW = Math.round(W * 0.70);
     const designCanvas = await renderDesignCanvas(contentW, { qrDesign: design });
 
     if (designCanvas) {
       const dh = designCanvas.height;
-      const frontMargin = Math.round((FRONT_BOT - FRONT_TOP) * 0.05);
+      // 1% top margin — design sits at the top of the front safe zone
+      const frontMargin = Math.round((FRONT_BOT - FRONT_TOP) * 0.01);
       ctx.drawImage(designCanvas, Math.round(cx - contentW / 2), FRONT_TOP + frontMargin, contentW, dh);
 
       if (backDesign === 'duplicate') {
         ctx.save();
         ctx.translate(W, BACK_BOT);
         ctx.rotate(Math.PI);
-        ctx.drawImage(designCanvas, Math.round(cx - contentW / 2), Math.round(BACK_H * 0.05), contentW, dh);
+        // 1% margin from BACK_BOT — back design sits at bottom of the back safe zone
+        ctx.drawImage(designCanvas, Math.round(cx - contentW / 2), Math.round(BACK_H * 0.01), contentW, dh);
         ctx.restore();
       }
     }
@@ -849,7 +852,8 @@ export default function CreateLoofaPage() {
   const generatePrintFileBlob = async (): Promise<Blob | null> => {
     const canvas = await buildMainBagTemplateCanvas();
     if (!canvas) return null;
-    return new Promise((resolve) => canvas.toBlob((b) => resolve(b), 'image/png'));
+    // JPEG ensures white background — Printful rejects print files with transparency
+    return new Promise((resolve) => canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.95));
   };
 
   const placeOrder = async (sessionId: string) => {

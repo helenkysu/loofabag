@@ -14,12 +14,12 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const path = `print-files/${sessionId}/design.png`;
+    const path = `print-files/${sessionId}/design.jpg`;
 
     const supabase = createAdminClient();
     const { error } = await supabase.storage
       .from(BUCKET)
-      .upload(path, buffer, { contentType: 'image/png', upsert: true });
+      .upload(path, buffer, { contentType: 'image/jpeg', upsert: true });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
