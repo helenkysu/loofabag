@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripeKey = process.env.STRIPE_LIVE_MODE === 'true'
+  ? process.env.STRIPE_SECRET_KEY_PROD!
+  : process.env.STRIPE_SECRET_KEY!;
+const stripe = new Stripe(stripeKey);
 
 const PRODUCT_MAP: Record<string, string> = {
   'eco-tote': 'prod_UafgTxRmQLMdbg',

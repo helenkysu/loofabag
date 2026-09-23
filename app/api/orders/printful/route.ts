@@ -3,7 +3,10 @@ import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripeKey = process.env.STRIPE_LIVE_MODE === 'true'
+  ? process.env.STRIPE_SECRET_KEY_PROD!
+  : process.env.STRIPE_SECRET_KEY!;
+const stripe = new Stripe(stripeKey);
 
 // Our product ID → Printful catalog product ID
 const PRINTFUL_PRODUCT_MAP: Record<string, number> = {
@@ -101,7 +104,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        confirm: false,
+        confirm: process.env.PRINTFUL_CONFIRM_ORDERS === 'true',
         recipient,
         items: [{
           variant_id: variantId,
