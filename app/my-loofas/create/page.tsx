@@ -737,7 +737,7 @@ export default function CreateLoofaPage() {
     const W = Math.round(300 * 9.5); // 2850 px — 9.5" at 300 DPI
     const design = qrDesignRef.current;
     if (!design) return;
-    const canvas = await renderDesignCanvas(W, { qrDesign: design, includeLogo: true });
+    const canvas = await renderDesignCanvas(W, { qrDesign: design });
     if (!canvas) return;
     canvas.toBlob((blob) => {
       if (!blob) return;
@@ -772,10 +772,10 @@ export default function CreateLoofaPage() {
     const BACK_BOT  = Math.round(H * 0.95);
     const BACK_H    = BACK_BOT - BACK_TOP;
 
-    // Use same renderDesignCanvas so template exactly matches preview
+    // Use same renderDesignCanvas so template exactly matches preview (no logo — logo goes in bottom strip)
     const contentW = Math.round(W * 0.55);
     const designCanvas = design
-      ? await renderDesignCanvas(contentW, { qrDesign: design, includeLogo: true })
+      ? await renderDesignCanvas(contentW, { qrDesign: design })
       : null;
 
     if (designCanvas) {
@@ -791,6 +791,14 @@ export default function CreateLoofaPage() {
         ctx.restore();
       }
     }
+
+    // Logo goes in the physical bottom-of-bag strip (between front and back panels)
+    const bottomStripH = BACK_TOP - FRONT_BOT; // ~111px at 150 DPI
+    const logo = await loadImg('/loofabagteal.jpg');
+    const logoStripH = Math.round(bottomStripH * 0.8);
+    const logoStripW = Math.round(logoStripH * logo.width / logo.height);
+    const logoY = FRONT_BOT + Math.round((bottomStripH - logoStripH) / 2);
+    ctx.drawImage(logo, Math.round(cx - logoStripW / 2), logoY, logoStripW, logoStripH);
 
     if (backDesign === 'universe') {
       const gradCy = BACK_TOP + BACK_H / 2;
@@ -835,7 +843,7 @@ export default function CreateLoofaPage() {
     const design = qrDesignRef.current ?? restoredQrDesign;
     if (!design) return null;
     const W = Math.round(300 * 9.5); // 2850 px = 9.5" at 300 DPI
-    const canvas = await renderDesignCanvas(W, { qrDesign: design, includeLogo: true });
+    const canvas = await renderDesignCanvas(W, { qrDesign: design });
     if (!canvas) return null;
 
     return new Promise((resolve) => canvas.toBlob((b) => resolve(b), 'image/png'));
