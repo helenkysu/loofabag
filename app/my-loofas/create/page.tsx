@@ -450,6 +450,7 @@ export default function CreateLoofaPage() {
           const draft = JSON.parse(saved);
           if (draft.name) setName(draft.name);
           if (draft.selectedProductId) setSelectedProductId(draft.selectedProductId);
+          if (draft.selectedVariantId) setSelectedVariantId(draft.selectedVariantId);
           if (draft.bagText) setBagText(draft.bagText);
           if (draft.address) setAddress(draft.address);
           if (draft.qrDesign) setRestoredQrDesign(draft.qrDesign);
@@ -1046,6 +1047,7 @@ export default function CreateLoofaPage() {
     sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify({
       name,
       selectedProductId,
+      selectedVariantId,
       bagText,
       address,
       qrToken,
