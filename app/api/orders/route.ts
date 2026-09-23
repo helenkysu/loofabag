@@ -88,7 +88,19 @@ export async function GET(req: NextRequest) {
       }
     }));
 
-    return NextResponse.json({ orders: orders.map(dbToClient) });
+    // Generate short-lived signed URLs for any stored print files
+    const clientOrders = await Promise.all(orders.map(async (o) => {
+      const base = dbToClient(o);
+      if (!o.print_file_path) return base;
+      try {
+        const { data } = await admin.storage.from('loofabag-private').createSignedUrl(o.print_file_path, 3600);
+        return { ...base, printFileSignedUrl: data?.signedUrl ?? null };
+      } catch {
+        return base;
+      }
+    }));
+
+    return NextResponse.json({ orders: clientOrders });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: message }, { status: 500 });

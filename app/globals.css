@@ -5446,6 +5446,63 @@ footer p {
   margin: 4px 0 0;
 }
 
+.order-design-preview {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.order-design-panels {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.order-design-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.order-design-panel-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #999;
+  text-align: center;
+}
+
+.order-design-panel-crop {
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  background: #fafafa;
+  position: relative;
+  aspect-ratio: 1 / 1;
+}
+
+.order-design-panel-img {
+  position: absolute;
+  width: 100%;
+  object-fit: cover;
+  object-position: center top;
+  /* template is 3150×5550; front panel is top ~48% */
+  height: calc(100% / 0.48);
+}
+
+/* Back panel: bottom ~43% of template, rotated 180° */
+.order-design-panel-back .order-design-panel-img {
+  object-position: center bottom;
+  transform: rotate(180deg);
+  transform-origin: center center;
+}
+
+.order-design-panel-img-flipped {
+  /* already handled by .order-design-panel-back */
+}
+
 .order-card-footer {
   margin-top: 20px;
   padding-top: 16px;

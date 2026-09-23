@@ -36,6 +36,7 @@ interface Order {
   tracking: Tracking | null;
   checkoutDraft: object | null;
   printFilePath: string | null;
+  printFileSignedUrl?: string | null;
   createdAt: string;
 }
 
@@ -55,7 +56,10 @@ function statusInfo(status: string) {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const d = new Date(iso);
+  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+  return `${date} at ${time}`;
 }
 
 export default function OrdersPage() {
@@ -203,6 +207,28 @@ export default function OrdersPage() {
                             Estimated delivery: {formatDate(order.tracking.estimatedDelivery)}
                           </p>
                         )}
+                      </div>
+                    )}
+
+                    {order.printFileSignedUrl && (
+                      <div className="order-design-preview">
+                        <p className="order-address-label">Design Preview</p>
+                        <div className="order-design-panels">
+                          {/* Front panel: top ~48% of the 3150×5550 template */}
+                          <div className="order-design-panel">
+                            <span className="order-design-panel-label">Front</span>
+                            <div className="order-design-panel-crop order-design-panel-front">
+                              <img src={order.printFileSignedUrl} alt="Front design" className="order-design-panel-img" />
+                            </div>
+                          </div>
+                          {/* Back panel: bottom ~45% of the template (rotated 180°) */}
+                          <div className="order-design-panel">
+                            <span className="order-design-panel-label">Back</span>
+                            <div className="order-design-panel-crop order-design-panel-back">
+                              <img src={order.printFileSignedUrl} alt="Back design" className="order-design-panel-img order-design-panel-img-flipped" />
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
 
