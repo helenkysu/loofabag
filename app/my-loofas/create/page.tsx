@@ -795,7 +795,7 @@ export default function CreateLoofaPage() {
     // Logo goes in the physical bottom-of-bag strip (between front and back panels)
     const bottomStripH = BACK_TOP - FRONT_BOT; // ~111px at 150 DPI
     const logo = await loadImg('/loofabagteal.jpg');
-    const logoStripH = Math.round(bottomStripH * 0.8);
+    const logoStripH = Math.round(bottomStripH * 2.4); // 3× the strip height
     const logoStripW = Math.round(logoStripH * logo.width / logo.height);
     const logoY = FRONT_BOT + Math.round((bottomStripH - logoStripH) / 2);
     ctx.drawImage(logo, Math.round(cx - logoStripW / 2), logoY, logoStripW, logoStripH);
