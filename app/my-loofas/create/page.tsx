@@ -729,7 +729,7 @@ export default function CreateLoofaPage() {
 
   const renderPreviewBlock = async (): Promise<string> => {
     if (!qrRenderedDataUrl) return '';
-    const canvas = await renderDesignCanvas(500, { qrDataUrl: qrRenderedDataUrl, includeLogo: true });
+    const canvas = await renderDesignCanvas(500, { qrDataUrl: qrRenderedDataUrl });
     return canvas?.toDataURL('image/png') ?? '';
   };
 
