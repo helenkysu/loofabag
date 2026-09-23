@@ -414,6 +414,7 @@ export default function CreateLoofaPage() {
   const [availability, setAvailability] = useState<Record<string, ProductAvailability>>({});
   const [productPrices, setProductPrices] = useState<Record<string, { amount: number; currency: string }>>({});
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  const [restoredVariantLabel, setRestoredVariantLabel] = useState<string | null>(null);
   const didSave = useRef(false);
   const loofaIdRef = useRef(Date.now().toString());
   const qrDesignRef = useRef<QRDesignOptions | null>(null);
@@ -451,6 +452,7 @@ export default function CreateLoofaPage() {
           if (draft.name) setName(draft.name);
           if (draft.selectedProductId) setSelectedProductId(draft.selectedProductId);
           if (draft.selectedVariantId) setSelectedVariantId(draft.selectedVariantId);
+          if (draft.selectedVariantLabel != null) setRestoredVariantLabel(draft.selectedVariantLabel);
           if (draft.bagText) setBagText(draft.bagText);
           if (draft.address) setAddress(draft.address);
           if (draft.qrDesign) setRestoredQrDesign(draft.qrDesign);
@@ -898,10 +900,16 @@ export default function CreateLoofaPage() {
         printFileUrl = uploadData.signedUrl;
         storagePath = uploadData.path;
 
-        // 3. Upload front preview image (the design canvas the user saw during design)
-        if (previewDataUrl) {
-          try {
-            const previewBlob = await fetch(previewDataUrl).then((r) => r.blob());
+        // 3. Upload front preview — use qrDesignRef directly (same as print file) so it
+        //    works even when qrRenderedDataUrl hasn't resolved yet after the Stripe redirect
+        try {
+          const design = qrDesignRef.current;
+          const previewCanvas = design
+            ? await renderDesignCanvas(500, { qrDesign: design })
+            : null;
+          const freshPreviewUrl = previewCanvas?.toDataURL('image/jpeg') ?? previewDataUrl;
+          if (freshPreviewUrl) {
+            const previewBlob = await fetch(freshPreviewUrl).then((r) => r.blob());
             const pfd = new FormData();
             pfd.append('file', previewBlob, 'preview-front.jpg');
             pfd.append('sessionId', sessionId);
@@ -909,13 +917,16 @@ export default function CreateLoofaPage() {
             const pRes = await fetch('/api/upload/print-file', { method: 'POST', body: pfd });
             const pData = await pRes.json();
             if (pData.path) frontPreviewPath = pData.path;
-            // For duplicate back design, back preview is the same image
             if (backDesign === 'duplicate' && pData.path) backPreviewPath = pData.path;
-          } catch { /* non-fatal — preview is optional */ }
-        }
+          }
+        } catch { /* non-fatal */ }
       }
 
       // 4. Place the Printful order
+      // Use restored variant label (saved before Stripe redirect) when availability isn't loaded
+      const variantLabel = availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label
+        ?? restoredVariantLabel
+        ?? null;
       const res = await fetch('/api/orders/printful', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -932,7 +943,7 @@ export default function CreateLoofaPage() {
           backDesign,
           slug,
           productName: PRODUCTS.find((p) => p.id === selectedProductId)?.name ?? '',
-          productImage: getBagImageUrl(selectedProductId, availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label),
+          productImage: getBagImageUrl(selectedProductId, variantLabel),
           checkoutDraft,
         }),
       });
@@ -1044,10 +1055,12 @@ export default function CreateLoofaPage() {
     // Save draft so we can restore after redirect
     // In reorder mode qrDesignRef is null (QRDesigner not rendered at step 3), fall back to restoredQrDesign
     const effectiveDesign = qrDesignRef.current ?? restoredQrDesign;
+    const selectedVariantLabel = availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label ?? null;
     sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify({
       name,
       selectedProductId,
       selectedVariantId,
+      selectedVariantLabel,
       bagText,
       address,
       qrToken,
