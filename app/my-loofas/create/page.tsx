@@ -673,7 +673,7 @@ export default function CreateLoofaPage() {
     }
 
     let h = Math.round(W * 0.07);
-    if (textLines.length) h += textLines.length * Math.round(textFS * 1.2) + Math.round(W * 0.04);
+    if (textLines.length) h += textLines.length * Math.round(textFS * 1.2) + Math.round(W * 0.02);
     h += qrPx + Math.round(W * 0.04);
     h += urlH + (tealLogo ? Math.round(W * 0.05) + logoH : 0) + Math.round(W * 0.02);
 
@@ -695,7 +695,7 @@ export default function CreateLoofaPage() {
         ctx.fillText(line, cx, y, maxTextW);
         y += Math.round(textFS * 1.2);
       }
-      y += Math.round(W * 0.04);
+      y += Math.round(W * 0.02);
     }
 
     if (opts.qrDesign) {
