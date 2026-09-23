@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     // Load the order — verify it belongs to this user
     const { data: order } = await admin
       .from('loofabag_orders')
-      .select('id, product_id, variant_id, printful_order_id, front_preview_path')
+      .select('id, product_id, variant_id, printful_order_id, front_preview_path, print_file_path')
       .eq('id', orderId)
       .eq('user_id', user.id)
       .single();
@@ -41,21 +41,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Cannot generate mockup for this order' }, { status: 422 });
     }
 
-    // Fetch the Printful order to get the stored file ID
-    const pfRes = await fetch(`https://api.printful.com/orders/${order.printful_order_id}`, {
-      headers: { Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}` },
-    });
-    const pfData = await pfRes.json();
-    if (pfData.code !== 200) return NextResponse.json({ error: 'Printful order not found' }, { status: 404 });
+    // Resolve a publicly accessible URL for the print file.
+    // Option 1: fresh signed URL from our Supabase storage (full resolution, preferred)
+    // Option 2: Printful's own preview_url from the order (fallback for old orders)
+    let printFileImageUrl: string | null = null;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const files: any[] = pfData.result?.items?.[0]?.files ?? [];
-    const defaultFile = files.find((f: { type: string }) => f.type === 'default');
-    const printfulFileId: number | null = defaultFile?.id ?? null;
+    if (order.print_file_path) {
+      const { data: urlData } = await admin.storage
+        .from('loofabag-private')
+        .createSignedUrl(order.print_file_path, 3600);
+      if (urlData?.signedUrl) printFileImageUrl = urlData.signedUrl;
+    }
 
-    if (!printfulFileId) return NextResponse.json({ error: 'No print file found on Printful order' }, { status: 422 });
+    if (!printFileImageUrl) {
+      // Fetch the Printful order to grab the print file preview URL
+      const pfRes = await fetch(`https://api.printful.com/orders/${order.printful_order_id}`, {
+        headers: { Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}` },
+      });
+      const pfData = await pfRes.json();
+      if (pfData.code !== 200) return NextResponse.json({ error: 'Printful order not found' }, { status: 404 });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const files: any[] = pfData.result?.items?.[0]?.files ?? [];
+      const defaultFile = files.find((f: { type: string }) => f.type === 'default');
+      // preview_url is a Printful CDN URL — publicly accessible, suitable for mockup generator
+      printFileImageUrl = defaultFile?.preview_url ?? null;
+    }
 
-    // Create mockup task using the Printful-stored file ID
+    if (!printFileImageUrl) {
+      return NextResponse.json({ error: 'No accessible print file URL found for this order' }, { status: 422 });
+    }
+
+    // Create mockup task — Printful requires a public image_url (not a file id)
     const taskRes = await fetch(
       `https://api.printful.com/mockup-generator/create-task/${pfProductId}`,
       {
@@ -66,7 +82,7 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           variant_ids: [order.variant_id],
-          files: [{ placement: 'default', id: printfulFileId }],
+          files: [{ placement: 'default', image_url: printFileImageUrl }],
           format: 'jpg',
         }),
       },
