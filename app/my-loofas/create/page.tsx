@@ -681,17 +681,9 @@ export default function CreateLoofaPage() {
     const textLines = bagText ? bagText.split('\n') : [];
 
     const CW = 500; // preview content width (px)
-    const qrPx = Math.round(CW * 0.55);
-    const urlH = Math.round(CW * 0.065);
-
-    // Auto-fit text so it never clips at canvas edges
-    let textFS = Math.round(CW * 0.10);
-    if (textLines.length) {
-      const tmp = document.createElement('canvas').getContext('2d')!;
-      tmp.font = `900 ${textFS}px "Arial Black", Arial, sans-serif`;
-      const maxW = Math.max(...textLines.map((l) => tmp.measureText(l).width));
-      if (maxW > CW * 0.92) textFS = Math.floor(textFS * (CW * 0.92) / maxW);
-    }
+    const qrPx  = Math.round(CW * 0.55);
+    const urlH  = Math.round(CW * 0.065);
+    const textFS = Math.round(CW * 0.07); // 7% fits even long lines without clipping
 
     let h = Math.round(CW * 0.02);
     if (textLines.length) h += textLines.length * Math.round(textFS * 1.2) + Math.round(CW * 0.04);
@@ -710,8 +702,9 @@ export default function CreateLoofaPage() {
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
+      const maxTextW = Math.round(CW * 0.92);
       for (const line of textLines) {
-        ctx.fillText(line, CW / 2, y);
+        ctx.fillText(line, CW / 2, y, maxTextW); // maxWidth prevents any clipping
         y += Math.round(textFS * 1.2);
       }
       y += Math.round(CW * 0.04);
@@ -744,14 +737,7 @@ export default function CreateLoofaPage() {
     const logoH = Math.round(logoW * tealLogoImg.height / tealLogoImg.width);
     const textLines = bagText ? bagText.split('\n') : [];
 
-    // Auto-fit text so it never clips at canvas edges
-    let textFs = Math.round(W * 0.10);
-    if (textLines.length) {
-      const tmp = document.createElement('canvas').getContext('2d')!;
-      tmp.font = `900 ${textFs}px "Arial Black", Arial, sans-serif`;
-      const maxW = Math.max(...textLines.map((l) => tmp.measureText(l).width));
-      if (maxW > W * 0.92) textFs = Math.floor(textFs * (W * 0.92) / maxW);
-    }
+    const textFs = Math.round(W * 0.07);
 
     // Dynamic height so all elements fit
     let totalH = Math.round(W * 0.02);
@@ -773,8 +759,9 @@ export default function CreateLoofaPage() {
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
+      const maxTextW = Math.round(W * 0.92);
       for (const line of textLines) {
-        ctx.fillText(line, cx, y);
+        ctx.fillText(line, cx, y, maxTextW);
         y += Math.round(textFs * 1.2);
       }
       y += Math.round(W * 0.04);
@@ -947,16 +934,9 @@ export default function CreateLoofaPage() {
     const logoH     = Math.round(logoW * tealLogoImg.height / tealLogoImg.width);
     const textLines = bagText ? bagText.split('\n') : [];
 
-    // Auto-fit text so it never clips at canvas edges
-    let textFs = Math.round(W * 0.10);
-    if (textLines.length) {
-      const tmp = document.createElement('canvas').getContext('2d')!;
-      tmp.font = `900 ${textFs}px "Arial Black", Arial, sans-serif`;
-      const maxW = Math.max(...textLines.map((l) => tmp.measureText(l).width));
-      if (maxW > W * 0.92) textFs = Math.floor(textFs * (W * 0.92) / maxW);
-    }
+    const textFs = Math.round(W * 0.07);
+    const urlH   = Math.round(W * 0.065);
 
-    const urlH = Math.round(W * 0.065);
     let totalH = Math.round(W * 0.02);
     if (textLines.length) totalH += textLines.length * Math.round(textFs * 1.2) + Math.round(W * 0.04);
     totalH += qrPx + Math.round(W * 0.04);
@@ -976,8 +956,9 @@ export default function CreateLoofaPage() {
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
+      const maxTextW = Math.round(W * 0.92);
       for (const line of textLines) {
-        ctx.fillText(line, cx, y);
+        ctx.fillText(line, cx, y, maxTextW);
         y += Math.round(textFs * 1.2);
       }
       y += Math.round(W * 0.04);
