@@ -940,9 +940,12 @@ export default function CreateLoofaPage() {
 
   useEffect(() => {
     if (step !== 4 || !stripeSessionId || orderPlacedRef.current) return;
-    const savedOrder = sessionStorage.getItem('loofabag_order');
-    if (savedOrder) {
-      try { setPrintfulOrder(JSON.parse(savedOrder)); return; } catch {}
+    // In reorder mode always place a fresh order; otherwise use the cached order to survive refreshes
+    if (!isReorder) {
+      const savedOrder = sessionStorage.getItem('loofabag_order');
+      if (savedOrder) {
+        try { setPrintfulOrder(JSON.parse(savedOrder)); return; } catch {}
+      }
     }
     orderPlacedRef.current = true;
     placeOrder(stripeSessionId);

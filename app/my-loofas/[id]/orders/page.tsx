@@ -84,6 +84,7 @@ export default function OrdersPage() {
   const handleReorder = (order: Order) => {
     if (!order.checkoutDraft) return;
     sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify(order.checkoutDraft));
+    sessionStorage.removeItem('loofabag_order'); // clear cached order so a fresh one is placed
     router.push('/my-loofas/create?resume=3&reorder=1');
   };
 
