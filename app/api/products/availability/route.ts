@@ -34,6 +34,7 @@ function preferredVariant(variants: PrintfulVariant[]): PrintfulVariant | null {
   const inStock = variants.filter(isInStock);
   return (
     inStock.find((v) => /oyster|natural|white|beige|cream/i.test(v.name)) ??
+    inStock.find((v) => /\bblack\b/i.test(v.name)) ??
     inStock[0] ??
     null
   );
@@ -46,8 +47,8 @@ export async function GET() {
       const inStock = variants.filter(isInStock);
       const preferred = preferredVariant(variants);
 
-      // For products with multiple meaningful variants (handle colours etc.), expose them
-      const hasColorChoice = variants.length > 1 && variants.every((v) => v.color);
+      // Expose variant options whenever there are multiple in-stock choices
+      const hasColorChoice = inStock.length > 1;
       const variantOptions = hasColorChoice
         ? inStock.map((v) => ({
             id: v.id,

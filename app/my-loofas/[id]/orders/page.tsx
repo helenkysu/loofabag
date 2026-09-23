@@ -37,6 +37,9 @@ interface Order {
   checkoutDraft: object | null;
   printFilePath: string | null;
   printFileSignedUrl?: string | null;
+  frontPreviewSignedUrl?: string | null;
+  backPreviewSignedUrl?: string | null;
+  backDesign?: string | null;
   createdAt: string;
 }
 
@@ -210,23 +213,25 @@ export default function OrdersPage() {
                       </div>
                     )}
 
-                    {order.printFileSignedUrl && (
+                    {order.frontPreviewSignedUrl && (
                       <div className="order-design-preview">
                         <p className="order-address-label">Design Preview</p>
                         <div className="order-design-panels">
-                          {/* Front panel: top ~48% of the 3150×5550 template */}
                           <div className="order-design-panel">
                             <span className="order-design-panel-label">Front</span>
-                            <div className="order-design-panel-crop order-design-panel-front">
-                              <img src={order.printFileSignedUrl} alt="Front design" className="order-design-panel-img" />
-                            </div>
+                            <img src={order.frontPreviewSignedUrl} alt="Front design" className="order-preview-thumb" />
                           </div>
-                          {/* Back panel: bottom ~45% of the template (rotated 180°) */}
                           <div className="order-design-panel">
                             <span className="order-design-panel-label">Back</span>
-                            <div className="order-design-panel-crop order-design-panel-back">
-                              <img src={order.printFileSignedUrl} alt="Back design" className="order-design-panel-img order-design-panel-img-flipped" />
-                            </div>
+                            {order.backPreviewSignedUrl ? (
+                              <img src={order.backPreviewSignedUrl} alt="Back design" className="order-preview-thumb" />
+                            ) : (
+                              <div className="order-preview-thumb order-preview-placeholder">
+                                {order.backDesign === 'universe' && <span>🌌 Universe do your thing</span>}
+                                {order.backDesign === 'grass' && <span>🌿 I&apos;m touching grass</span>}
+                                {(!order.backDesign || order.backDesign === 'blank') && <span>—</span>}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

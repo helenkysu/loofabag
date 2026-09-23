@@ -28,6 +28,9 @@ function dbToClient(o: any) {
     tracking: (o.tracking ?? null) as Tracking | null,
     checkoutDraft: (o.checkout_draft ?? null) as object | null,
     printFilePath: (o.print_file_path ?? null) as string | null,
+    frontPreviewPath: (o.front_preview_path ?? null) as string | null,
+    backPreviewPath: (o.back_preview_path ?? null) as string | null,
+    backDesign: (o.back_design ?? null) as string | null,
     createdAt: o.created_at as string,
   };
 }
@@ -88,16 +91,32 @@ export async function GET(req: NextRequest) {
       }
     }));
 
-    // Generate short-lived signed URLs for any stored print files
+    // Generate short-lived signed URLs for stored files
     const clientOrders = await Promise.all(orders.map(async (o) => {
       const base = dbToClient(o);
-      if (!o.print_file_path) return base;
-      try {
-        const { data } = await admin.storage.from('loofabag-private').createSignedUrl(o.print_file_path, 3600);
-        return { ...base, printFileSignedUrl: data?.signedUrl ?? null };
-      } catch {
-        return base;
-      }
+      const extras: Record<string, string | null> = {};
+
+      const signPath = async (path: string | null): Promise<string | null> => {
+        if (!path) return null;
+        try {
+          const { data } = await admin.storage.from('loofabag-private').createSignedUrl(path, 3600);
+          return data?.signedUrl ?? null;
+        } catch {
+          return null;
+        }
+      };
+
+      const [printFileSignedUrl, frontPreviewSignedUrl, backPreviewSignedUrl] = await Promise.all([
+        signPath(o.print_file_path),
+        signPath(o.front_preview_path),
+        signPath(o.back_preview_path),
+      ]);
+
+      if (printFileSignedUrl) extras.printFileSignedUrl = printFileSignedUrl;
+      if (frontPreviewSignedUrl) extras.frontPreviewSignedUrl = frontPreviewSignedUrl;
+      if (backPreviewSignedUrl) extras.backPreviewSignedUrl = backPreviewSignedUrl;
+
+      return { ...base, ...extras };
     }));
 
     return NextResponse.json({ orders: clientOrders });

@@ -8,14 +8,19 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const sessionId = formData.get('sessionId') as string | null;
+    const fileType = (formData.get('fileType') as string | null) ?? 'design';
 
     if (!file || !sessionId) {
       return NextResponse.json({ error: 'Missing file or sessionId' }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const path = `print-files/${sessionId}/design.jpg`;
+    const filename = fileType === 'design' ? 'design.jpg'
+      : fileType === 'preview-front' ? 'preview-front.jpg'
+      : fileType === 'preview-back' ? 'preview-back.jpg'
+      : `${fileType}.jpg`;
+    const path = `print-files/${sessionId}/${filename}`;
 
+    const buffer = Buffer.from(await file.arrayBuffer());
     const supabase = createAdminClient();
     const { error } = await supabase.storage
       .from(BUCKET)

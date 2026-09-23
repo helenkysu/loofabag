@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -24,6 +26,28 @@ function isVariantInStock(v: any): boolean {
     : [];
   if (statuses.length === 0) return true; // no data → assume available
   return statuses.some((s) => s.status === 'in_stock');
+}
+
+// Upload pocket1design.jpg from public/ to Supabase and return a fresh signed URL.
+// This ensures Printful always gets the current file regardless of deployment state.
+async function getPocketFileUrl(supabase: ReturnType<typeof createAdminClient>): Promise<string | null> {
+  try {
+    const filePath = join(process.cwd(), 'public', 'pocket1design.jpg');
+    const buffer = await readFile(filePath);
+    const storagePath = 'pocket-design/pocket1design.jpg';
+    const { error } = await supabase.storage
+      .from('loofabag-private')
+      .upload(storagePath, buffer, { contentType: 'image/jpeg', upsert: true });
+    if (error) {
+      console.error('[orders/printful] pocket upload error:', error.message);
+      return null;
+    }
+    const { data } = await supabase.storage.from('loofabag-private').createSignedUrl(storagePath, 3600);
+    return data?.signedUrl ?? null;
+  } catch (err) {
+    console.error('[orders/printful] pocket upload failed:', err);
+    return null;
+  }
 }
 
 async function getAvailableVariantId(printfulProductId: number): Promise<number | null> {
@@ -57,6 +81,7 @@ export async function POST(req: NextRequest) {
     const {
       stripeSessionId, productId, variantId: explicitVariantId, customerName, address,
       printFileUrl: incomingPrintFileUrl, storagePath,
+      frontPreviewPath, backPreviewPath, backDesign,
       slug, productName, productImage, checkoutDraft,
     } = await req.json() as {
       stripeSessionId: string;
@@ -65,7 +90,10 @@ export async function POST(req: NextRequest) {
       customerName: string;
       address: { country: string; state: string; address1: string; address2: string; city: string; zip: string };
       printFileUrl?: string;
-      storagePath?: string; // reorder: existing storage path → generate fresh signed URL
+      storagePath?: string;
+      frontPreviewPath?: string;
+      backPreviewPath?: string;
+      backDesign?: string;
       slug: string;
       productName: string;
       productImage?: string;
@@ -101,9 +129,15 @@ export async function POST(req: NextRequest) {
       printFileUrl = data.signedUrl;
     }
 
-    const variantId = explicitVariantId ?? await getAvailableVariantId(printfulProductId);
+    const [variantId, pocketFileUrl] = await Promise.all([
+      explicitVariantId ?? getAvailableVariantId(printfulProductId),
+      getPocketFileUrl(supabaseAdmin),
+    ]);
     if (!variantId) {
       return NextResponse.json({ error: 'No available variant found for this product' }, { status: 400 });
+    }
+    if (!pocketFileUrl) {
+      console.warn('[orders/printful] Could not upload pocket file — proceeding without pocket');
     }
 
     const recipient: Record<string, string> = {
@@ -131,7 +165,7 @@ export async function POST(req: NextRequest) {
           quantity: 1,
           files: [
             { type: 'default', url: printFileUrl },
-            { type: 'pocket', url: `${req.headers.get('origin') ?? process.env.NEXT_PUBLIC_BASE_URL}/pocket1design.jpg` },
+            ...(pocketFileUrl ? [{ type: 'pocket', url: pocketFileUrl }] : []),
           ],
         }],
       }),
@@ -168,11 +202,24 @@ export async function POST(req: NextRequest) {
     };
 
     let { error: dbError } = await supabaseAdmin.from('loofabag_orders').upsert(
-      { ...baseRow, print_file_path: resolvedStoragePath ?? null },
+      {
+        ...baseRow,
+        print_file_path: resolvedStoragePath ?? null,
+        front_preview_path: frontPreviewPath ?? null,
+        back_preview_path: backPreviewPath ?? null,
+        back_design: backDesign ?? null,
+      },
       { onConflict: 'stripe_session_id' },
     );
 
-    // Fallback: if print_file_path column doesn't exist yet (migration pending), save without it
+    // Fallback: if new preview columns don't exist yet (migration pending), save without them
+    if (dbError?.message?.includes('front_preview_path') || dbError?.message?.includes('back_preview_path') || dbError?.message?.includes('back_design')) {
+      console.warn('[orders/printful] preview columns missing — saving without them');
+      ({ error: dbError } = await supabaseAdmin.from('loofabag_orders').upsert(
+        { ...baseRow, print_file_path: resolvedStoragePath ?? null },
+        { onConflict: 'stripe_session_id' },
+      ));
+    }
     if (dbError?.message?.includes('print_file_path')) {
       console.warn('[orders/printful] print_file_path column missing — saving without it');
       ({ error: dbError } = await supabaseAdmin.from('loofabag_orders').upsert(
@@ -190,7 +237,7 @@ export async function POST(req: NextRequest) {
       orderNumber: `#${order.id}`,
       status: order.status,
       printFilePath: resolvedStoragePath ?? null,
-      // Surface DB errors so they're visible in the browser network tab for debugging
+      frontPreviewPath: frontPreviewPath ?? null,
       dbError: dbError ? { message: dbError.message, code: dbError.code } : undefined,
     });
   } catch (err) {

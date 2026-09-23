@@ -223,11 +223,11 @@ async function ensureLobster(): Promise<void> {
 }
 
 function getBagImageUrl(productId: string, variantLabel?: string | null): string {
-  if (productId === 'premium-large-tote' && variantLabel) {
+  if (variantLabel) {
     const color = variantLabel.toLowerCase();
     if (color.includes('red')) return '/bagimages/premiumtote-red.webp';
     if (color.includes('yellow')) return '/bagimages/premiumtote-yellow.webp';
-    return '/bagimages/premiumtote-black.webp';
+    if (color.includes('black')) return '/bagimages/premiumtote-black.webp';
   }
   return PRODUCTS.find((p) => p.id === productId)?.image ?? '';
 }
@@ -866,6 +866,9 @@ export default function CreateLoofaPage() {
       let printFileUrl: string | undefined;
       let storagePath: string | undefined;
 
+      let frontPreviewPath: string | undefined;
+      let backPreviewPath: string | undefined;
+
       if (isReorder && savedPrintFilePath) {
         storagePath = savedPrintFilePath;
       } else {
@@ -878,10 +881,11 @@ export default function CreateLoofaPage() {
           return;
         }
 
-        // 2. Upload to Supabase storage
+        // 2. Upload print file to Supabase storage
         const fd = new FormData();
-        fd.append('file', blob, 'design.png');
+        fd.append('file', blob, 'design.jpg');
         fd.append('sessionId', sessionId);
+        fd.append('fileType', 'design');
         const uploadRes = await fetch('/api/upload/print-file', { method: 'POST', body: fd });
         const uploadData = await uploadRes.json();
         if (!uploadData.signedUrl) {
@@ -892,9 +896,25 @@ export default function CreateLoofaPage() {
         }
         printFileUrl = uploadData.signedUrl;
         storagePath = uploadData.path;
+
+        // 3. Upload front preview image (the design canvas the user saw during design)
+        if (previewDataUrl) {
+          try {
+            const previewBlob = await fetch(previewDataUrl).then((r) => r.blob());
+            const pfd = new FormData();
+            pfd.append('file', previewBlob, 'preview-front.jpg');
+            pfd.append('sessionId', sessionId);
+            pfd.append('fileType', 'preview-front');
+            const pRes = await fetch('/api/upload/print-file', { method: 'POST', body: pfd });
+            const pData = await pRes.json();
+            if (pData.path) frontPreviewPath = pData.path;
+            // For duplicate back design, back preview is the same image
+            if (backDesign === 'duplicate' && pData.path) backPreviewPath = pData.path;
+          } catch { /* non-fatal — preview is optional */ }
+        }
       }
 
-      // 3. Place the Printful order
+      // 4. Place the Printful order
       const res = await fetch('/api/orders/printful', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -906,6 +926,9 @@ export default function CreateLoofaPage() {
           address,
           printFileUrl,
           storagePath,
+          frontPreviewPath,
+          backPreviewPath,
+          backDesign,
           slug,
           productName: PRODUCTS.find((p) => p.id === selectedProductId)?.name ?? '',
           productImage: getBagImageUrl(selectedProductId, availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label),
@@ -1263,7 +1286,7 @@ export default function CreateLoofaPage() {
                         </div>
                         {(() => {
                           const variants = availability[selectedProductId]?.variants;
-                          if (!variants?.length || selectedProductId !== 'premium-large-tote') return null;
+                          if (!variants?.length) return null;
                           return (
                             <div className="handle-color-picker">
                               <p className="handle-color-label">Handle colour</p>
