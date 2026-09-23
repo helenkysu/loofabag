@@ -681,14 +681,13 @@ export default function CreateLoofaPage() {
     const textLines = bagText ? bagText.split('\n') : [];
 
     const CW = 500; // preview content width (px)
-    const textFS   = Math.round(CW * 0.10);
-    const qrPx     = Math.round(CW * 0.55);
-    const urlDesW  = Math.round(CW * 0.60);
-    const urlH     = Math.round(urlDesW * 0.038);
+    const textFS = Math.round(CW * 0.11);
+    const qrPx   = Math.round(CW * 0.55);
+    const urlH   = Math.round(CW * 0.038);
 
-    let h = 0;
+    let h = Math.round(CW * 0.02);
     if (textLines.length) h += textLines.length * Math.round(textFS * 1.2) + Math.round(CW * 0.04);
-    h += qrPx + Math.round(CW * 0.03);
+    h += qrPx + Math.round(CW * 0.04);
     h += urlH + Math.round(CW * 0.02);
 
     const canvas = document.createElement('canvas');
@@ -697,7 +696,7 @@ export default function CreateLoofaPage() {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, CW, h || CW);
 
-    let y = 0;
+    let y = Math.round(CW * 0.02);
     if (textLines.length) {
       ctx.font = `900 ${textFS}px "Arial Black", Arial, sans-serif`;
       ctx.fillStyle = '#000000';
@@ -714,7 +713,7 @@ export default function CreateLoofaPage() {
     qrImg.src = qrRenderedDataUrl;
     await new Promise<void>((res) => { qrImg.onload = () => res(); qrImg.onerror = () => res(); });
     ctx.drawImage(qrImg, Math.round((CW - qrPx) / 2), y, qrPx, qrPx);
-    y += qrPx + Math.round(CW * 0.03);
+    y += qrPx + Math.round(CW * 0.04);
 
     ctx.font = `400 ${urlH}px Lobster, cursive`;
     ctx.fillStyle = '#00B5AD';
