@@ -35,6 +35,7 @@ interface Order {
   status: string;
   tracking: Tracking | null;
   checkoutDraft: object | null;
+  printFilePath: string | null;
   createdAt: string;
 }
 
@@ -85,6 +86,11 @@ export default function OrdersPage() {
     if (!order.checkoutDraft) return;
     sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify(order.checkoutDraft));
     sessionStorage.removeItem('loofabag_order'); // clear cached order so a fresh one is placed
+    if (order.printFilePath) {
+      sessionStorage.setItem('loofabag_print_file_path', order.printFilePath);
+    } else {
+      sessionStorage.removeItem('loofabag_print_file_path');
+    }
     router.push('/my-loofas/create?resume=3&reorder=1');
   };
 

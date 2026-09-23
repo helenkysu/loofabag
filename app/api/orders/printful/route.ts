@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const {
-      stripeSessionId, productId, variantId: explicitVariantId, customerName, address, printFileUrl,
+      stripeSessionId, productId, variantId: explicitVariantId, customerName, address,
+      printFileUrl: incomingPrintFileUrl, storagePath,
       slug, productName, productImage, checkoutDraft,
     } = await req.json() as {
       stripeSessionId: string;
@@ -59,7 +60,8 @@ export async function POST(req: NextRequest) {
       variantId?: number;
       customerName: string;
       address: { country: string; state: string; address1: string; address2: string; city: string; zip: string };
-      printFileUrl: string;
+      printFileUrl?: string;
+      storagePath?: string; // reorder: existing storage path → generate fresh signed URL
       slug: string;
       productName: string;
       productImage?: string;
@@ -77,8 +79,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unknown product' }, { status: 400 });
     }
 
-    if (!printFileUrl) {
-      return NextResponse.json({ error: 'Missing print file URL' }, { status: 400 });
+    if (!incomingPrintFileUrl && !storagePath) {
+      return NextResponse.json({ error: 'Missing print file' }, { status: 400 });
+    }
+
+    // Resolve the URL to give Printful — either the uploaded URL or a fresh signed URL from storage
+    const supabaseAdmin = createAdminClient();
+    let printFileUrl = incomingPrintFileUrl ?? '';
+    const resolvedStoragePath = storagePath;
+    if (!printFileUrl && resolvedStoragePath) {
+      const { data } = await supabaseAdmin.storage
+        .from('loofabag-private')
+        .createSignedUrl(resolvedStoragePath, 3600);
+      if (!data?.signedUrl) {
+        return NextResponse.json({ error: 'Failed to create signed URL for stored print file' }, { status: 500 });
+      }
+      printFileUrl = data.signedUrl;
     }
 
     const variantId = explicitVariantId ?? await getAvailableVariantId(printfulProductId);
@@ -129,8 +145,7 @@ export async function POST(req: NextRequest) {
 
     const order = data.result;
 
-    const admin = createAdminClient();
-    const { error: dbError } = await admin.from('loofabag_orders').upsert({
+    const { error: dbError } = await supabaseAdmin.from('loofabag_orders').upsert({
       user_id: user.id,
       slug,
       product_id: productId,
@@ -146,6 +161,7 @@ export async function POST(req: NextRequest) {
       printful_order_number: `#${order.id}`,
       status: order.status,
       checkout_draft: checkoutDraft ?? null,
+      print_file_path: resolvedStoragePath ?? null,
     }, { onConflict: 'stripe_session_id' });
 
     if (dbError) {

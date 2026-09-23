@@ -27,6 +27,7 @@ function dbToClient(o: any) {
     status: o.status as string,
     tracking: (o.tracking ?? null) as Tracking | null,
     checkoutDraft: (o.checkout_draft ?? null) as object | null,
+    printFilePath: (o.print_file_path ?? null) as string | null,
     createdAt: o.created_at as string,
   };
 }

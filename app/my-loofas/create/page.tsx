@@ -439,7 +439,8 @@ export default function CreateLoofaPage() {
     const resume = params.get('resume');
 
     if (resume) {
-      // Post-Stripe restore path
+      // Post-Stripe restore path — clear any stale print file path for non-reorder flows
+      if (params.get('reorder') !== '1') sessionStorage.removeItem('loofabag_print_file_path');
       if (params.get('reorder') === '1') setIsReorder(true);
       const sessionId = params.get('session_id');
       if (sessionId) setStripeSessionId(sessionId);
@@ -855,30 +856,42 @@ export default function CreateLoofaPage() {
     setPlacingOrder(true);
     setOrderError('');
     try {
-      // 1. Generate the full 9.5" × 9.5" print file
-      const blob = await generatePrintFileBlob();
-      if (!blob) {
-        orderPlacedRef.current = false;
-        setOrderError('Could not generate print file. Please try again.');
-        setPlacingOrder(false);
-        return;
-      }
-
-      // 2. Upload via FormData to get a Supabase signed URL
-      const fd = new FormData();
-      fd.append('file', blob, 'design.png');
-      fd.append('sessionId', sessionId);
-      const uploadRes = await fetch('/api/upload/print-file', { method: 'POST', body: fd });
-      const uploadData = await uploadRes.json();
-      if (!uploadData.signedUrl) {
-        orderPlacedRef.current = false;
-        setOrderError(uploadData.error ?? 'Failed to upload print file. Please try again.');
-        setPlacingOrder(false);
-        return;
-      }
-
-      // 3. Place the Printful order with the signed URL
       const checkoutDraft = JSON.parse(sessionStorage.getItem('loofabag_checkout_draft') ?? 'null');
+
+      // Reorders: reuse the saved print file path from the original order (skip regeneration)
+      const savedPrintFilePath = sessionStorage.getItem('loofabag_print_file_path');
+      let printFileUrl: string | undefined;
+      let storagePath: string | undefined;
+
+      if (isReorder && savedPrintFilePath) {
+        storagePath = savedPrintFilePath;
+      } else {
+        // 1. Generate the full bag print file
+        const blob = await generatePrintFileBlob();
+        if (!blob) {
+          orderPlacedRef.current = false;
+          setOrderError('Could not generate print file. Please try again.');
+          setPlacingOrder(false);
+          return;
+        }
+
+        // 2. Upload to Supabase storage
+        const fd = new FormData();
+        fd.append('file', blob, 'design.png');
+        fd.append('sessionId', sessionId);
+        const uploadRes = await fetch('/api/upload/print-file', { method: 'POST', body: fd });
+        const uploadData = await uploadRes.json();
+        if (!uploadData.signedUrl) {
+          orderPlacedRef.current = false;
+          setOrderError(uploadData.error ?? 'Failed to upload print file. Please try again.');
+          setPlacingOrder(false);
+          return;
+        }
+        printFileUrl = uploadData.signedUrl;
+        storagePath = uploadData.path;
+      }
+
+      // 3. Place the Printful order
       const res = await fetch('/api/orders/printful', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -888,7 +901,8 @@ export default function CreateLoofaPage() {
           variantId: selectedVariantId ?? undefined,
           customerName: address.customerName,
           address,
-          printFileUrl: uploadData.signedUrl,
+          printFileUrl,
+          storagePath,
           slug,
           productName: PRODUCTS.find((p) => p.id === selectedProductId)?.name ?? '',
           productImage: getBagImageUrl(selectedProductId, availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label),
