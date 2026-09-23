@@ -2,6 +2,12 @@ import { NextRequest, NextResponse, after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+const PRODUCT_TO_PRINTFUL_ID: Record<string, number> = {
+  'eco-tote': 367,
+  'large-eco-tote': 378,
+  'premium-large-tote': 274,
+};
+
 interface Tracking {
   trackingNumber: string;
   trackingUrl: string | null;
@@ -87,26 +93,63 @@ export async function GET(req: NextRequest) {
             .eq('id', o.id);
         }
 
-        // If we have no stored preview, extract Printful's generated mockup URL
-        if (!o.front_preview_path) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const files: any[] = result.items?.[0]?.files ?? [];
-          const defaultFile = files.find((f: { type: string }) => f.type === 'default');
-          const printfulPreviewUrl: string | null = defaultFile?.preview_url ?? null;
-          if (printfulPreviewUrl) {
-            // Use the Printful CDN URL immediately for this response
-            o.printful_preview_url = printfulPreviewUrl;
-            // Download + store to Supabase after responding so future loads use our DB
+        // For orders with no preview yet, generate a real product mockup via Printful
+        // Mockup Generator API after responding (files[0].preview_url is a print file
+        // thumbnail, not a product photo — so we skip it and use the mockup generator).
+        if (!o.front_preview_path && o.print_file_path && o.variant_id) {
+          const pfProductId = PRODUCT_TO_PRINTFUL_ID[o.product_id];
+          if (pfProductId) {
             const orderId = o.id;
-            const printfulOrderId = o.printful_order_id;
+            const printFilePath: string = o.print_file_path;
+            const variantId: number = o.variant_id;
             after(async () => {
               try {
-                const imgRes = await fetch(printfulPreviewUrl);
-                const buffer = Buffer.from(await imgRes.arrayBuffer());
-                const storagePath = `print-files/printful-${printfulOrderId}/mockup-front.jpg`;
+                // Fresh signed URL so Printful can fetch the print file
+                const { data: urlData } = await admin.storage
+                  .from('loofabag-private')
+                  .createSignedUrl(printFilePath, 3600);
+                if (!urlData?.signedUrl) return;
+
+                const taskRes = await fetch(
+                  `https://api.printful.com/mockup-generator/create-task/${pfProductId}`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      variant_ids: [variantId],
+                      files: [{ placement: 'default', image_url: urlData.signedUrl }],
+                      format: 'jpg',
+                    }),
+                  },
+                );
+                const taskData = await taskRes.json();
+                if (taskData.code !== 200) return;
+                const taskKey = taskData.result?.task_key;
+                if (!taskKey) return;
+
+                let mockupUrl: string | null = null;
+                for (let i = 0; i < 7; i++) {
+                  await new Promise((r) => setTimeout(r, 2000));
+                  const pollRes = await fetch(
+                    `https://api.printful.com/mockup-generator/task?task_key=${taskKey}`,
+                    { headers: { Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}` } },
+                  );
+                  const pollData = await pollRes.json();
+                  if (pollData.result?.status === 'completed') {
+                    mockupUrl = pollData.result?.mockups?.[0]?.mockup_url ?? null;
+                    break;
+                  }
+                }
+                if (!mockupUrl) return;
+
+                const imgBuf = Buffer.from(await (await fetch(mockupUrl)).arrayBuffer());
+                const storagePath = `print-files/mockup-${orderId}/mockup-front.jpg`;
                 const { error } = await admin.storage
                   .from('loofabag-private')
-                  .upload(storagePath, buffer, { contentType: 'image/jpeg', upsert: true });
+                  .upload(storagePath, imgBuf, { contentType: 'image/jpeg', upsert: true });
                 if (!error) {
                   await admin
                     .from('loofabag_orders')
@@ -114,7 +157,7 @@ export async function GET(req: NextRequest) {
                     .eq('id', orderId);
                 }
               } catch (e) {
-                console.error('[orders] mockup cache failed:', e);
+                console.error('[orders] mockup gen failed:', e);
               }
             });
           }
@@ -146,9 +189,7 @@ export async function GET(req: NextRequest) {
       ]);
 
       if (printFileSignedUrl) extras.printFileSignedUrl = printFileSignedUrl;
-      // Fall back to Printful CDN URL when no stored preview exists yet
       if (frontPreviewSignedUrl) extras.frontPreviewSignedUrl = frontPreviewSignedUrl;
-      else if (o.printful_preview_url) extras.frontPreviewSignedUrl = o.printful_preview_url;
       if (backPreviewSignedUrl) extras.backPreviewSignedUrl = backPreviewSignedUrl;
 
       return { ...base, ...extras };
