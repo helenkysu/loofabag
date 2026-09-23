@@ -3519,7 +3519,18 @@ footer p {
   display: block;
 }
 
-/* Centered overlay column sitting in the bag body area */
+/* Canvas-rendered design image overlay — exact match to print output */
+.bag-preview-design-img {
+  position: absolute;
+  top: 58%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 62%;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+/* Centered overlay column sitting in the bag body area (universe/grass placeholders) */
 .bag-preview-overlay {
   position: absolute;
   top: 63%;

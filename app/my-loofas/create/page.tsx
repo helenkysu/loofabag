@@ -399,6 +399,7 @@ export default function CreateLoofaPage() {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [qrToken, setQrToken] = useState('');
   const [backDesign, setBackDesign] = useState<'blank' | 'duplicate' | 'universe' | 'grass'>('blank');
+  const [previewDataUrl, setPreviewDataUrl] = useState('');
   const [checkoutPreviewSide, setCheckoutPreviewSide] = useState<'front' | 'back'>('front');
   const [designStep, setDesignStep] = useState(1); // 1=Pick Bag, 2=Front, 3=Back, 4=Review
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -647,47 +648,85 @@ export default function CreateLoofaPage() {
     setFinished(true);
   };
 
-  // Shared helper: draw URL row (dotcom.jpg + /slug in Lobster teal) and bottom teal logo.
-  // Returns the y position after all drawn elements.
+  // Shared helper: draw URL row (plain text) and bottom teal logo.
   const drawUrlAndLogo = async (
     ctx: CanvasRenderingContext2D,
     cx: number,
     startY: number,
     designW: number,
-    dotcomImg: HTMLImageElement,
     tealLogoImg: HTMLImageElement,
   ): Promise<number> => {
     let y = startY;
-    const urlH   = Math.round(designW * 0.038);
-    const logoW  = Math.round(designW * 0.90);
-    const logoH  = Math.round(logoW * tealLogoImg.height / tealLogoImg.width);
-    const gap    = Math.round(urlH * 0.25);
+    const urlH  = Math.round(designW * 0.038);
+    const logoW = Math.round(designW * 0.90);
+    const logoH = Math.round(logoW * tealLogoImg.height / tealLogoImg.width);
 
-    // dotcom.jpg image
-    const dcW = Math.round(urlH * dotcomImg.width / dotcomImg.height);
-    // /<slug> in Lobster teal
-    const slugText = `/${slug || 'your-name'}`;
     ctx.font = `400 ${urlH}px Lobster, cursive`;
-    const slugW = ctx.measureText(slugText).width;
-    const totalW = dcW + gap + slugW;
-    const startX = Math.round(cx - totalW / 2);
-
-    ctx.drawImage(dotcomImg, startX, y, dcW, urlH);
     ctx.fillStyle = '#00B5AD';
-    ctx.textAlign = 'left';
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(slugText, startX + dcW + gap, y);
+    ctx.fillText(`loofabag.com/${slug || 'your-name'}`, cx, y);
     y += urlH + Math.round(designW * 0.05);
 
-    // loofabagteal.jpg
     ctx.drawImage(tealLogoImg, Math.round(cx - logoW / 2), y, logoW, logoH);
     y += logoH;
-
     return y;
   };
 
+  // Renders the design block to a small canvas using the same proportions as the
+  // main bag print file so the bag preview exactly matches what will be printed.
+  const renderPreviewBlock = async (): Promise<string> => {
+    if (!qrRenderedDataUrl) return '';
+    await ensureLobster();
+    const textLines = bagText ? bagText.split('\n') : [];
+
+    const CW = 500; // preview content width (px)
+    const textFS   = Math.round(CW * 0.10);
+    const qrPx     = Math.round(CW * 0.44);
+    const urlDesW  = Math.round(CW * 0.60);
+    const urlH     = Math.round(urlDesW * 0.038);
+
+    let h = 0;
+    if (textLines.length) h += textLines.length * Math.round(textFS * 1.2) + Math.round(CW * 0.04);
+    h += qrPx + Math.round(CW * 0.03);
+    h += urlH + Math.round(CW * 0.02);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = CW; canvas.height = h || CW;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, CW, h || CW);
+
+    let y = 0;
+    if (textLines.length) {
+      ctx.font = `900 ${textFS}px "Arial Black", Arial, sans-serif`;
+      ctx.fillStyle = '#000000';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for (const line of textLines) {
+        ctx.fillText(line, CW / 2, y);
+        y += Math.round(textFS * 1.2);
+      }
+      y += Math.round(CW * 0.04);
+    }
+
+    const qrImg = new Image();
+    qrImg.src = qrRenderedDataUrl;
+    await new Promise<void>((res) => { qrImg.onload = () => res(); qrImg.onerror = () => res(); });
+    ctx.drawImage(qrImg, Math.round((CW - qrPx) / 2), y, qrPx, qrPx);
+    y += qrPx + Math.round(CW * 0.03);
+
+    ctx.font = `400 ${urlH}px Lobster, cursive`;
+    ctx.fillStyle = '#00B5AD';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`loofabag.com/${slug || 'your-name'}`, CW / 2, y);
+
+    return canvas.toDataURL('image/png');
+  };
+
   const downloadDesignPNG = async () => {
-    const [dotcomImg, tealLogoImg] = await Promise.all([loadImg('/dotcom.jpg'), loadImg('/loofabagteal.jpg')]);
+    const tealLogoImg = await loadImg('/loofabagteal.jpg');
     await ensureLobster();
 
     const W  = Math.round(300 * 9.5); // 2850 px — 9.5" at 300 DPI
@@ -736,7 +775,7 @@ export default function CreateLoofaPage() {
       y += qrPx + Math.round(W * 0.04);
     }
 
-    await drawUrlAndLogo(ctx, cx, y, W, dotcomImg, tealLogoImg);
+    await drawUrlAndLogo(ctx, cx, y, W, tealLogoImg);
 
     canvas.toBlob((blob) => {
       if (!blob) return;
@@ -752,7 +791,7 @@ export default function CreateLoofaPage() {
   // Layout per Printful spec: front face (top half) + back face ROTATED 180deg (bottom half).
   const downloadMainBagTemplate = async () => {
     const design = qrDesignRef.current;
-    const [dotcomImg, tealLogoImg] = await Promise.all([loadImg('/dotcom.jpg'), loadImg('/loofabagteal.jpg')]);
+    const tealLogoImg = await loadImg('/loofabagteal.jpg');
     await ensureLobster();
 
     const W = 3150;   // 21" x 150 DPI
@@ -807,20 +846,13 @@ export default function CreateLoofaPage() {
         y += qrSize + Math.round(contentW * 0.03);
       }
 
-      // URL row: dotcom.jpg + /slug in Lobster teal
-      const urlH   = Math.round(urlDesignW * 0.038);
-      const dcW    = Math.round(urlH * dotcomImg.width / dotcomImg.height);
-      const urlGap = Math.round(urlH * 0.25);
-      const slugTxt = `/${slug || 'your-name'}`;
+      // URL row: plain text loofabag.com/slug in Lobster teal
+      const urlH = Math.round(urlDesignW * 0.038);
       ctx.font = `400 ${urlH}px Lobster, cursive`;
-      const slugPx = ctx.measureText(slugTxt).width;
-      const rowW   = dcW + urlGap + slugPx;
-      const rowX   = Math.round(drawCx - rowW / 2);
-      ctx.drawImage(dotcomImg, rowX, y, dcW, urlH);
       ctx.fillStyle    = '#00B5AD';
-      ctx.textAlign    = 'left';
+      ctx.textAlign    = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillText(slugTxt, rowX + dcW + urlGap, y);
+      ctx.fillText(`loofabag.com/${slug || 'your-name'}`, drawCx, y);
       y += urlH + Math.round(urlDesignW * 0.05);
 
       // Teal Loofabag logo — front only (bottom of bag branding, not on back)
@@ -890,7 +922,7 @@ export default function CreateLoofaPage() {
     const design = qrDesignRef.current ?? restoredQrDesign;
     if (!design) return null;
 
-    const [dotcomImg, tealLogoImg] = await Promise.all([loadImg('/dotcom.jpg'), loadImg('/loofabagteal.jpg')]);
+    const tealLogoImg = await loadImg('/loofabagteal.jpg');
     await ensureLobster();
 
     const W  = Math.round(300 * 9.5); // 2850 px = 9.5" at 300 DPI
@@ -936,7 +968,7 @@ export default function CreateLoofaPage() {
     ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
     y += qrPx + Math.round(W * 0.04);
 
-    await drawUrlAndLogo(ctx, cx, y, W, dotcomImg, tealLogoImg);
+    await drawUrlAndLogo(ctx, cx, y, W, tealLogoImg);
 
     return new Promise((resolve) => canvas.toBlob((b) => resolve(b), 'image/png'));
   };
@@ -1000,6 +1032,12 @@ export default function CreateLoofaPage() {
       setPlacingOrder(false);
     }
   };
+
+  // Re-render the bag preview canvas whenever the QR, text or slug changes
+  useEffect(() => {
+    renderPreviewBlock().then((url) => setPreviewDataUrl(url));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qrRenderedDataUrl, bagText, slug]);
 
   // Auto-place order when arriving at step 4 after Stripe payment
   // Fetch availability + prices once when reaching the design step
@@ -1214,54 +1252,36 @@ export default function CreateLoofaPage() {
                 const BagFrontOverlay = (
                   <div className="bag-preview-overlay-wrap">
                     <img src={bagImageUrl!} alt={selectedProduct.name} className="bag-preview-img" />
-                    <div className="bag-preview-overlay">
-                      {bagText && <div className="bag-preview-text-overlay">{bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}</div>}
-                      {qrRenderedDataUrl && (
-                        <>
-                          <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
-                          <div className="bag-preview-url-overlay">
-                            <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
-                            <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    {previewDataUrl && (
+                      <img src={previewDataUrl} alt="design preview" className="bag-preview-design-img" />
+                    )}
                   </div>
                 );
 
                 const BagBackOverlay = (
                   <div className="bag-preview-overlay-wrap">
                     <img src={bagImageUrl!} alt={selectedProduct.name} className="bag-preview-img" />
-                    <div className="bag-preview-overlay">
-                      {backDesign === 'duplicate' && (
-                        <>
-                          {bagText && <div className="bag-preview-text-overlay">{bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}</div>}
-                          {qrRenderedDataUrl && (
-                            <>
-                              <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
-                              <div className="bag-preview-url-overlay">
-                                <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
-                                <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
-                              </div>
-                            </>
-                          )}
-                        </>
-                      )}
-                      {backDesign === 'universe' && (
+                    {backDesign === 'duplicate' && previewDataUrl && (
+                      <img src={previewDataUrl} alt="design preview" className="bag-preview-design-img" />
+                    )}
+                    {backDesign === 'universe' && (
+                      <div className="bag-preview-overlay">
                         <div className="back-placeholder back-placeholder-universe">
                           <span className="back-placeholder-emoji">🌌</span>
                           <span className="back-placeholder-text">Universe do your thing</span>
                           <span className="back-placeholder-sub">Design coming soon</span>
                         </div>
-                      )}
-                      {backDesign === 'grass' && (
+                      </div>
+                    )}
+                    {backDesign === 'grass' && (
+                      <div className="bag-preview-overlay">
                         <div className="back-placeholder back-placeholder-grass">
                           <span className="back-placeholder-emoji">🌿</span>
                           <span className="back-placeholder-text">I&apos;m touching grass</span>
                           <span className="back-placeholder-sub">Design coming soon</span>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 );
 
@@ -1668,58 +1688,28 @@ export default function CreateLoofaPage() {
                         {checkoutBagUrl && (
                           <div className="bag-preview-overlay-wrap">
                             <img src={checkoutBagUrl} alt={checkoutProduct?.name} className="bag-preview-img" />
-                            {checkoutPreviewSide === 'front' && (
+                            {checkoutPreviewSide === 'front' && previewDataUrl && (
+                              <img src={previewDataUrl} alt="design preview" className="bag-preview-design-img" />
+                            )}
+                            {checkoutPreviewSide === 'back' && backDesign === 'duplicate' && previewDataUrl && (
+                              <img src={previewDataUrl} alt="design preview" className="bag-preview-design-img" />
+                            )}
+                            {checkoutPreviewSide === 'back' && backDesign === 'universe' && (
                               <div className="bag-preview-overlay">
-                                {bagText && (
-                                  <div className="bag-preview-text-overlay">
-                                    {bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}
-                                  </div>
-                                )}
-                                {qrRenderedDataUrl && (
-                                  <>
-                                    <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
-                                    <div className="bag-preview-url-overlay">
-                              <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
-                              <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
-                            </div>
-                                  </>
-                                )}
+                                <div className="back-placeholder back-placeholder-universe">
+                                  <span className="back-placeholder-emoji">🌌</span>
+                                  <span className="back-placeholder-text">Universe do your thing</span>
+                                  <span className="back-placeholder-sub">Design coming soon</span>
+                                </div>
                               </div>
                             )}
-                            {checkoutPreviewSide === 'back' && (
+                            {checkoutPreviewSide === 'back' && backDesign === 'grass' && (
                               <div className="bag-preview-overlay">
-                                {backDesign === 'duplicate' && (
-                                  <>
-                                    {bagText && (
-                                      <div className="bag-preview-text-overlay">
-                                        {bagText.split('\n').map((line, i) => <div key={i}>{line}</div>)}
-                                      </div>
-                                    )}
-                                    {qrRenderedDataUrl && (
-                                      <>
-                                        <img src={qrRenderedDataUrl} alt="QR" className="bag-preview-qr-overlay" />
-                                        <div className="bag-preview-url-overlay">
-                              <img src="/dotcom.jpg" alt="loofabag.com" className="bag-preview-url-logo" />
-                              <span className="bag-preview-url-slug">/{slug || 'your-name'}</span>
-                            </div>
-                                      </>
-                                    )}
-                                  </>
-                                )}
-                                {backDesign === 'universe' && (
-                                  <div className="back-placeholder back-placeholder-universe">
-                                    <span className="back-placeholder-emoji">🌌</span>
-                                    <span className="back-placeholder-text">Universe do your thing</span>
-                                    <span className="back-placeholder-sub">Design coming soon</span>
-                                  </div>
-                                )}
-                                {backDesign === 'grass' && (
-                                  <div className="back-placeholder back-placeholder-grass">
-                                    <span className="back-placeholder-emoji">🌿</span>
-                                    <span className="back-placeholder-text">I&apos;m touching grass</span>
-                                    <span className="back-placeholder-sub">Design coming soon</span>
-                                  </div>
-                                )}
+                                <div className="back-placeholder back-placeholder-grass">
+                                  <span className="back-placeholder-emoji">🌿</span>
+                                  <span className="back-placeholder-text">I&apos;m touching grass</span>
+                                  <span className="back-placeholder-sub">Design coming soon</span>
+                                </div>
                               </div>
                             )}
                           </div>
