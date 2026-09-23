@@ -3522,7 +3522,7 @@ footer p {
 /* Canvas-rendered design image overlay — exact match to print output */
 .bag-preview-design-img {
   position: absolute;
-  top: 58%;
+  top: 65%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 62%;
