@@ -851,6 +851,40 @@ export default function CreateLoofaPage() {
     document.body.removeChild(a);
   };
 
+  // Composites the bag image + design overlay onto a canvas — matches the CSS preview layout
+  // (design centered at 65% from top, 62% wide, multiply blend mode).
+  const renderBagMockupCanvas = async (
+    bagImageUrl: string,
+    design: QRDesignOptions,
+    canvasW = 600,
+  ): Promise<HTMLCanvasElement | null> => {
+    try {
+      const bagImg = new Image();
+      bagImg.crossOrigin = 'anonymous';
+      bagImg.src = bagImageUrl;
+      await new Promise<void>((res, rej) => { bagImg.onload = () => res(); bagImg.onerror = () => rej(); });
+
+      const canvasH = Math.round(canvasW * (bagImg.naturalHeight / bagImg.naturalWidth));
+      const canvas = document.createElement('canvas');
+      canvas.width = canvasW; canvas.height = canvasH;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(bagImg, 0, 0, canvasW, canvasH);
+
+      const designW = Math.round(canvasW * 0.62);
+      const designCanvas = await renderDesignCanvas(designW, { qrDesign: design });
+      if (designCanvas) {
+        const dh = designCanvas.height;
+        const dx = Math.round((canvasW - designW) / 2);
+        const centerY = Math.round(canvasH * 0.65);
+        const dy = Math.round(centerY - dh / 2);
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.drawImage(designCanvas, dx, dy, designW, dh);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      return canvas;
+    } catch { return null; }
+  };
+
   const generatePrintFileBlob = async (): Promise<Blob | null> => {
     const canvas = await buildMainBagTemplateCanvas();
     if (!canvas) return null;
@@ -869,8 +903,9 @@ export default function CreateLoofaPage() {
       let printFileUrl: string | undefined;
       let storagePath: string | undefined;
 
-      let frontPreviewPath: string | undefined;
-      let backPreviewPath: string | undefined;
+      // Preview paths were uploaded before the Stripe redirect in handleCheckout
+      let frontPreviewPath: string | undefined = checkoutDraft?.previewFrontPath ?? undefined;
+      let backPreviewPath: string | undefined = checkoutDraft?.previewBackPath ?? undefined;
 
       if (isReorder && savedPrintFilePath) {
         storagePath = savedPrintFilePath;
@@ -879,7 +914,11 @@ export default function CreateLoofaPage() {
         const blob = await generatePrintFileBlob();
         if (!blob) {
           orderPlacedRef.current = false;
-          setOrderError('Could not generate print file. Please try again.');
+          setOrderError(
+            isReorder
+              ? 'Your original design could not be loaded. Please go back to step 2 and redo your design before placing the order.'
+              : 'Could not generate print file. Please try again.',
+          );
           setPlacingOrder(false);
           return;
         }
@@ -899,27 +938,6 @@ export default function CreateLoofaPage() {
         }
         printFileUrl = uploadData.signedUrl;
         storagePath = uploadData.path;
-
-        // 3. Upload front preview — use qrDesignRef directly (same as print file) so it
-        //    works even when qrRenderedDataUrl hasn't resolved yet after the Stripe redirect
-        try {
-          const design = qrDesignRef.current;
-          const previewCanvas = design
-            ? await renderDesignCanvas(500, { qrDesign: design })
-            : null;
-          const freshPreviewUrl = previewCanvas?.toDataURL('image/jpeg') ?? previewDataUrl;
-          if (freshPreviewUrl) {
-            const previewBlob = await fetch(freshPreviewUrl).then((r) => r.blob());
-            const pfd = new FormData();
-            pfd.append('file', previewBlob, 'preview-front.jpg');
-            pfd.append('sessionId', sessionId);
-            pfd.append('fileType', 'preview-front');
-            const pRes = await fetch('/api/upload/print-file', { method: 'POST', body: pfd });
-            const pData = await pRes.json();
-            if (pData.path) frontPreviewPath = pData.path;
-            if (backDesign === 'duplicate' && pData.path) backPreviewPath = pData.path;
-          }
-        } catch { /* non-fatal */ }
       }
 
       // 4. Place the Printful order
@@ -1056,6 +1074,35 @@ export default function CreateLoofaPage() {
     // In reorder mode qrDesignRef is null (QRDesigner not rendered at step 3), fall back to restoredQrDesign
     const effectiveDesign = qrDesignRef.current ?? restoredQrDesign;
     const selectedVariantLabel = availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label ?? null;
+
+    // Generate and upload bag mockup previews NOW (design is in memory, bag image URL is known).
+    // Paths go into the draft so placeOrder can use them after the Stripe redirect without
+    // needing to re-render. Uses loofaIdRef as a stable pre-Stripe storage key.
+    let preCheckoutFrontPath: string | null = null;
+    let preCheckoutBackPath: string | null = null;
+    try {
+      const bagImageUrl = getBagImageUrl(selectedProductId, selectedVariantLabel ?? restoredVariantLabel);
+      if (effectiveDesign && bagImageUrl) {
+        const uploadMockup = async (canvas: HTMLCanvasElement | null, type: string): Promise<string | null> => {
+          if (!canvas) return null;
+          const blob = await new Promise<Blob | null>((res) => canvas.toBlob((b) => res(b), 'image/jpeg', 0.9));
+          if (!blob) return null;
+          const fd = new FormData();
+          fd.append('file', blob, `${type}.jpg`);
+          fd.append('sessionId', loofaIdRef.current);
+          fd.append('fileType', type);
+          const r = await fetch('/api/upload/print-file', { method: 'POST', body: fd });
+          const d = await r.json();
+          return d.path ?? null;
+        };
+        const frontCanvas = await renderBagMockupCanvas(bagImageUrl, effectiveDesign);
+        preCheckoutFrontPath = await uploadMockup(frontCanvas, 'preview-front');
+        if (backDesign === 'duplicate') {
+          preCheckoutBackPath = preCheckoutFrontPath; // same design on both sides
+        }
+      }
+    } catch { /* non-fatal — preview is cosmetic */ }
+
     sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify({
       name,
       selectedProductId,
@@ -1068,6 +1115,8 @@ export default function CreateLoofaPage() {
       // logoFile is a File object (not serializable) but logoDataUrl is a base64 string
       qrDesign: effectiveDesign ? { fgColor: effectiveDesign.fgColor, bgColor: effectiveDesign.bgColor, gradient: effectiveDesign.gradient, shape: effectiveDesign.shape, logoFile: null, logoDataUrl: effectiveDesign.logoDataUrl ?? null } : null,
       reorder: isReorder,
+      previewFrontPath: preCheckoutFrontPath,
+      previewBackPath: preCheckoutBackPath,
     }));
     const selectedRate = shippingRates.find((r) => r.id === selectedRateId);
     try {

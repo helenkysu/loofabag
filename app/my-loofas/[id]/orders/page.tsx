@@ -98,7 +98,11 @@ export default function OrdersPage() {
     } else {
       sessionStorage.removeItem('loofabag_print_file_path');
     }
-    router.push('/my-loofas/create?resume=3&reorder=1');
+    // If there's no saved print file AND no qrDesign in the draft, we can't generate a print
+    // file at step 3 — send user back to step 2 so they can redo the design.
+    const draft = order.checkoutDraft as Record<string, unknown>;
+    const canGenerate = !!order.printFilePath || !!draft.qrDesign;
+    router.push(canGenerate ? '/my-loofas/create?resume=3&reorder=1' : '/my-loofas/create?resume=2&reorder=1');
   };
 
   if (notFound) {

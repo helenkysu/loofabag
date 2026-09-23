@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -86,6 +86,39 @@ export async function GET(req: NextRequest) {
             .update({ status: result.status, tracking, updated_at: new Date().toISOString() })
             .eq('id', o.id);
         }
+
+        // If we have no stored preview, extract Printful's generated mockup URL
+        if (!o.front_preview_path) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const files: any[] = result.items?.[0]?.files ?? [];
+          const defaultFile = files.find((f: { type: string }) => f.type === 'default');
+          const printfulPreviewUrl: string | null = defaultFile?.preview_url ?? null;
+          if (printfulPreviewUrl) {
+            // Use the Printful CDN URL immediately for this response
+            o.printful_preview_url = printfulPreviewUrl;
+            // Download + store to Supabase after responding so future loads use our DB
+            const orderId = o.id;
+            const printfulOrderId = o.printful_order_id;
+            after(async () => {
+              try {
+                const imgRes = await fetch(printfulPreviewUrl);
+                const buffer = Buffer.from(await imgRes.arrayBuffer());
+                const storagePath = `print-files/printful-${printfulOrderId}/mockup-front.jpg`;
+                const { error } = await admin.storage
+                  .from('loofabag-private')
+                  .upload(storagePath, buffer, { contentType: 'image/jpeg', upsert: true });
+                if (!error) {
+                  await admin
+                    .from('loofabag_orders')
+                    .update({ front_preview_path: storagePath })
+                    .eq('id', orderId);
+                }
+              } catch (e) {
+                console.error('[orders] mockup cache failed:', e);
+              }
+            });
+          }
+        }
       } catch (err) {
         console.error('[orders] Failed to refresh from Printful:', err);
       }
@@ -113,7 +146,9 @@ export async function GET(req: NextRequest) {
       ]);
 
       if (printFileSignedUrl) extras.printFileSignedUrl = printFileSignedUrl;
+      // Fall back to Printful CDN URL when no stored preview exists yet
       if (frontPreviewSignedUrl) extras.frontPreviewSignedUrl = frontPreviewSignedUrl;
+      else if (o.printful_preview_url) extras.frontPreviewSignedUrl = o.printful_preview_url;
       if (backPreviewSignedUrl) extras.backPreviewSignedUrl = backPreviewSignedUrl;
 
       return { ...base, ...extras };

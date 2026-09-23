@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import Stripe from 'stripe';
@@ -30,6 +30,72 @@ function isVariantInStock(v: any): boolean {
 
 // Upload pocket1design.jpg from public/ to Supabase and return a fresh signed URL.
 // This ensures Printful always gets the current file regardless of deployment state.
+// Calls the Printful Mockup Generator API, downloads the result, and stores it in Supabase.
+// Runs in parallel with order creation; accepts up to ~14 s for Printful to render.
+async function generateAndStoreMockup(
+  printfulProductId: number,
+  variantId: number,
+  printFileUrl: string,
+  supabase: ReturnType<typeof createAdminClient>,
+  sessionId: string,
+): Promise<string | null> {
+  try {
+    // Start the mockup task
+    const taskRes = await fetch(
+      `https://api.printful.com/mockup-generator/create-task/${printfulProductId}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          variant_ids: [variantId],
+          files: [{ placement: 'default', image_url: printFileUrl }],
+          format: 'jpg',
+        }),
+      },
+    );
+    const taskData = await taskRes.json();
+    if (taskData.code !== 200) {
+      console.warn('[mockup] create-task error:', taskData.error?.message);
+      return null;
+    }
+    const taskKey = taskData.result?.task_key;
+    if (!taskKey) return null;
+
+    // Poll until completed or 7 attempts × 2 s = 14 s max
+    let mockupUrl: string | null = null;
+    for (let i = 0; i < 7; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const pollRes = await fetch(
+        `https://api.printful.com/mockup-generator/task?task_key=${taskKey}`,
+        { headers: { Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}` } },
+      );
+      const pollData = await pollRes.json();
+      if (pollData.result?.status === 'completed') {
+        mockupUrl = pollData.result?.mockups?.[0]?.mockup_url ?? null;
+        break;
+      }
+    }
+    if (!mockupUrl) { console.warn('[mockup] timed out waiting for Printful mockup'); return null; }
+
+    // Download the CDN image and re-upload to our private Supabase bucket
+    const imgRes = await fetch(mockupUrl);
+    const buffer = Buffer.from(await imgRes.arrayBuffer());
+    const storagePath = `print-files/${sessionId}/mockup-front.jpg`;
+    const { error } = await supabase.storage
+      .from('loofabag-private')
+      .upload(storagePath, buffer, { contentType: 'image/jpeg', upsert: true });
+    if (error) { console.error('[mockup] supabase upload error:', error.message); return null; }
+
+    return storagePath;
+  } catch (err) {
+    console.error('[mockup] error:', err);
+    return null;
+  }
+}
+
 async function getPocketFileUrl(supabase: ReturnType<typeof createAdminClient>): Promise<string | null> {
   try {
     const filePath = join(process.cwd(), 'public', 'pocket1design.jpg');
@@ -150,8 +216,7 @@ export async function POST(req: NextRequest) {
     if (address.address2) recipient.address2 = address.address2;
     if (address.state) recipient.state_code = address.state;
 
-    // confirm: false → draft order (test mode, not fulfilled until confirmed)
-    const res = await fetch('https://api.printful.com/orders', {
+    const orderRes = await fetch('https://api.printful.com/orders', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}`,
@@ -171,7 +236,7 @@ export async function POST(req: NextRequest) {
       }),
     });
 
-    const data = await res.json();
+    const data = await orderRes.json();
 
     if (data.code !== 200) {
       console.error('[orders/printful] Printful error:', data);
@@ -182,6 +247,28 @@ export async function POST(req: NextRequest) {
     }
 
     const order = data.result;
+
+    const resolvedFrontPreviewPath = frontPreviewPath ?? null;
+    const resolvedBackPreviewPath = backPreviewPath ?? null;
+
+    // Generate Printful mockup after responding — don't block order confirmation
+    if (!resolvedFrontPreviewPath) {
+      after(async () => {
+        try {
+          const mockupPath = await generateAndStoreMockup(
+            printfulProductId, variantId, printFileUrl, supabaseAdmin, stripeSessionId,
+          );
+          if (mockupPath) {
+            await supabaseAdmin
+              .from('loofabag_orders')
+              .update({ front_preview_path: mockupPath })
+              .eq('stripe_session_id', stripeSessionId);
+          }
+        } catch (err) {
+          console.error('[after] mockup generation failed:', err);
+        }
+      });
+    }
 
     const baseRow = {
       user_id: user.id,
@@ -205,8 +292,8 @@ export async function POST(req: NextRequest) {
       {
         ...baseRow,
         print_file_path: resolvedStoragePath ?? null,
-        front_preview_path: frontPreviewPath ?? null,
-        back_preview_path: backPreviewPath ?? null,
+        front_preview_path: resolvedFrontPreviewPath,
+        back_preview_path: resolvedBackPreviewPath,
         back_design: backDesign ?? null,
       },
       { onConflict: 'stripe_session_id' },
@@ -239,7 +326,7 @@ export async function POST(req: NextRequest) {
       variantIdUsed: variantId,
       explicitVariantIdReceived: explicitVariantId ?? null,
       printFilePath: resolvedStoragePath ?? null,
-      frontPreviewPath: frontPreviewPath ?? null,
+      frontPreviewPath: resolvedFrontPreviewPath,
       dbError: dbError ? { message: dbError.message, code: dbError.code } : undefined,
     });
   } catch (err) {
