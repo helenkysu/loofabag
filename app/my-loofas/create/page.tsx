@@ -682,7 +682,7 @@ export default function CreateLoofaPage() {
 
     const CW = 500; // preview content width (px)
     const textFS   = Math.round(CW * 0.10);
-    const qrPx     = Math.round(CW * 0.44);
+    const qrPx     = Math.round(CW * 0.55);
     const urlDesW  = Math.round(CW * 0.60);
     const urlH     = Math.round(urlDesW * 0.038);
 
