@@ -661,8 +661,8 @@ export default function CreateLoofaPage() {
     const textLines = bagText ? bagText.split('\n') : [];
     const cx     = W / 2;
     const textFS = Math.round(W * 0.08);  // 8% — larger text per user feedback
-    const qrPx   = Math.round(W * 0.55);
-    const urlH   = Math.round(W * 0.065);
+    const qrPx   = Math.round(W * 0.62);
+    const urlH   = Math.round(W * 0.08);
 
     let tealLogo: HTMLImageElement | null = null;
     let logoW = 0, logoH = 0;
