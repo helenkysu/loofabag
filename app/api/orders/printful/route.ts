@@ -37,11 +37,15 @@ async function getAvailableVariantId(printfulProductId: number): Promise<number 
   const variants: any[] = data.result?.variants ?? [];
   const inStock = variants.filter(isVariantInStock);
 
-  // Prefer light colours (Oyster, Natural, White) so the print design shows well
+  // Prefer light colours so the print design shows well; never fall back to black/dark
   const preferred = inStock.find((v) =>
     /oyster|natural|white|beige|cream/i.test(v.name ?? ''),
   );
-  return preferred?.id ?? inStock[0]?.id ?? null;
+  if (preferred) return preferred.id;
+
+  // Skip black/dark variants
+  const nonDark = inStock.filter((v) => !/black|dark|navy|charcoal/i.test(v.name ?? ''));
+  return nonDark[0]?.id ?? inStock[0]?.id ?? null;
 }
 
 export async function POST(req: NextRequest) {
@@ -145,7 +149,7 @@ export async function POST(req: NextRequest) {
 
     const order = data.result;
 
-    const { error: dbError } = await supabaseAdmin.from('loofabag_orders').upsert({
+    const baseRow = {
       user_id: user.id,
       slug,
       product_id: productId,
@@ -161,8 +165,21 @@ export async function POST(req: NextRequest) {
       printful_order_number: `#${order.id}`,
       status: order.status,
       checkout_draft: checkoutDraft ?? null,
-      print_file_path: resolvedStoragePath ?? null,
-    }, { onConflict: 'stripe_session_id' });
+    };
+
+    let { error: dbError } = await supabaseAdmin.from('loofabag_orders').upsert(
+      { ...baseRow, print_file_path: resolvedStoragePath ?? null },
+      { onConflict: 'stripe_session_id' },
+    );
+
+    // Fallback: if print_file_path column doesn't exist yet (migration pending), save without it
+    if (dbError?.message?.includes('print_file_path')) {
+      console.warn('[orders/printful] print_file_path column missing — saving without it');
+      ({ error: dbError } = await supabaseAdmin.from('loofabag_orders').upsert(
+        baseRow,
+        { onConflict: 'stripe_session_id' },
+      ));
+    }
 
     if (dbError) {
       console.error('[orders/printful] Failed to persist order:', dbError);
