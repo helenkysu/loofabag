@@ -997,7 +997,8 @@ export default function CreateLoofaPage() {
   const handleCheckout = async () => {
     setCheckingOut(true);
     // Save draft so we can restore after redirect
-    const design = qrDesignRef.current;
+    // In reorder mode qrDesignRef is null (QRDesigner not rendered at step 3), fall back to restoredQrDesign
+    const effectiveDesign = qrDesignRef.current ?? restoredQrDesign;
     sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify({
       name,
       selectedProductId,
@@ -1005,7 +1006,7 @@ export default function CreateLoofaPage() {
       address,
       qrToken,
       // Save design options (logoFile is a File object — can't be serialized)
-      qrDesign: design ? { fgColor: design.fgColor, bgColor: design.bgColor, gradient: design.gradient, shape: design.shape, logoFile: null } : null,
+      qrDesign: effectiveDesign ? { fgColor: effectiveDesign.fgColor, bgColor: effectiveDesign.bgColor, gradient: effectiveDesign.gradient, shape: effectiveDesign.shape, logoFile: null } : null,
       reorder: isReorder,
     }));
     const selectedRate = shippingRates.find((r) => r.id === selectedRateId);
