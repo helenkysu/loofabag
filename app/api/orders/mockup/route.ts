@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+// Mockup polling can take up to 20 s — raise the Vercel function limit
+export const maxDuration = 60;
+
 const PRODUCT_TO_PRINTFUL_ID: Record<string, number> = {
   'eco-tote': 367,
   'large-eco-tote': 378,
@@ -72,6 +75,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create mockup task — Printful requires a public image_url (not a file id)
+    // Tote bags use placement 'front', not 'default' (which is for order file types)
     const taskRes = await fetch(
       `https://api.printful.com/mockup-generator/create-task/${pfProductId}`,
       {
@@ -82,12 +86,13 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           variant_ids: [order.variant_id],
-          files: [{ placement: 'default', image_url: printFileImageUrl }],
+          files: [{ placement: 'front', image_url: printFileImageUrl }],
           format: 'jpg',
         }),
       },
     );
     const taskData = await taskRes.json();
+    console.log('[mockup] create-task response:', JSON.stringify(taskData).slice(0, 300));
     if (taskData.code !== 200) {
       console.error('[mockup] create-task error:', taskData);
       return NextResponse.json({ error: taskData.error?.message ?? 'Mockup task failed' }, { status: 500 });

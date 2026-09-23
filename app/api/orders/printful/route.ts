@@ -51,7 +51,7 @@ async function generateAndStoreMockup(
         },
         body: JSON.stringify({
           variant_ids: [variantId],
-          files: [{ placement: 'default', image_url: printFileUrl }],
+          files: [{ placement: 'front', image_url: printFileUrl }],
           format: 'jpg',
         }),
       },
