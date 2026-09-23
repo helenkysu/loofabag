@@ -789,8 +789,8 @@ export default function CreateLoofaPage() {
         ctx.save();
         ctx.translate(W, BACK_BOT);
         ctx.rotate(Math.PI);
-        // 5% base margin from BACK_BOT, shifted 90px higher in original space (+90 in rotated space)
-        ctx.drawImage(designCanvas, Math.round(cx - contentW / 2), Math.round(BACK_H * 0.05) + 90, contentW, dh);
+        // 5% base margin from BACK_BOT, shifted 105px higher in original space (+105 in rotated space)
+        ctx.drawImage(designCanvas, Math.round(cx - contentW / 2), Math.round(BACK_H * 0.05) + 105, contentW, dh);
         ctx.restore();
       }
     }
