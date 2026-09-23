@@ -236,6 +236,8 @@ export async function POST(req: NextRequest) {
       orderId: order.id,
       orderNumber: `#${order.id}`,
       status: order.status,
+      variantIdUsed: variantId,
+      explicitVariantIdReceived: explicitVariantId ?? null,
       printFilePath: resolvedStoragePath ?? null,
       frontPreviewPath: frontPreviewPath ?? null,
       dbError: dbError ? { message: dbError.message, code: dbError.code } : undefined,

@@ -1247,9 +1247,11 @@ export default function CreateLoofaPage() {
                                 disabled={oos}
                                 className={`product-card${selectedProductId === product.id ? ' selected' : ''}${oos ? ' product-card-oos' : ''}`}
                                 onClick={() => {
-                                  setSelectedProductId(product.id);
-                                  const def = availability[product.id]?.defaultVariantId ?? null;
-                                  setSelectedVariantId(def);
+                                  if (product.id !== selectedProductId) {
+                                    setSelectedProductId(product.id);
+                                    const def = availability[product.id]?.defaultVariantId ?? null;
+                                    setSelectedVariantId(def);
+                                  }
                                 }}
                               >
                                 <div className="product-card-img-wrap">
@@ -1426,6 +1428,12 @@ export default function CreateLoofaPage() {
                       <span>Product:</span>
                       <strong>{checkoutProduct?.name}</strong>
                     </div>
+                    {checkoutVariantLabel && (
+                      <div className="summary-item">
+                        <span>Handle colour:</span>
+                        <strong>{checkoutVariantLabel}</strong>
+                      </div>
+                    )}
                   </div>
 
                   {/* Shipping address */}
