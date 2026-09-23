@@ -648,136 +648,97 @@ export default function CreateLoofaPage() {
     setFinished(true);
   };
 
-  // Shared helper: draw URL row (plain text) and bottom teal logo.
-  const drawUrlAndLogo = async (
-    ctx: CanvasRenderingContext2D,
-    cx: number,
-    startY: number,
-    designW: number,
-    tealLogoImg: HTMLImageElement,
-  ): Promise<number> => {
-    let y = startY;
-    const urlH  = Math.round(designW * 0.065);
-    const logoW = Math.round(designW * 0.90);
-    const logoH = Math.round(logoW * tealLogoImg.height / tealLogoImg.width);
-
-    ctx.font = `400 ${urlH}px Lobster, cursive`;
-    ctx.fillStyle = '#00B5AD';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`loofabag.com/${slug || 'your-name'}`, cx, y);
-    y += urlH + Math.round(designW * 0.05);
-
-    ctx.drawImage(tealLogoImg, Math.round(cx - logoW / 2), y, logoW, logoH);
-    y += logoH;
-    return y;
-  };
-
-  // Renders the design block to a small canvas using the same proportions as the
-  // main bag print file so the bag preview exactly matches what will be printed.
-  const renderPreviewBlock = async (): Promise<string> => {
-    if (!qrRenderedDataUrl) return '';
+  // Single source-of-truth renderer for the design block (text + QR + URL [+ logo]).
+  // Preview calls with W=500 and qrDataUrl; print calls with W=2850 and qrDesign to
+  // re-render the QR at full resolution. Both use identical ratios → preview = print.
+  const renderDesignCanvas = async (
+    W: number,
+    opts: { qrDataUrl?: string; qrDesign?: QRDesignOptions; includeLogo?: boolean } = {},
+  ): Promise<HTMLCanvasElement | null> => {
+    if (!opts.qrDataUrl && !opts.qrDesign) return null;
     await ensureLobster();
+
     const textLines = bagText ? bagText.split('\n') : [];
+    const cx     = W / 2;
+    const textFS = Math.round(W * 0.06);  // 6% — matches sample proportions
+    const qrPx   = Math.round(W * 0.55);
+    const urlH   = Math.round(W * 0.065);
 
-    const CW = 500; // preview content width (px)
-    const qrPx  = Math.round(CW * 0.55);
-    const urlH  = Math.round(CW * 0.065);
-    const textFS = Math.round(CW * 0.07); // 7% fits even long lines without clipping
-
-    let h = Math.round(CW * 0.02);
-    if (textLines.length) h += textLines.length * Math.round(textFS * 1.2) + Math.round(CW * 0.04);
-    h += qrPx + Math.round(CW * 0.04);
-    h += urlH + Math.round(CW * 0.02);
-
-    const canvas = document.createElement('canvas');
-    canvas.width = CW; canvas.height = h || CW;
-    const ctx = canvas.getContext('2d')!;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, CW, h || CW);
-
-    let y = Math.round(CW * 0.02);
-    if (textLines.length) {
-      ctx.font = `900 ${textFS}px "Arial Black", Arial, sans-serif`;
-      ctx.fillStyle = '#000000';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      const maxTextW = Math.round(CW * 0.92);
-      for (const line of textLines) {
-        ctx.fillText(line, CW / 2, y, maxTextW); // maxWidth prevents any clipping
-        y += Math.round(textFS * 1.2);
-      }
-      y += Math.round(CW * 0.04);
+    let tealLogo: HTMLImageElement | null = null;
+    let logoW = 0, logoH = 0;
+    if (opts.includeLogo) {
+      tealLogo = await loadImg('/loofabagteal.jpg');
+      logoW = Math.round(W * 0.90);
+      logoH = Math.round(logoW * tealLogo.height / tealLogo.width);
     }
 
-    const qrImg = new Image();
-    qrImg.src = qrRenderedDataUrl;
-    await new Promise<void>((res) => { qrImg.onload = () => res(); qrImg.onerror = () => res(); });
-    ctx.drawImage(qrImg, Math.round((CW - qrPx) / 2), y, qrPx, qrPx);
-    y += qrPx + Math.round(CW * 0.04);
-
-    ctx.font = `400 ${urlH}px Lobster, cursive`;
-    ctx.fillStyle = '#00B5AD';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`loofabag.com/${slug || 'your-name'}`, CW / 2, y);
-
-    return canvas.toDataURL('image/png');
-  };
-
-  const downloadDesignPNG = async () => {
-    const tealLogoImg = await loadImg('/loofabagteal.jpg');
-    await ensureLobster();
-
-    const W  = Math.round(300 * 9.5); // 2850 px — 9.5" at 300 DPI
-    const cx = W / 2;
-
-    const qrPx  = Math.round(W * 0.55);
-    const logoW = Math.round(W * 0.90);
-    const logoH = Math.round(logoW * tealLogoImg.height / tealLogoImg.width);
-    const textLines = bagText ? bagText.split('\n') : [];
-
-    const textFs = Math.round(W * 0.07);
-
-    // Dynamic height so all elements fit
-    let totalH = Math.round(W * 0.02);
-    if (textLines.length) totalH += textLines.length * Math.round(textFs * 1.2) + Math.round(W * 0.04);
-    totalH += qrPx + Math.round(W * 0.04);
-    totalH += urlH + Math.round(W * 0.05) + logoH + Math.round(W * 0.02);
+    let h = Math.round(W * 0.02);
+    if (textLines.length) h += textLines.length * Math.round(textFS * 1.2) + Math.round(W * 0.04);
+    h += qrPx + Math.round(W * 0.04);
+    h += urlH + (tealLogo ? Math.round(W * 0.05) + logoH : 0) + Math.round(W * 0.02);
 
     const canvas = document.createElement('canvas');
-    canvas.width  = W;
-    canvas.height = totalH;
+    canvas.width = W; canvas.height = h;
     const ctx = canvas.getContext('2d')!;
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, W, totalH);
+    ctx.fillRect(0, 0, W, h);
 
     let y = Math.round(W * 0.02);
 
     if (textLines.length) {
-      ctx.font = `900 ${textFs}px "Arial Black", Arial, sans-serif`;
+      ctx.font = `900 ${textFS}px "Arial Black", Arial, sans-serif`;
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       const maxTextW = Math.round(W * 0.92);
       for (const line of textLines) {
         ctx.fillText(line, cx, y, maxTextW);
-        y += Math.round(textFs * 1.2);
+        y += Math.round(textFS * 1.2);
       }
       y += Math.round(W * 0.04);
     }
 
-    if (qrDesignRef.current) {
+    if (opts.qrDesign) {
       const qrCanvas = document.createElement('canvas');
       qrCanvas.width = qrPx; qrCanvas.height = qrPx;
       const qrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
-      await renderQRToCanvas(qrCanvas, qrUrl, qrDesignRef.current);
+      await renderQRToCanvas(qrCanvas, qrUrl, opts.qrDesign);
       ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
-      y += qrPx + Math.round(W * 0.04);
+    } else if (opts.qrDataUrl) {
+      const qrImg = new Image();
+      qrImg.src = opts.qrDataUrl;
+      await new Promise<void>((res) => { qrImg.onload = () => res(); qrImg.onerror = () => res(); });
+      ctx.drawImage(qrImg, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
+    }
+    y += qrPx + Math.round(W * 0.04);
+
+    ctx.font = `400 ${urlH}px Lobster, cursive`;
+    ctx.fillStyle = '#00B5AD';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`loofabag.com/${slug || 'your-name'}`, cx, y);
+    y += urlH;
+
+    if (tealLogo) {
+      y += Math.round(W * 0.05);
+      ctx.drawImage(tealLogo, Math.round(cx - logoW / 2), y, logoW, logoH);
     }
 
-    await drawUrlAndLogo(ctx, cx, y, W, tealLogoImg);
+    return canvas;
+  };
 
+  const renderPreviewBlock = async (): Promise<string> => {
+    if (!qrRenderedDataUrl) return '';
+    const canvas = await renderDesignCanvas(500, { qrDataUrl: qrRenderedDataUrl });
+    return canvas?.toDataURL('image/png') ?? '';
+  };
+
+  const downloadDesignPNG = async () => {
+    const W = Math.round(300 * 9.5); // 2850 px — 9.5" at 300 DPI
+    const design = qrDesignRef.current;
+    if (!design) return;
+    const canvas = await renderDesignCanvas(W, { qrDesign: design, includeLogo: true });
+    if (!canvas) return;
     canvas.toBlob((blob) => {
       if (!blob) return;
       const blobUrl = URL.createObjectURL(blob);
@@ -922,56 +883,9 @@ export default function CreateLoofaPage() {
   const generatePrintFileBlob = async (): Promise<Blob | null> => {
     const design = qrDesignRef.current ?? restoredQrDesign;
     if (!design) return null;
-
-    const tealLogoImg = await loadImg('/loofabagteal.jpg');
-    await ensureLobster();
-
-    const W  = Math.round(300 * 9.5); // 2850 px = 9.5" at 300 DPI
-    const cx = W / 2;
-
-    const qrPx      = Math.round(W * 0.55);
-    const logoW     = Math.round(W * 0.90);
-    const logoH     = Math.round(logoW * tealLogoImg.height / tealLogoImg.width);
-    const textLines = bagText ? bagText.split('\n') : [];
-
-    const textFs = Math.round(W * 0.07);
-    const urlH   = Math.round(W * 0.065);
-
-    let totalH = Math.round(W * 0.02);
-    if (textLines.length) totalH += textLines.length * Math.round(textFs * 1.2) + Math.round(W * 0.04);
-    totalH += qrPx + Math.round(W * 0.04);
-    totalH += urlH + Math.round(W * 0.05) + logoH + Math.round(W * 0.02);
-
-    const canvas = document.createElement('canvas');
-    canvas.width  = W;
-    canvas.height = totalH;
-    const ctx = canvas.getContext('2d')!;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, W, totalH);
-
-    let y = Math.round(W * 0.02);
-
-    if (textLines.length) {
-      ctx.font = `900 ${textFs}px "Arial Black", Arial, sans-serif`;
-      ctx.fillStyle = '#000000';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      const maxTextW = Math.round(W * 0.92);
-      for (const line of textLines) {
-        ctx.fillText(line, cx, y, maxTextW);
-        y += Math.round(textFs * 1.2);
-      }
-      y += Math.round(W * 0.04);
-    }
-
-    const qrCanvas = document.createElement('canvas');
-    qrCanvas.width = qrPx; qrCanvas.height = qrPx;
-    const printQrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
-    await renderQRToCanvas(qrCanvas, printQrUrl, design);
-    ctx.drawImage(qrCanvas, Math.round(cx - qrPx / 2), y, qrPx, qrPx);
-    y += qrPx + Math.round(W * 0.04);
-
-    await drawUrlAndLogo(ctx, cx, y, W, tealLogoImg);
+    const W = Math.round(300 * 9.5); // 2850 px = 9.5" at 300 DPI
+    const canvas = await renderDesignCanvas(W, { qrDesign: design, includeLogo: true });
+    if (!canvas) return null;
 
     return new Promise((resolve) => canvas.toBlob((b) => resolve(b), 'image/png'));
   };
