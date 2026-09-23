@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse, after } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -41,67 +41,6 @@ function dbToClient(o: any) {
   };
 }
 
-// Generate a Printful product mockup using an existing Printful file ID (no re-upload needed),
-// download it, store to Supabase, and update the order row.
-async function generateMockupForOrder(
-  admin: ReturnType<typeof createAdminClient>,
-  orderId: string,
-  printfulProductId: number,
-  variantId: number,
-  printfulFileId: number,
-): Promise<void> {
-  try {
-    const taskRes = await fetch(
-      `https://api.printful.com/mockup-generator/create-task/${printfulProductId}`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          variant_ids: [variantId],
-          files: [{ placement: 'default', id: printfulFileId }],
-          format: 'jpg',
-        }),
-      },
-    );
-    const taskData = await taskRes.json();
-    if (taskData.code !== 200) {
-      console.warn('[mockup] create-task error:', taskData.error?.message);
-      return;
-    }
-    const taskKey = taskData.result?.task_key;
-    if (!taskKey) return;
-
-    let mockupUrl: string | null = null;
-    for (let i = 0; i < 7; i++) {
-      await new Promise((r) => setTimeout(r, 2000));
-      const pollRes = await fetch(
-        `https://api.printful.com/mockup-generator/task?task_key=${taskKey}`,
-        { headers: { Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}` } },
-      );
-      const pollData = await pollRes.json();
-      if (pollData.result?.status === 'completed') {
-        mockupUrl = pollData.result?.mockups?.[0]?.mockup_url ?? null;
-        break;
-      }
-    }
-    if (!mockupUrl) { console.warn('[mockup] timed out for order', orderId); return; }
-
-    const imgBuf = Buffer.from(await (await fetch(mockupUrl)).arrayBuffer());
-    const storagePath = `print-files/mockup-${orderId}/mockup-front.jpg`;
-    const { error } = await admin.storage
-      .from('loofabag-private')
-      .upload(storagePath, imgBuf, { contentType: 'image/jpeg', upsert: true });
-    if (!error) {
-      await admin.from('loofabag_orders').update({ front_preview_path: storagePath }).eq('id', orderId);
-      console.log('[mockup] saved for order', orderId);
-    }
-  } catch (err) {
-    console.error('[mockup] failed for order', orderId, err);
-  }
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -123,13 +62,8 @@ export async function GET(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     if (!orders?.length) return NextResponse.json({ orders: [] });
 
-    // Collect mockup jobs to run after responding (keyed by orderId)
-    const mockupJobs: Array<{
-      orderId: string;
-      printfulProductId: number;
-      variantId: number;
-      printfulFileId: number;
-    }> = [];
+    // Track which orders need mockups — returned to client so it can call /api/orders/mockup
+    const orderIdsNeedingMockup: string[] = [];
 
     // Refresh live status/tracking from Printful for orders with a Printful order id
     await Promise.all(orders.map(async (o) => {
@@ -163,45 +97,17 @@ export async function GET(req: NextRequest) {
             .eq('id', o.id);
         }
 
-        // Queue mockup generation if this order has no preview yet.
-        // Use the Printful file ID directly — works for all orders regardless of whether
-        // we stored print_file_path ourselves.
-        if (!o.front_preview_path) {
+        // Flag orders that need a mockup — the client will call /api/orders/mockup for these
+        if (!o.front_preview_path && PRODUCT_TO_PRINTFUL_ID[o.product_id] && o.variant_id) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const files: any[] = result.items?.[0]?.files ?? [];
-          const defaultFile = files.find((f: { type: string }) => f.type === 'default');
-          const printfulFileId: number | null = defaultFile?.id ?? null;
-          const pfProductId = PRODUCT_TO_PRINTFUL_ID[o.product_id];
-
-          if (printfulFileId && pfProductId && o.variant_id) {
-            mockupJobs.push({
-              orderId: o.id,
-              printfulProductId: pfProductId,
-              variantId: o.variant_id,
-              printfulFileId,
-            });
-          }
+          const hasFile = files.some((f: { type: string }) => f.type === 'default');
+          if (hasFile) orderIdsNeedingMockup.push(o.id);
         }
       } catch (err) {
         console.error('[orders] Failed to refresh from Printful:', err);
       }
     }));
-
-    // Schedule mockup generation AFTER responding — called once from the top level
-    // so Next.js after() registration is reliable.
-    if (mockupJobs.length > 0) {
-      after(async () => {
-        for (const job of mockupJobs) {
-          await generateMockupForOrder(
-            admin,
-            job.orderId,
-            job.printfulProductId,
-            job.variantId,
-            job.printfulFileId,
-          );
-        }
-      });
-    }
 
     // Generate short-lived signed URLs for stored files
     const clientOrders = await Promise.all(orders.map(async (o) => {
@@ -231,7 +137,7 @@ export async function GET(req: NextRequest) {
       return { ...base, ...extras };
     }));
 
-    return NextResponse.json({ orders: clientOrders });
+    return NextResponse.json({ orders: clientOrders, orderIdsNeedingMockup });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: message }, { status: 500 });

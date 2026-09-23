@@ -72,18 +72,45 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [generatingMockups, setGeneratingMockups] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    let slug: string;
     fetch(`/api/loofas/${id}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.error) { setNotFound(true); return; }
         setLoofa(data.loofa);
-        return fetch(`/api/orders?slug=${encodeURIComponent(data.loofa.slug)}`);
+        slug = data.loofa.slug;
+        return fetch(`/api/orders?slug=${encodeURIComponent(slug)}`);
       })
       .then((r) => r?.json())
       .then((data) => {
-        if (data) setOrders(data.orders ?? []);
+        if (!data) return;
+        setOrders(data.orders ?? []);
+        // Generate mockups for orders that need them — call the dedicated endpoint
+        const needingMockup: string[] = data.orderIdsNeedingMockup ?? [];
+        if (needingMockup.length === 0) return;
+        setGeneratingMockups(new Set(needingMockup));
+        // Process one at a time to avoid hammering Printful
+        (async () => {
+          for (const orderId of needingMockup) {
+            try {
+              const res = await fetch('/api/orders/mockup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId }),
+              });
+              const { signedUrl } = await res.json();
+              if (signedUrl) {
+                setOrders((prev) => prev.map((o) =>
+                  o.id === orderId ? { ...o, frontPreviewSignedUrl: signedUrl } : o,
+                ));
+              }
+            } catch { /* non-fatal */ }
+            setGeneratingMockups((prev) => { const next = new Set(prev); next.delete(orderId); return next; });
+          }
+        })();
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -217,13 +244,19 @@ export default function OrdersPage() {
                       </div>
                     )}
 
-                    {order.frontPreviewSignedUrl && (
+                    {(order.frontPreviewSignedUrl || generatingMockups.has(order.id)) && (
                       <div className="order-design-preview">
                         <p className="order-address-label">Design Preview</p>
                         <div className="order-design-panels">
                           <div className="order-design-panel">
                             <span className="order-design-panel-label">Front</span>
-                            <img src={order.frontPreviewSignedUrl} alt="Front design" className="order-preview-thumb" />
+                            {order.frontPreviewSignedUrl ? (
+                              <img src={order.frontPreviewSignedUrl} alt="Front design" className="order-preview-thumb" />
+                            ) : (
+                              <div className="order-preview-thumb order-preview-placeholder" style={{ fontSize: 12, color: '#999' }}>
+                                Generating...
+                              </div>
+                            )}
                           </div>
                           <div className="order-design-panel">
                             <span className="order-design-panel-label">Back</span>
