@@ -776,22 +776,21 @@ export default function CreateLoofaPage() {
     const BACK_H    = BACK_BOT - BACK_TOP;
 
     // Use same renderDesignCanvas so template exactly matches preview (no logo — logo goes in bottom strip)
-    // 70% of W fills the Printful safe zone properly
-    const contentW = Math.round(W * 0.70);
+    const contentW = Math.round(W * 0.55);
     const designCanvas = await renderDesignCanvas(contentW, { qrDesign: design });
 
     if (designCanvas) {
       const dh = designCanvas.height;
-      // 1% top margin — design sits at the top of the front safe zone
-      const frontMargin = Math.round((FRONT_BOT - FRONT_TOP) * 0.01);
+      // 5% base margin, shifted 50px higher than the original position
+      const frontMargin = Math.round((FRONT_BOT - FRONT_TOP) * 0.05) - 50;
       ctx.drawImage(designCanvas, Math.round(cx - contentW / 2), FRONT_TOP + frontMargin, contentW, dh);
 
       if (backDesign === 'duplicate') {
         ctx.save();
         ctx.translate(W, BACK_BOT);
         ctx.rotate(Math.PI);
-        // 1% margin from BACK_BOT — back design sits at bottom of the back safe zone
-        ctx.drawImage(designCanvas, Math.round(cx - contentW / 2), Math.round(BACK_H * 0.01), contentW, dh);
+        // 5% base margin from BACK_BOT, shifted 30px lower (subtract 30 in rotated space)
+        ctx.drawImage(designCanvas, Math.round(cx - contentW / 2), Math.round(BACK_H * 0.05) - 30, contentW, dh);
         ctx.restore();
       }
     }
