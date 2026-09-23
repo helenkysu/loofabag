@@ -660,7 +660,7 @@ export default function CreateLoofaPage() {
 
     const textLines = bagText ? bagText.split('\n') : [];
     const cx     = W / 2;
-    const textFS = Math.round(W * 0.06);  // 6% — matches sample proportions
+    const textFS = Math.round(W * 0.08);  // 8% — larger text per user feedback
     const qrPx   = Math.round(W * 0.55);
     const urlH   = Math.round(W * 0.065);
 
