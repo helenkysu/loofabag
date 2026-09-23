@@ -729,7 +729,7 @@ export default function CreateLoofaPage() {
 
   const renderPreviewBlock = async (): Promise<string> => {
     if (!qrRenderedDataUrl) return '';
-    const canvas = await renderDesignCanvas(500, { qrDataUrl: qrRenderedDataUrl });
+    const canvas = await renderDesignCanvas(500, { qrDataUrl: qrRenderedDataUrl, includeLogo: true });
     return canvas?.toDataURL('image/png') ?? '';
   };
 
@@ -737,7 +737,7 @@ export default function CreateLoofaPage() {
     const W = Math.round(300 * 9.5); // 2850 px — 9.5" at 300 DPI
     const design = qrDesignRef.current;
     if (!design) return;
-    const canvas = await renderDesignCanvas(W, { qrDesign: design });
+    const canvas = await renderDesignCanvas(W, { qrDesign: design, includeLogo: true });
     if (!canvas) return;
     canvas.toBlob((blob) => {
       if (!blob) return;
@@ -775,7 +775,7 @@ export default function CreateLoofaPage() {
     // Use same renderDesignCanvas so template exactly matches preview
     const contentW = Math.round(W * 0.55);
     const designCanvas = design
-      ? await renderDesignCanvas(contentW, { qrDesign: design })
+      ? await renderDesignCanvas(contentW, { qrDesign: design, includeLogo: true })
       : null;
 
     if (designCanvas) {
@@ -835,7 +835,7 @@ export default function CreateLoofaPage() {
     const design = qrDesignRef.current ?? restoredQrDesign;
     if (!design) return null;
     const W = Math.round(300 * 9.5); // 2850 px = 9.5" at 300 DPI
-    const canvas = await renderDesignCanvas(W, { qrDesign: design });
+    const canvas = await renderDesignCanvas(W, { qrDesign: design, includeLogo: true });
     if (!canvas) return null;
 
     return new Promise((resolve) => canvas.toBlob((b) => resolve(b), 'image/png'));
