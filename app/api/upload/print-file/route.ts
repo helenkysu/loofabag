@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const path = `temp-designs/${sessionId}/design.png`;
+    const path = `print-files/${sessionId}/design.png`;
 
     const supabase = createAdminClient();
     const { error } = await supabase.storage
