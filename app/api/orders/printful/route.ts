@@ -189,6 +189,8 @@ export async function POST(req: NextRequest) {
       orderId: order.id,
       orderNumber: `#${order.id}`,
       status: order.status,
+      // Surface DB errors so they're visible in the browser network tab for debugging
+      dbError: dbError ? { message: dbError.message, code: dbError.code } : undefined,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
