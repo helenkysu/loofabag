@@ -751,8 +751,9 @@ export default function CreateLoofaPage() {
 
   // Printful main bag: 21" x 37" at 150 DPI (3150 x 5550 px)
   // Layout per Printful spec: front face (top half) + back face ROTATED 180deg (bottom half).
-  const downloadMainBagTemplate = async () => {
-    const design = qrDesignRef.current;
+  const buildMainBagTemplateCanvas = async (): Promise<HTMLCanvasElement | null> => {
+    const design = qrDesignRef.current ?? restoredQrDesign;
+    if (!design) return null;
     await ensureLobster();
 
     const W = 3150;   // 21" x 150 DPI
@@ -774,9 +775,7 @@ export default function CreateLoofaPage() {
 
     // Use same renderDesignCanvas so template exactly matches preview (no logo — logo goes in bottom strip)
     const contentW = Math.round(W * 0.55);
-    const designCanvas = design
-      ? await renderDesignCanvas(contentW, { qrDesign: design })
-      : null;
+    const designCanvas = await renderDesignCanvas(contentW, { qrDesign: design });
 
     if (designCanvas) {
       const dh = designCanvas.height;
@@ -819,6 +818,12 @@ export default function CreateLoofaPage() {
     }
     // 'blank' stays white from the initial fillRect
 
+    return canvas;
+  };
+
+  const downloadMainBagTemplate = async () => {
+    const canvas = await buildMainBagTemplateCanvas();
+    if (!canvas) return;
     canvas.toBlob((blob) => {
       if (!blob) return;
       const blobUrl = URL.createObjectURL(blob);
@@ -840,12 +845,8 @@ export default function CreateLoofaPage() {
   };
 
   const generatePrintFileBlob = async (): Promise<Blob | null> => {
-    const design = qrDesignRef.current ?? restoredQrDesign;
-    if (!design) return null;
-    const W = Math.round(300 * 9.5); // 2850 px = 9.5" at 300 DPI
-    const canvas = await renderDesignCanvas(W, { qrDesign: design });
+    const canvas = await buildMainBagTemplateCanvas();
     if (!canvas) return null;
-
     return new Promise((resolve) => canvas.toBlob((b) => resolve(b), 'image/png'));
   };
 
