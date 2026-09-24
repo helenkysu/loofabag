@@ -246,7 +246,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const order = data.result;
+    let order = data.result;
+
+    // Explicitly confirm if still draft — belt-and-suspenders in case the confirm flag is ignored
+    if (process.env.PRINTFUL_CONFIRM_ORDERS === 'true' && order.status === 'draft') {
+      try {
+        const confirmRes = await fetch(`https://api.printful.com/orders/${order.id}/confirm`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}` },
+        });
+        const confirmData = await confirmRes.json();
+        if (confirmData.code === 200) {
+          order = confirmData.result;
+        } else {
+          console.warn('[orders/printful] confirm call failed:', confirmData.error?.message);
+        }
+      } catch (err) {
+        console.warn('[orders/printful] confirm call error:', err);
+      }
+    }
 
     const resolvedFrontPreviewPath = frontPreviewPath ?? null;
     const resolvedBackPreviewPath = backPreviewPath ?? null;
