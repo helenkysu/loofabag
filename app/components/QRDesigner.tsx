@@ -29,9 +29,9 @@ const SIZE = 280;
 
 // Returns true if canvas-space point (cx, cy) is inside the heart shape.
 // Heart equation: (x²+y²−1)³ − x²y³ ≤ 0  (y up)
-function insideHeart(cx: number, cy: number): boolean {
-  const nx =  (cx - SIZE * 0.5)  / (SIZE * 0.44);
-  const ny = -(cy - SIZE * 0.543) / (SIZE * 0.44);
+function insideHeart(cx: number, cy: number, size: number): boolean {
+  const nx =  (cx - size * 0.5)  / (size * 0.44);
+  const ny = -(cy - size * 0.543) / (size * 0.44);
   const a = nx * nx + ny * ny - 1;
   return a * a * a - nx * nx * ny * ny * ny <= 0;
 }
@@ -44,9 +44,12 @@ export async function renderQRToCanvas(
 ) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  canvas.width = SIZE;
-  canvas.height = SIZE;
-  ctx.clearRect(0, 0, SIZE, SIZE);
+  // Use the caller's intended size (set before this call) so the print path
+  // renders at full resolution instead of being stretched up from 280 px.
+  const S = canvas.width > 0 ? canvas.width : SIZE;
+  canvas.width = S;
+  canvas.height = S;
+  ctx.clearRect(0, 0, S, S);
   if (!url) return;
 
   const QRCode = (await import('qrcode')).default;
@@ -90,27 +93,27 @@ export async function renderQRToCanvas(
   // Heart: leave canvas transparent outside the heart; fill per-module below.
   if (design.shape !== 'heart') {
     ctx.fillStyle = design.bgColor;
-    ctx.fillRect(0, 0, SIZE, SIZE);
+    ctx.fillRect(0, 0, S, S);
   }
 
   // ── Gradient pixel map ─────────────────────────────────────────────────────
   let gradPixels: Uint8ClampedArray | null = null;
   if (design.gradient) {
     const gc = document.createElement('canvas');
-    gc.width = gc.height = SIZE;
+    gc.width = gc.height = S;
     const gx = gc.getContext('2d')!;
-    const g = gx.createLinearGradient(0, 0, SIZE, SIZE);
+    const g = gx.createLinearGradient(0, 0, S, S);
     g.addColorStop(0, design.gradient.from);
     g.addColorStop(1, design.gradient.to);
     gx.fillStyle = g;
-    gx.fillRect(0, 0, SIZE, SIZE);
-    gradPixels = gx.getImageData(0, 0, SIZE, SIZE).data;
+    gx.fillRect(0, 0, S, S);
+    gradPixels = gx.getImageData(0, 0, S, S).data;
   }
   const [fr, fg, fb] = hexToRgb(design.fgColor);
 
   // ── Module rendering ───────────────────────────────────────────────────────
-  const pad = design.shape === 'heart' ? SIZE * 0.02 : SIZE * 0.05;
-  const modSize = (SIZE - 2 * pad) / numModules;
+  const pad = design.shape === 'heart' ? S * 0.02 : S * 0.05;
+  const modSize = (S - 2 * pad) / numModules;
 
   for (let row = 0; row < numModules; row++) {
     for (let col = 0; col < numModules; col++) {
@@ -120,7 +123,7 @@ export async function renderQRToCanvas(
       const cy = my + modSize / 2;           // centre y
 
       const heartMode = design.shape === 'heart';
-      const inHeart   = !heartMode || insideHeart(cx, cy);
+      const inHeart   = !heartMode || insideHeart(cx, cy, S);
 
       if (!isDark(row, col)) {
         // Light module: only fill bgColor inside the heart.
@@ -137,7 +140,7 @@ export async function renderQRToCanvas(
       // This keeps all QR data intact so scanning never fails.
       let r = fr, g = fg, b = fb;
       if (gradPixels) {
-        const pi = (Math.round(cy) * SIZE + Math.round(cx)) * 4;
+        const pi = (Math.round(cy) * S + Math.round(cx)) * 4;
         r = gradPixels[pi]; g = gradPixels[pi + 1]; b = gradPixels[pi + 2];
       }
 
@@ -152,29 +155,29 @@ export async function renderQRToCanvas(
     const logo = new Image();
     logo.src = logoSrc;
     await new Promise<void>((res) => { logo.onload = () => res(); logo.onerror = () => res(); });
-    const ls = Math.round(SIZE * 0.30);
-    const lx = Math.round((SIZE - ls) / 2);
+    const ls = Math.round(S * 0.30);
+    const lx = Math.round((S - ls) / 2);
     // Heart's visual center is slightly below canvas center
-    const logoCy = design.shape === 'heart' ? Math.round(SIZE * 0.47) : Math.round(SIZE / 2);
+    const logoCy = design.shape === 'heart' ? Math.round(S * 0.47) : Math.round(S / 2);
     const ly = Math.round(logoCy - ls / 2);
-    const pad = Math.round(SIZE * 0.025);
+    const logoPad = Math.round(S * 0.025);
 
     if (design.shape === 'heart') {
       // Circular white background + circular clip for heart
-      const r = ls / 2 + pad;
+      const r = ls / 2 + logoPad;
       ctx.save();
       ctx.beginPath();
-      ctx.arc(SIZE / 2, logoCy, r, 0, Math.PI * 2);
+      ctx.arc(S / 2, logoCy, r, 0, Math.PI * 2);
       ctx.fillStyle = design.bgColor;
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(SIZE / 2, logoCy, ls / 2, 0, Math.PI * 2);
+      ctx.arc(S / 2, logoCy, ls / 2, 0, Math.PI * 2);
       ctx.clip();
       ctx.drawImage(logo, lx, ly, ls, ls);
       ctx.restore();
     } else {
       ctx.fillStyle = design.bgColor;
-      ctx.fillRect(lx - pad, ly - pad, ls + pad * 2, ls + pad * 2);
+      ctx.fillRect(lx - logoPad, ly - logoPad, ls + logoPad * 2, ls + logoPad * 2);
       ctx.drawImage(logo, lx, ly, ls, ls);
     }
     if (design.logoFile) URL.revokeObjectURL(logoSrc!);
