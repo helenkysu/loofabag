@@ -8,7 +8,7 @@ interface Phrase {
   id: string;
   line1: string;
   line2?: string;
-  sub?: 'parents';
+  sub?: 'bestie' | 'parents';
 }
 
 const PHRASES: Record<Category, Phrase[]> = {
@@ -33,6 +33,21 @@ const PHRASES: Record<Category, Phrase[]> = {
     { id: 'd18', line1: 'Looking for my plus one' },
     { id: 'd19', line1: 'Looking for someone to yap with' },
     { id: 'd20', line1: 'SAVE ME FROM',              line2: 'THIRD WHEELING' },
+    // Bestie subcategory
+    { id: 'db1',  line1: 'MY BESTIE/HOMIE/BFF/FRIEND IS STILL SINGLE',                              sub: 'bestie' },
+    { id: 'db2',  line1: 'MY BESTIE/HOMIE/BFF/FRIEND IS HOT AND SINGLE',                            sub: 'bestie' },
+    { id: 'db3',  line1: 'MY BEST FRIEND IS STILL SINGLE',                                           sub: 'bestie' },
+    { id: 'db4',  line1: 'GET MY BESTIE/HOMIE/BFF/FRIEND OFF HINGE',                                 sub: 'bestie' },
+    { id: 'db5',  line1: 'SOMEONE DATE MY BESTIE/HOMIE/BFF/FRIEND',                                  sub: 'bestie' },
+    { id: 'db6',  line1: 'MY BESTIE/HOMIE/BFF/FRIEND',  line2: 'IS ACCEPTING APPLICATIONS',          sub: 'bestie' },
+    { id: 'db7',  line1: "HIRING: MY BESTIE/HOMIE/BFF/FRIEND'S PARTNER",                             sub: 'bestie' },
+    { id: 'db8',  line1: 'MY BESTIE/HOMIE/BFF/FRIEND',  line2: 'HAS BEEN ON HINGE TOO LONG',         sub: 'bestie' },
+    { id: 'db9',  line1: 'SWIPE RIGHT ON MY BESTIE/HOMIE/BFF/FRIEND',                                sub: 'bestie' },
+    { id: 'db10', line1: "I'M HER/HIS/THEIR IRL HINGE PROFILE",                                      sub: 'bestie' },
+    { id: 'db11', line1: 'MATCH WITH MY BESTIE/HOMIE/BFF/FRIEND',                                    sub: 'bestie' },
+    { id: 'db12', line1: 'HELP MY BESTIE/HOMIE/BFF/FRIEND', line2: 'FIND HER/HIS/THEIR PERSON',      sub: 'bestie' },
+    { id: 'db13', line1: 'TAKE MY BESTIE/HOMIE/BFF/FRIEND OFF THE MARKET',                           sub: 'bestie' },
+    { id: 'db14', line1: 'ASK ME ABOUT MY SINGLE BESTIE/HOMIE/BFF/FRIEND',                           sub: 'bestie' },
     // Parents subcategory
     { id: 'dp1', line1: 'LOOKING FOR MY SONS',    line2: 'FUTURE WIFE/HUSBAND',          sub: 'parents' },
     { id: 'dp2', line1: 'LOOKING FOR MY DAUGHTERS', line2: 'FUTURE HUSBAND/WIFE',         sub: 'parents' },
@@ -172,6 +187,7 @@ export default function BagTextSelector({ templateId, onChange }: Props) {
 
   const phrases = PHRASES[category];
   const general = phrases.filter((p) => !p.sub);
+  const bestie  = phrases.filter((p) => p.sub === 'bestie');
   const parents = phrases.filter((p) => p.sub === 'parents');
   const selectedPhrase = phrases.find((p) => p.id === selectedId) ?? null;
 
@@ -203,6 +219,22 @@ export default function BagTextSelector({ templateId, onChange }: Props) {
             onChoiceChange={(key, val) => handleChoiceChange(key, val, phrase)}
           />
         ))}
+
+        {bestie.length > 0 && (
+          <>
+            <div className="bag-text-sub-divider">🫂 For your bestie</div>
+            {bestie.map((phrase) => (
+              <PhraseButton
+                key={phrase.id}
+                phrase={phrase}
+                selected={selectedId === phrase.id}
+                choices={choices}
+                onSelect={() => selectPhrase(phrase)}
+                onChoiceChange={(key, val) => handleChoiceChange(key, val, phrase)}
+              />
+            ))}
+          </>
+        )}
 
         {parents.length > 0 && (
           <>
