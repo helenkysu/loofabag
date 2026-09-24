@@ -6,11 +6,17 @@ const stripeKey = process.env.STRIPE_LIVE_MODE === 'true'
   : process.env.STRIPE_SECRET_KEY!;
 const stripe = new Stripe(stripeKey);
 
-const PRODUCT_MAP: Record<string, string> = {
+const TEST_PRODUCT_MAP: Record<string, string> = {
   'eco-tote': 'prod_UafgTxRmQLMdbg',
   'large-eco-tote': 'prod_UafhIaLEJSyn7L',
   'premium-large-tote': 'prod_UafjK3Rqo6GSO6',
 };
+const LIVE_PRODUCT_MAP: Record<string, string> = {
+  'eco-tote': process.env.STRIPE_LIVE_PRODUCT_ECO_TOTE ?? '',
+  'large-eco-tote': process.env.STRIPE_LIVE_PRODUCT_LARGE_ECO_TOTE ?? '',
+  'premium-large-tote': 'prod_UafjcxbS5ebThX',
+};
+const PRODUCT_MAP = process.env.STRIPE_LIVE_MODE === 'true' ? LIVE_PRODUCT_MAP : TEST_PRODUCT_MAP;
 
 export async function POST(req: NextRequest) {
   try {
