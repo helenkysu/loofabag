@@ -32,6 +32,7 @@ const PHRASES: Record<Category, Phrase[]> = {
     { id: 'd17', line1: 'Looking for someone to survive Costco with' },
     { id: 'd18', line1: 'Looking for my plus one' },
     { id: 'd19', line1: 'Looking for someone to yap with' },
+    { id: 'd20', line1: 'SAVE ME FROM',              line2: 'THIRD WHEELING' },
     // Parents subcategory
     { id: 'dp1', line1: 'LOOKING FOR MY SONS',    line2: 'FUTURE WIFE/HUSBAND',          sub: 'parents' },
     { id: 'dp2', line1: 'LOOKING FOR MY DAUGHTERS', line2: 'FUTURE HUSBAND/WIFE',         sub: 'parents' },
