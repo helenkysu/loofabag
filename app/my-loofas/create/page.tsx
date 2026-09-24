@@ -398,7 +398,10 @@ export default function CreateLoofaPage() {
   const [subDragOverIndex, setSubDragOverIndex] = useState<number | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [qrToken, setQrToken] = useState('');
-  const [backDesign, setBackDesign] = useState<'blank' | 'duplicate' | 'universe' | 'grass'>('blank');
+  const [backDesign, setBackDesign] = useState<'blank' | 'duplicate' | 'universe' | 'grass' | 'custom'>('blank');
+  // --- CUSTOM BACK: remove these two lines + all "CUSTOM BACK" blocks below to revert ---
+  const [backCustomText, setBackCustomText] = useState('');
+  const [backLogoDataUrl, setBackLogoDataUrl] = useState('');
   const [previewDataUrl, setPreviewDataUrl] = useState('');
   const [checkoutPreviewSide, setCheckoutPreviewSide] = useState<'front' | 'back'>('front');
   const [designStep, setDesignStep] = useState(1); // 1=Pick Bag, 2=Front, 3=Back, 4=Review
@@ -458,6 +461,10 @@ export default function CreateLoofaPage() {
           if (draft.qrDesign) setRestoredQrDesign(draft.qrDesign);
           if (draft.qrToken) setQrToken(draft.qrToken);
           if (draft.backDesign) setBackDesign(draft.backDesign);
+          // --- CUSTOM BACK ---
+          if (draft.backCustomText) setBackCustomText(draft.backCustomText);
+          if (draft.backLogoDataUrl) setBackLogoDataUrl(draft.backLogoDataUrl);
+          // --- END CUSTOM BACK ---
           if (draft.reorder) setIsReorder(true);
         } catch {}
       }
@@ -822,6 +829,38 @@ export default function CreateLoofaPage() {
       grad.addColorStop(1, '#6abf69');
       ctx.fillStyle = grad;
       ctx.fillRect(0, BACK_TOP, W, BACK_H);
+    // --- CUSTOM BACK ---
+    } else if (backDesign === 'custom') {
+      // Render rotated 180° so it reads right-way-up on the physical bag back
+      ctx.save();
+      ctx.translate(W, BACK_BOT);
+      ctx.rotate(Math.PI);
+      let curY = Math.round(BACK_H * 0.08);
+      if (backCustomText.trim()) {
+        const lines = backCustomText.split('\n').filter((l) => l.trim());
+        const textFS = Math.round(W * 0.07);
+        ctx.font = `900 ${textFS}px "Arial Black", Arial, sans-serif`;
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        for (const line of lines) {
+          ctx.fillText(line, W / 2, curY, Math.round(W * 0.9));
+          curY += Math.round(textFS * 1.3);
+        }
+        curY += Math.round(W * 0.04);
+      }
+      if (backLogoDataUrl) {
+        const logoImg = new Image();
+        logoImg.src = backLogoDataUrl;
+        await new Promise<void>((res) => { logoImg.onload = () => res(); logoImg.onerror = () => res(); });
+        const maxW = Math.round(W * 0.70);
+        const aspect = logoImg.naturalHeight / logoImg.naturalWidth;
+        const drawH = Math.min(Math.round(maxW * aspect), Math.round(BACK_H * 0.60));
+        const drawW = Math.round(drawH / aspect);
+        ctx.drawImage(logoImg, Math.round((W - drawW) / 2), curY, drawW, drawH);
+      }
+      ctx.restore();
+    // --- END CUSTOM BACK ---
     }
     // 'blank' stays white from the initial fillRect
 
@@ -1112,6 +1151,10 @@ export default function CreateLoofaPage() {
       address,
       qrToken,
       backDesign,
+      // --- CUSTOM BACK ---
+      backCustomText,
+      backLogoDataUrl,
+      // --- END CUSTOM BACK ---
       // logoFile is a File object (not serializable) but logoDataUrl is a base64 string
       qrDesign: effectiveDesign ? { fgColor: effectiveDesign.fgColor, bgColor: effectiveDesign.bgColor, gradient: effectiveDesign.gradient, shape: effectiveDesign.shape, logoFile: null, logoDataUrl: effectiveDesign.logoDataUrl ?? null } : null,
       reorder: isReorder,
@@ -1269,6 +1312,17 @@ export default function CreateLoofaPage() {
                         </div>
                       </div>
                     )}
+                    {/* --- CUSTOM BACK --- */}
+                    {backDesign === 'custom' && (
+                      <div className="bag-preview-overlay">
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8, padding: '0 10%', textAlign: 'center' }}>
+                          {backLogoDataUrl && <img src={backLogoDataUrl} alt="logo" style={{ maxWidth: '70%', maxHeight: '45%', objectFit: 'contain' }} />}
+                          {backCustomText && <span style={{ fontWeight: 900, fontSize: '0.85em', lineHeight: 1.2, whiteSpace: 'pre-wrap' }}>{backCustomText}</span>}
+                          {!backCustomText && !backLogoDataUrl && <span style={{ color: '#999', fontSize: '0.8em' }}>Custom back preview</span>}
+                        </div>
+                      </div>
+                    )}
+                    {/* --- END CUSTOM BACK --- */}
                   </div>
                 );
 
@@ -1416,6 +1470,8 @@ export default function CreateLoofaPage() {
                               { id: 'duplicate', label: 'Duplicate front', desc: 'Same QR on the back', emoji: '🔁' },
                               { id: 'universe', label: 'Universe do your thing', desc: 'Cosmic surprise', emoji: '🌌' },
                               { id: 'grass', label: "I'm touching grass", desc: 'Nature vibes', emoji: '🌿' },
+                              // --- CUSTOM BACK: remove this object to revert ---
+                              { id: 'custom', label: 'Custom design', desc: 'Add your own text & logo', emoji: '✏️' },
                             ] as const).map((opt) => (
                               <button
                                 key={opt.id}
@@ -1429,6 +1485,43 @@ export default function CreateLoofaPage() {
                               </button>
                             ))}
                           </div>
+                          {/* --- CUSTOM BACK --- */}
+                          {backDesign === 'custom' && (
+                            <div style={{ marginTop: 20 }}>
+                              <p className="step-subtitle" style={{ marginBottom: 8 }}>
+                                Back text <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span>
+                              </p>
+                              <textarea
+                                className="shipping-input"
+                                rows={3}
+                                placeholder={'e.g. Your Name\nyour@email.com'}
+                                value={backCustomText}
+                                onChange={(e) => setBackCustomText(e.target.value)}
+                                style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                              />
+                              <p className="step-subtitle" style={{ margin: '14px 0 8px' }}>
+                                Logo or image <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span>
+                              </p>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  style={{ flex: 1 }}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const reader = new FileReader();
+                                    reader.onload = (ev) => setBackLogoDataUrl(ev.target?.result as string ?? '');
+                                    reader.readAsDataURL(file);
+                                  }}
+                                />
+                                {backLogoDataUrl && (
+                                  <img src={backLogoDataUrl} alt="logo preview" style={{ width: 56, height: 56, objectFit: 'contain', border: '1px solid #eee', borderRadius: 6 }} />
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          {/* --- END CUSTOM BACK --- */}
                         </div>
                         {bagImageUrl && (
                           <div className="design-right">
@@ -1707,6 +1800,16 @@ export default function CreateLoofaPage() {
                                 </div>
                               </div>
                             )}
+                            {/* --- CUSTOM BACK --- */}
+                            {checkoutPreviewSide === 'back' && backDesign === 'custom' && (
+                              <div className="bag-preview-overlay">
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8, padding: '0 10%', textAlign: 'center' }}>
+                                  {backLogoDataUrl && <img src={backLogoDataUrl} alt="logo" style={{ maxWidth: '70%', maxHeight: '45%', objectFit: 'contain' }} />}
+                                  {backCustomText && <span style={{ fontWeight: 900, fontSize: '0.85em', lineHeight: 1.2, whiteSpace: 'pre-wrap' }}>{backCustomText}</span>}
+                                </div>
+                              </div>
+                            )}
+                            {/* --- END CUSTOM BACK --- */}
                           </div>
                         )}
                         <p className="bag-preview-name">{checkoutProduct?.name} · {checkoutPreviewSide === 'front' ? 'Front' : 'Back'}</p>
