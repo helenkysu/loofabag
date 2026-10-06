@@ -21,16 +21,18 @@ const PRODUCT_MAP = process.env.STRIPE_LIVE_MODE === 'true' ? LIVE_PRODUCT_MAP :
 export async function GET() {
   try {
     const entries = await Promise.all(
-      Object.entries(PRODUCT_MAP).map(async ([productId, stripeId]) => {
-        const prices = await stripe.prices.list({ product: stripeId, active: true, limit: 1 });
-        const price = prices.data[0];
-        return [
-          productId,
-          price
-            ? { amount: price.unit_amount ?? 0, currency: price.currency.toUpperCase() }
-            : null,
-        ] as const;
-      }),
+      Object.entries(PRODUCT_MAP)
+        .filter(([, stripeId]) => !!stripeId)
+        .map(async ([productId, stripeId]) => {
+          const prices = await stripe.prices.list({ product: stripeId, active: true, limit: 1 });
+          const price = prices.data[0];
+          return [
+            productId,
+            price
+              ? { amount: price.unit_amount ?? 0, currency: price.currency.toUpperCase() }
+              : null,
+          ] as const;
+        }),
     );
     return NextResponse.json(Object.fromEntries(entries));
   } catch (err) {
