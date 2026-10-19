@@ -3275,6 +3275,13 @@ footer p {
   pointer-events: none;
 }
 
+.logo-crop-guide {
+  position: absolute;
+  inset: 0;
+  fill: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
 .logo-crop-zoom {
   width: 100%;
   accent-color: #FF6B6B;

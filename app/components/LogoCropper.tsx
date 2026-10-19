@@ -6,13 +6,38 @@ const VIEW = 240; // crop viewport size (px)
 const OUTPUT = 512; // exported image size (px)
 const MAX_ZOOM = 4;
 
+// Classic parametric heart, fitted and centered inside a size×size box (y down)
+export function heartPoints(size: number, n = 120): [number, number][] {
+  const raw: [number, number][] = [];
+  for (let i = 0; i < n; i++) {
+    const t = (i / n) * Math.PI * 2;
+    raw.push([
+      16 * Math.sin(t) ** 3,
+      -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)),
+    ]);
+  }
+  const xs = raw.map((p) => p[0]);
+  const ys = raw.map((p) => p[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const k = size / Math.max(maxX - minX, maxY - minY);
+  const ox = (size - (maxX - minX) * k) / 2;
+  const oy = (size - (maxY - minY) * k) / 2;
+  return raw.map(([x, y]) => [ox + (x - minX) * k, oy + (y - minY) * k]);
+}
+
+export function heartSvgPath(size: number): string {
+  return 'M' + heartPoints(size).map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join(' L') + ' Z';
+}
+
 interface Props {
   file: File;
+  heart?: boolean; // show a heart guide (heart QR clips the logo to a heart)
   onCancel: () => void;
   onCrop: (cropped: File) => void;
 }
 
-export default function LogoCropper({ file, onCancel, onCrop }: Props) {
+export default function LogoCropper({ file, heart, onCancel, onCrop }: Props) {
   const [src, setSrc] = useState('');
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -114,6 +139,11 @@ export default function LogoCropper({ file, onCancel, onCrop }: Props) {
                 transform: `translate(${offset.x}px, ${offset.y}px)`,
               }}
             />
+          )}
+          {heart && (
+            <svg className="logo-crop-guide" width={VIEW} height={VIEW} viewBox={`0 0 ${VIEW} ${VIEW}`}>
+              <path d={`M0 0 H${VIEW} V${VIEW} H0 Z ${heartSvgPath(VIEW)}`} fillRule="evenodd" />
+            </svg>
           )}
         </div>
         <input

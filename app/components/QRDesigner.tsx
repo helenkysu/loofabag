@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import LogoCropper from './LogoCropper';
+import LogoCropper, { heartPoints, heartSvgPath } from './LogoCropper';
 
 export interface QRDesignOptions {
   fgColor: string;
@@ -163,9 +163,26 @@ export async function renderQRToCanvas(
     const ly = Math.round(logoCy - ls / 2);
     const logoPad = Math.round(S * 0.025);
 
-    ctx.fillStyle = design.bgColor;
-    ctx.fillRect(lx - logoPad, ly - logoPad, ls + logoPad * 2, ls + logoPad * 2);
-    ctx.drawImage(logo, lx, ly, ls, ls);
+    if (design.shape === 'heart') {
+      // Heart-shaped background + heart clip
+      const tracePath = (x: number, y: number, size: number) => {
+        ctx.beginPath();
+        heartPoints(size).forEach(([px, py], i) => (i ? ctx.lineTo(x + px, y + py) : ctx.moveTo(x + px, y + py)));
+        ctx.closePath();
+      };
+      ctx.save();
+      tracePath(lx - logoPad, ly - logoPad, ls + logoPad * 2);
+      ctx.fillStyle = design.bgColor;
+      ctx.fill();
+      tracePath(lx, ly, ls);
+      ctx.clip();
+      ctx.drawImage(logo, lx, ly, ls, ls);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = design.bgColor;
+      ctx.fillRect(lx - logoPad, ly - logoPad, ls + logoPad * 2, ls + logoPad * 2);
+      ctx.drawImage(logo, lx, ly, ls, ls);
+    }
     if (design.logoFile) URL.revokeObjectURL(logoSrc!);
   }
 }
@@ -262,7 +279,12 @@ export default function QRDesigner({ url, onDataUrl, hidePreview, onDesignChange
             <div className="qr-logo-upload">
               <button type="button" className="qr-logo-btn" onClick={() => logoInputRef.current?.click()}>
                 {logoPreview
-                  ? <img src={logoPreview} alt="logo" className="qr-logo-thumb" />
+                  ? <img
+                      src={logoPreview}
+                      alt="logo"
+                      className="qr-logo-thumb"
+                      style={design.shape === 'heart' ? { clipPath: `path('${heartSvgPath(32)}')`, borderRadius: 0 } : undefined}
+                    />
                   : '+ Upload center image (optional)'}
               </button>
               {logoPreview && (
@@ -274,6 +296,7 @@ export default function QRDesigner({ url, onDataUrl, hidePreview, onDesignChange
           {cropFile && (
             <LogoCropper
               file={cropFile}
+              heart={design.shape === 'heart'}
               onCancel={() => setCropFile(null)}
               onCrop={handleLogoFile}
             />
