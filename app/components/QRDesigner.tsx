@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import LogoCropper from './LogoCropper';
 
 export interface QRDesignOptions {
   fgColor: string;
@@ -202,6 +203,7 @@ export default function QRDesigner({ url, onDataUrl, hidePreview, onDesignChange
     logoFile: null,
   });
   const [logoPreview, setLogoPreview] = useState('');
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [rendering, setRendering] = useState(false);
 
   const update = (patch: Partial<QRDesignOptions>) =>
@@ -221,8 +223,15 @@ export default function QRDesigner({ url, onDataUrl, hidePreview, onDesignChange
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, design]);
 
-  const handleLogoFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Picking a file opens the cropper; the cropped square result becomes the logo
+  const handleLogoInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
+    if (file) setCropFile(file);
+    if (logoInputRef.current) logoInputRef.current.value = '';
+  };
+
+  const handleLogoFile = (file: File | null) => {
+    setCropFile(null);
     if (logoPreview) URL.revokeObjectURL(logoPreview);
     setLogoPreview(file ? URL.createObjectURL(file) : '');
     if (file) {
@@ -274,8 +283,16 @@ export default function QRDesigner({ url, onDataUrl, hidePreview, onDesignChange
               {logoPreview && (
                 <button type="button" className="qr-logo-remove-btn" onClick={removeLogo} aria-label="Remove logo">✕</button>
               )}
-              <input ref={logoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoFile} />
+              <input ref={logoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoInput} />
             </div>
+          )}
+          {cropFile && (
+            <LogoCropper
+              file={cropFile}
+              circle={design.shape === 'heart'}
+              onCancel={() => setCropFile(null)}
+              onCrop={handleLogoFile}
+            />
           )}
         </div>
 
