@@ -8,12 +8,11 @@ const MAX_ZOOM = 4;
 
 interface Props {
   file: File;
-  circle?: boolean; // show a circular guide (heart QR clips the logo to a circle)
   onCancel: () => void;
   onCrop: (cropped: File) => void;
 }
 
-export default function LogoCropper({ file, circle, onCancel, onCrop }: Props) {
+export default function LogoCropper({ file, onCancel, onCrop }: Props) {
   const [src, setSrc] = useState('');
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -116,7 +115,6 @@ export default function LogoCropper({ file, circle, onCancel, onCrop }: Props) {
               }}
             />
           )}
-          {circle && <div className="logo-crop-circle" />}
         </div>
         <input
           type="range"

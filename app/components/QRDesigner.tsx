@@ -163,24 +163,9 @@ export async function renderQRToCanvas(
     const ly = Math.round(logoCy - ls / 2);
     const logoPad = Math.round(S * 0.025);
 
-    if (design.shape === 'heart') {
-      // Circular white background + circular clip for heart
-      const r = ls / 2 + logoPad;
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(S / 2, logoCy, r, 0, Math.PI * 2);
-      ctx.fillStyle = design.bgColor;
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(S / 2, logoCy, ls / 2, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(logo, lx, ly, ls, ls);
-      ctx.restore();
-    } else {
-      ctx.fillStyle = design.bgColor;
-      ctx.fillRect(lx - logoPad, ly - logoPad, ls + logoPad * 2, ls + logoPad * 2);
-      ctx.drawImage(logo, lx, ly, ls, ls);
-    }
+    ctx.fillStyle = design.bgColor;
+    ctx.fillRect(lx - logoPad, ly - logoPad, ls + logoPad * 2, ls + logoPad * 2);
+    ctx.drawImage(logo, lx, ly, ls, ls);
     if (design.logoFile) URL.revokeObjectURL(logoSrc!);
   }
 }
@@ -277,7 +262,7 @@ export default function QRDesigner({ url, onDataUrl, hidePreview, onDesignChange
             <div className="qr-logo-upload">
               <button type="button" className="qr-logo-btn" onClick={() => logoInputRef.current?.click()}>
                 {logoPreview
-                  ? <img src={logoPreview} alt="logo" className={`qr-logo-thumb${design.shape === 'heart' ? ' qr-logo-thumb-circle' : ''}`} />
+                  ? <img src={logoPreview} alt="logo" className="qr-logo-thumb" />
                   : '+ Upload center image (optional)'}
               </button>
               {logoPreview && (
@@ -289,7 +274,6 @@ export default function QRDesigner({ url, onDataUrl, hidePreview, onDesignChange
           {cropFile && (
             <LogoCropper
               file={cropFile}
-              circle={design.shape === 'heart'}
               onCancel={() => setCropFile(null)}
               onCrop={handleLogoFile}
             />
