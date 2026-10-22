@@ -83,6 +83,7 @@ const PHRASES: Record<Category, Phrase[]> = {
     { id: 'f18', line1: 'LOOKING FOR', line2: 'A TOUR GUIDE (AND A BESTIE)' },
     { id: 'f19', line1: 'NEW TO TOWN, OPEN TO PLANS' },
     { id: 'f20', line1: 'LOOKING FOR', line2: 'NEW FRIENDS' },
+    { id: 'f21', line1: 'ACCEPTING BEST FRIEND', line2: 'APPLICATIONS' },
   ],
   networking: [
     { id: 'n1', line1: 'LOOKING FOR',   line2: 'A NEW JOB' },
