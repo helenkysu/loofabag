@@ -8,7 +8,7 @@ interface Phrase {
   id: string;
   line1: string;
   line2?: string;
-  sub?: 'bestie' | 'parents';
+  sub?: 'bestie' | 'parents' | 'pets';
 }
 
 const PHRASES: Record<Category, Phrase[]> = {
@@ -23,15 +23,15 @@ const PHRASES: Record<Category, Phrase[]> = {
     { id: 'd8',  line1: 'LOOKING FOR MY',        line2: 'PASSENGER PRINCESS' },
     { id: 'd9',  line1: 'LOOKING FOR MY',        line2: 'RAVE BAE' },
     { id: 'd10', line1: "SCAN THIS IF",          line2: "I'M YOUR TYPE :)" },
-    { id: 'd11', line1: 'Looking for my lobster' },
-    { id: 'd12', line1: 'Looking for someone to send memes to' },
-    { id: 'd13', line1: 'Looking for my emergency contact' },
-    { id: 'd14', line1: 'Looking for someone to steal my fries' },
-    { id: 'd15', line1: 'Looking for someone to match my freak' },
-    { id: 'd16', line1: 'Looking for my co-star' },
-    { id: 'd17', line1: 'Looking for someone to survive Costco with' },
-    { id: 'd18', line1: 'Looking for my plus one' },
-    { id: 'd19', line1: 'Looking for someone to yap with' },
+    { id: 'd11', line1: 'LOOKING FOR MY LOBSTER' },
+    { id: 'd12', line1: 'LOOKING FOR SOMEONE TO SEND MEMES TO' },
+    { id: 'd13', line1: 'LOOKING FOR MY EMERGENCY CONTACT' },
+    { id: 'd14', line1: 'LOOKING FOR SOMEONE TO STEAL MY FRIES' },
+    { id: 'd15', line1: 'LOOKING FOR SOMEONE TO MATCH MY FREAK' },
+    { id: 'd16', line1: 'LOOKING FOR MY CO-STAR' },
+    { id: 'd17', line1: 'LOOKING FOR SOMEONE TO SURVIVE COSTCO WITH' },
+    { id: 'd18', line1: 'LOOKING FOR MY PLUS ONE' },
+    { id: 'd19', line1: 'LOOKING FOR SOMEONE TO YAP WITH' },
     { id: 'd20', line1: 'SAVE ME FROM',              line2: 'THIRD WHEELING' },
     // Bestie subcategory
     { id: 'db1',  line1: 'MY BESTIE/HOMIE/BFF/FRIEND IS STILL SINGLE',                              sub: 'bestie' },
@@ -53,24 +53,42 @@ const PHRASES: Record<Category, Phrase[]> = {
     { id: 'dp2', line1: 'LOOKING FOR MY DAUGHTERS', line2: 'FUTURE HUSBAND/WIFE',         sub: 'parents' },
     { id: 'dp3', line1: 'LOOKING FOR MY FUTURE',  line2: 'DAUGHTER-IN-LAW/SON-IN-LAW',   sub: 'parents' },
     { id: 'dp4', line1: 'MY DAUGHTER/SON/KID IS STILL SINGLE',                             sub: 'parents' },
+    // Pet owners subcategory
+    { id: 'dpet1', line1: "LOOKING FOR MY CAT'S", line2: 'FUTURE MOM/DAD/CO-PARENT', sub: 'pets' },
+    { id: 'dpet2', line1: "LOOKING FOR MY DOG'S", line2: 'FUTURE MOM/DAD/CO-PARENT', sub: 'pets' },
+    { id: 'dpet3', line1: "LOOKING FOR MY PET'S", line2: 'FUTURE MOM/DAD/CO-PARENT', sub: 'pets' },
   ],
   friends: [
     { id: 'f1', line1: 'LOOKING FOR EXTROVERTS', line2: 'TO ADOPT ME' },
-    { id: 'f2', line1: 'LOOKING FOR',            line2: 'NEW BESTEAS' },
-    { id: 'f3', line1: 'Looking for concert buddies' },
-    { id: 'f4', line1: 'Looking for yap sessions' },
-    { id: 'f5', line1: 'Looking for gym friends' },
-    { id: 'f6', line1: 'Looking for travel buddies' },
+    { id: 'f2', line1: 'LOOKING FOR',            line2: 'NEW BESTIES/BESTEAS' },
+    { id: 'f3', line1: 'LOOKING FOR CONCERT BUDDIES' },
+    { id: 'f4', line1: 'LOOKING FOR YAP SESSIONS' },
+    { id: 'f5', line1: 'LOOKING FOR GYM FRIENDS' },
+    { id: 'f6', line1: 'LOOKING FOR TRAVEL BUDDIES' },
+    { id: 'f7',  line1: 'YOUR FUTURE BESTIE?' },
+    { id: 'f8',  line1: 'FRIENDS WANTED ♡' },
+    { id: 'f9',  line1: 'OPEN TO NEW FRIENDSHIPS' },
+    { id: 'f10', line1: "LET'S BE FRIENDS!" },
+    { id: 'f11', line1: 'STRANGERS TODAY, BESTIES TOMORROW' },
+    { id: 'f12', line1: 'HERE FOR THE FRIENDSHIP' },
+    { id: 'f13', line1: 'MANIFESTING MY FRIEND GROUP ✨' },
+    { id: 'f14', line1: 'IN MY FRIENDSHIP ERA' },
+    { id: 'f15', line1: 'NEW IN TOWN. SEND HELP' },
+    { id: 'f16', line1: 'ACCEPTING BESTIE APPLICATIONS' },
+    { id: 'f17', line1: 'LOCAL FRIENDS WANTED' },
+    { id: 'f18', line1: 'LOOKING FOR A TOUR GUIDE (AND A BESTIE)' },
+    { id: 'f19', line1: 'NEW TO TOWN, OPEN TO PLANS' },
+    { id: 'f20', line1: 'LOOKING FOR NEW FRIENDS' },
   ],
   networking: [
     { id: 'n1', line1: 'LOOKING FOR',   line2: 'A NEW JOB' },
     { id: 'n2', line1: 'LOOKING FOR',   line2: 'AN INTERNSHIP' },
-    { id: 'n3', line1: 'Looking for my next corporate adventure' },
-    { id: 'n4', line1: 'Looking for someone to explain crypto to me' },
-    { id: 'n5', line1: 'Looking for a tech job' },
-    { id: 'n6', line1: 'Looking for a career plot twist' },
-    { id: 'n7', line1: 'Looking for investors' },
-    { id: 'n8', line1: 'Looking for my cofounder' },
+    { id: 'n3', line1: 'LOOKING FOR MY NEXT CORPORATE ADVENTURE' },
+    { id: 'n4', line1: 'LOOKING FOR SOMEONE TO EXPLAIN CRYPTO TO ME' },
+    { id: 'n5', line1: 'LOOKING FOR A TECH JOB' },
+    { id: 'n6', line1: 'LOOKING FOR A CAREER PLOT TWIST' },
+    { id: 'n7', line1: 'LOOKING FOR INVESTORS' },
+    { id: 'n8', line1: 'LOOKING FOR MY CO-FOUNDER' },
   ],
 };
 
@@ -189,6 +207,7 @@ export default function BagTextSelector({ templateId, onChange }: Props) {
   const general = phrases.filter((p) => !p.sub);
   const bestie  = phrases.filter((p) => p.sub === 'bestie');
   const parents = phrases.filter((p) => p.sub === 'parents');
+  const pets    = phrases.filter((p) => p.sub === 'pets');
   const selectedPhrase = phrases.find((p) => p.id === selectedId) ?? null;
 
   return (
@@ -240,6 +259,22 @@ export default function BagTextSelector({ templateId, onChange }: Props) {
           <>
             <div className="bag-text-sub-divider">👨‍👩‍👧 For parents</div>
             {parents.map((phrase) => (
+              <PhraseButton
+                key={phrase.id}
+                phrase={phrase}
+                selected={selectedId === phrase.id}
+                choices={choices}
+                onSelect={() => selectPhrase(phrase)}
+                onChoiceChange={(key, val) => handleChoiceChange(key, val, phrase)}
+              />
+            ))}
+          </>
+        )}
+
+        {pets.length > 0 && (
+          <>
+            <div className="bag-text-sub-divider">🐾 For pet owners</div>
+            {pets.map((phrase) => (
               <PhraseButton
                 key={phrase.id}
                 phrase={phrase}
