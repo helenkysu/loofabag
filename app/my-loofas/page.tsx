@@ -114,6 +114,7 @@ export default function MyLoofas() {
 
           <Link href="/my-loofas/create" className="add-loofa-btn">
             <span className="plus-icon">+</span>
+            <span className="add-loofa-label">Create a new loofa</span>
           </Link>
 
           {loadingLoofas ? (

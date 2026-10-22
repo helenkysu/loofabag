@@ -306,6 +306,39 @@ nav {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   border-top: 4px solid transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sample bag photo pinned to the bottom of each category tile so they line up */
+.feature-bag {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1088 / 1344;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-top: auto;
+}
+
+.feature-card > p {
+  margin-bottom: 24px;
+}
+
+/* "You Control It" spans the full row as a banner */
+.feature-banner {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  gap: 28px;
+}
+
+.feature-banner .feature-icon {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.feature-banner h3 {
+  margin-bottom: 8px;
 }
 
 .feature-card:hover {
@@ -784,30 +817,36 @@ footer p {
 }
 
 .add-loofa-btn {
-  width: 200px;
-  height: 200px;
+  width: 100%;
+  height: 110px;
   border-radius: 20px;
   background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
   border: none;
   cursor: pointer;
-  font-size: 80px;
   font-weight: 900;
   color: white;
+  text-decoration: none;
   box-shadow: 0 10px 40px rgba(255, 107, 107, 0.3);
   transition: all 0.3s ease;
   margin-bottom: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 16px;
 }
 
 .add-loofa-btn:hover {
-  transform: translateY(-10px);
+  transform: translateY(-6px);
   box-shadow: 0 20px 60px rgba(255, 107, 107, 0.4);
 }
 
 .plus-icon {
+  font-size: 64px;
   line-height: 1;
+}
+
+.add-loofa-label {
+  font-size: 26px;
 }
 
 .empty-state {
@@ -884,9 +923,16 @@ footer p {
   }
 
   .add-loofa-btn {
-    width: 150px;
-    height: 150px;
-    font-size: 60px;
+    height: 88px;
+    gap: 10px;
+  }
+
+  .plus-icon {
+    font-size: 48px;
+  }
+
+  .add-loofa-label {
+    font-size: 20px;
   }
 
   .loofa-grid {

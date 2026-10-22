@@ -53,21 +53,26 @@ export default function Home() {
             <div className="feature-icon">💕</div>
             <h3>Dating & Romance</h3>
             <p>Looking for a boyfriend, girlfriend, husband, wife, or partner? Let your loofa bag do the talking.</p>
+            <img src="/bagimages/qrsamples/redbag.jpg" alt="Loofa tote with red handles and a QR code" className="feature-bag" loading="lazy" />
           </article>
           <article className="feature-card">
             <div className="feature-icon">👯</div>
             <h3>Find Your Tribe</h3>
             <p>Want new bestfriends? Tired of being lonely? Carry your loofa and attract people who are looking for the same connection.</p>
+            <img src="/bagimages/qrsamples/yellowbag.jpg" alt="Loofa tote with yellow handles and a QR code" className="feature-bag" loading="lazy" />
           </article>
           <article className="feature-card">
             <div className="feature-icon">💼</div>
             <h3>Land Your Dream Job</h3>
             <p>Looking for a new job? Share your loofa with the world and let opportunities find you naturally.</p>
+            <img src="/bagimages/qrsamples/blackbag.jpg" alt="Loofa tote with black handles and a QR code" className="feature-bag" loading="lazy" />
           </article>
-          <article className="feature-card">
+          <article className="feature-card feature-banner">
             <div className="feature-icon">⚡</div>
-            <h3>You Control It</h3>
-            <p>People scan your code and fill out a form. You review responses and decide who you want to connect with.</p>
+            <div>
+              <h3>You Control It</h3>
+              <p>People scan your code and fill out a form. You review responses and decide who you want to connect with.</p>
+            </div>
           </article>
         </div>
       </section>
