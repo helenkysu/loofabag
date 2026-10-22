@@ -33,6 +33,8 @@ const PHRASES: Record<Category, Phrase[]> = {
     { id: 'd18', line1: 'LOOKING FOR MY PLUS ONE' },
     { id: 'd19', line1: 'LOOKING FOR SOMEONE TO YAP WITH' },
     { id: 'd20', line1: 'SAVE ME FROM',              line2: 'THIRD WHEELING' },
+    { id: 'd21', line1: 'SAVE ME FROM',              line2: 'MY SITUATIONSHIP' },
+    { id: 'd22', line1: 'ACCEPTING APPLICATIONS',    line2: 'TO BE MY NEW CRUSH' },
     // Bestie subcategory
     { id: 'db1',  line1: 'MY BESTIE/HOMIE/BFF/FRIEND IS STILL SINGLE',                              sub: 'bestie' },
     { id: 'db2',  line1: 'MY BESTIE/HOMIE/BFF/FRIEND', line2: 'IS HOT AND SINGLE',                  sub: 'bestie' },
