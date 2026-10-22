@@ -8,7 +8,7 @@ interface Phrase {
   id: string;
   line1: string;
   line2?: string;
-  sub?: 'bestie' | 'parents' | 'pets';
+  sub?: 'bestie' | 'parents' | 'pets' | 'grads';
 }
 
 const PHRASES: Record<Category, Phrase[]> = {
@@ -93,6 +93,23 @@ const PHRASES: Record<Category, Phrase[]> = {
     { id: 'n6', line1: 'LOOKING FOR', line2: 'A CAREER PLOT TWIST' },
     { id: 'n7', line1: 'LOOKING FOR', line2: 'INVESTORS' },
     { id: 'n8', line1: 'LOOKING FOR MY', line2: 'CO-FOUNDER' },
+    { id: 'n9',  line1: 'HIRE ME, MAYBE?' },
+    { id: 'n10', line1: 'LOOKING FOR MY', line2: 'NEXT JOB' },
+    { id: 'n11', line1: 'LOOKING FOR MY', line2: 'NEXT INTERNSHIP' },
+    { id: 'n12', line1: 'LOOKING FOR', line2: 'NEW CORPORATE OPPORTUNITIES' },
+    { id: 'n13', line1: 'OPEN TO NETWORKING' },
+    { id: 'n14', line1: 'OPEN TO NEW', line2: 'PROFESSIONAL OPPORTUNITIES' },
+    { id: 'n15', line1: 'YOUR NEXT POTENTIAL HIRE' },
+    { id: 'n16', line1: 'FUTURE COLLEAGUE?' },
+    { id: 'n17', line1: 'MY LINKEDIN IS UP TO DATE' },
+    { id: 'n18', line1: 'CORPORATE BADDIE FOR HIRE' },
+    // New grads subcategory
+    { id: 'ng1', line1: 'DEGREE IN HAND,', line2: 'READY TO MAKE WAVES', sub: 'grads' },
+    { id: 'ng2', line1: 'A DEGREE AND A DREAM', sub: 'grads' },
+    { id: 'ng3', line1: 'FRESHLY GRADUATED,', line2: 'READY TO DOMINATE', sub: 'grads' },
+    { id: 'ng4', line1: 'HIRE ME BEFORE', line2: 'I FORGET EVERYTHING', sub: 'grads' },
+    { id: 'ng5', line1: 'EDUCATED & EMPLOYABLE', sub: 'grads' },
+    { id: 'ng6', line1: 'MY DEGREE NEEDS A PLUS-ONE', line2: '(A JOB)', sub: 'grads' },
   ],
 };
 
@@ -212,6 +229,7 @@ export default function BagTextSelector({ templateId, onChange }: Props) {
   const bestie  = phrases.filter((p) => p.sub === 'bestie');
   const parents = phrases.filter((p) => p.sub === 'parents');
   const pets    = phrases.filter((p) => p.sub === 'pets');
+  const grads   = phrases.filter((p) => p.sub === 'grads');
   const selectedPhrase = phrases.find((p) => p.id === selectedId) ?? null;
 
   return (
@@ -279,6 +297,22 @@ export default function BagTextSelector({ templateId, onChange }: Props) {
           <>
             <div className="bag-text-sub-divider">🐾 For pet owners</div>
             {pets.map((phrase) => (
+              <PhraseButton
+                key={phrase.id}
+                phrase={phrase}
+                selected={selectedId === phrase.id}
+                choices={choices}
+                onSelect={() => selectPhrase(phrase)}
+                onChoiceChange={(key, val) => handleChoiceChange(key, val, phrase)}
+              />
+            ))}
+          </>
+        )}
+
+        {grads.length > 0 && (
+          <>
+            <div className="bag-text-sub-divider">🎓 For new grads</div>
+            {grads.map((phrase) => (
               <PhraseButton
                 key={phrase.id}
                 phrase={phrase}
