@@ -12,6 +12,7 @@ interface Loofa {
   design: string;
   template: string;
   emoji: string;
+  qrToken?: string | null;
   isActive?: boolean;
   transferStatus?: 'pending' | 'claimed';
   transferRecipientEmail?: string;
@@ -89,6 +90,8 @@ export default function LoofaManagementPage() {
       sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify({
         name: loofa.name,
         slug: loofa.slug,
+        // Keep the loofa's tracked /q/ link in the QR so scans are counted
+        qrToken: loofa.qrToken ?? undefined,
         step: 2,
         reorder: true,
       }));
