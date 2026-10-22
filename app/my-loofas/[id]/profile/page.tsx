@@ -48,6 +48,8 @@ export default function ProfileEditorPage() {
   const [pendingFiles, setPendingFiles] = useState<Record<string, File[]>>({});
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [pendingProfilePhoto, setPendingProfilePhoto] = useState<File | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null); // blob URL for a not-yet-uploaded photo
+  const [profilePhotoError, setProfilePhotoError] = useState('');
   const [redirectUrl, setRedirectUrl] = useState('');
   const [redirectUrlError, setRedirectUrlError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -150,7 +152,12 @@ export default function ProfileEditorPage() {
     let newProfilePhotoUrl: string | null = profilePhoto ?? null;
     if (pendingProfilePhoto) {
       const path = await uploadFileDirect(loofa.id, pendingProfilePhoto);
-      if (path) newProfilePhotoUrl = path;
+      if (!path) {
+        setSaving(false);
+        setProfilePhotoError('Profile photo upload failed. Please try again.');
+        return;
+      }
+      newProfilePhotoUrl = path;
     }
 
     await fetch(`/api/loofas/${id}`, {
@@ -226,17 +233,23 @@ export default function ProfileEditorPage() {
           <div className="profile-photo-editor">
             <p className="question-editor-label">Profile Photo</p>
             <div className="profile-photo-editor-row">
-              {profilePhoto ? (
+              {profilePhotoPreview || profilePhoto ? (
                 <div className="profile-photo-preview-wrap">
                   <img
-                    src={`/api/files/proxy?path=${encodeURIComponent(profilePhoto)}`}
+                    src={profilePhotoPreview ?? `/api/files/proxy?path=${encodeURIComponent(profilePhoto!)}`}
                     alt="Profile"
                     className="profile-photo-preview"
                   />
                   <button
                     type="button"
                     className="profile-photo-remove"
-                    onClick={() => { setProfilePhoto(null); setPendingProfilePhoto(null); }}
+                    onClick={() => {
+                      if (profilePhotoPreview) URL.revokeObjectURL(profilePhotoPreview);
+                      setProfilePhotoPreview(null);
+                      setProfilePhoto(null);
+                      setPendingProfilePhoto(null);
+                      setProfilePhotoError('');
+                    }}
                   >
                     ×
                   </button>
@@ -249,12 +262,14 @@ export default function ProfileEditorPage() {
                   onFiles={(files) => {
                     if (files[0]) {
                       setPendingProfilePhoto(files[0]);
-                      setProfilePhoto(URL.createObjectURL(files[0]));
+                      setProfilePhotoPreview(URL.createObjectURL(files[0]));
+                      setProfilePhotoError('');
                     }
                   }}
                 />
               )}
             </div>
+            {profilePhotoError && <p className="shipping-field-error">{profilePhotoError}</p>}
           </div>
 
           <div className="question-editor">
