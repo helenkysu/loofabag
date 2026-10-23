@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { sampleBagTexts, type Category } from './BagTextSelector';
+import { bagTextFont, ensureBagFonts } from '@/lib/bag-fonts';
 
 const INTERVAL_MS = 3200;
 const FADE_MS = 600;
@@ -18,7 +19,7 @@ interface Props {
 
 // Overlays cycling bag text above the QR on a sample bag photo. Uses the same
 // layout as the print renderer in my-loofas/create: the design block is
-// QR / 0.62 wide, black Arial Black, lines 1.2× apart, squeezed to at most
+// QR / 0.62 wide, black Space Grotesk, lines 1.2× apart, squeezed to at most
 // 92% wide, with a 2% gap above the QR.
 export default function BagTextCycler({ category, qrCenterX, qrWidth, qrTop, photoAspect, delayMs = 0 }: Props) {
   const [texts] = useState(() => sampleBagTexts(category));
@@ -59,7 +60,7 @@ export default function BagTextCycler({ category, qrCenterX, qrWidth, qrTop, pho
       const lineH = Math.round(fontSize * 1.2);
       const lines = (texts[index] ?? '').split('\n');
       ctx.clearRect(0, 0, W, canvas.height);
-      ctx.font = `900 ${fontSize}px "Arial Black", Arial, sans-serif`;
+      ctx.font = bagTextFont(fontSize);
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
@@ -71,6 +72,7 @@ export default function BagTextCycler({ category, qrCenterX, qrWidth, qrTop, pho
       }
     };
     draw();
+    ensureBagFonts().then(draw); // redraw once the bag font has loaded
     const ro = new ResizeObserver(draw);
     ro.observe(canvas);
     return () => ro.disconnect();

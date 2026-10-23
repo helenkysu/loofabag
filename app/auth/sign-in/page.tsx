@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { PENDING_CHECKOUT_PATH } from '@/lib/pending-checkout';
 
 export default function SignInPage() {
   return (
@@ -17,6 +18,8 @@ function SignInContent() {
   const searchParams = useSearchParams();
   const next = searchParams.get('next') ?? '/my-loofas';
   const callbackError = searchParams.get('error');
+  // Sent here from the bag designer: their design is saved and they continue to checkout after signing in
+  const forCheckout = next === PENDING_CHECKOUT_PATH;
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState<string | null>(null);
@@ -39,7 +42,7 @@ function SignInContent() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${next}`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     setLoading(null);
@@ -56,7 +59,7 @@ function SignInContent() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${next}`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     if (error) {
@@ -75,7 +78,13 @@ function SignInContent() {
             <div className="auth-big-icon">✉️</div>
             <h2>Check your email</h2>
             <p>We sent a magic link to <strong>{email}</strong></p>
-            <p className="auth-hint">Click the link to sign in — no password needed.</p>
+            {forCheckout ? (
+              <p className="auth-hint">
+                Open the link in this browser and we&apos;ll take you straight to checkout with your bag design saved.
+              </p>
+            ) : (
+              <p className="auth-hint">Click the link to sign in — no password needed.</p>
+            )}
             <button type="button" className="btn btn-secondary" onClick={() => setMagicLinkSent(false)}>
               Use a different email
             </button>
@@ -83,8 +92,12 @@ function SignInContent() {
         ) : (
           <>
             <div className="auth-header">
-              <h1 className="auth-heading">Sign in</h1>
-              <p className="auth-subheading">to your loofabag account</p>
+              <h1 className="auth-heading">{forCheckout ? 'Sign in to check out' : 'Sign in'}</h1>
+              <p className="auth-subheading">
+                {forCheckout
+                  ? 'Your bag design is saved. Sign in so you can manage your loofa and see who reaches out.'
+                  : 'to your loofabag account'}
+              </p>
             </div>
 
             <form onSubmit={handleMagicLink} className="auth-form">

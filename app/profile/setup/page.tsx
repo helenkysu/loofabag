@@ -33,7 +33,9 @@ export default function ProfileSetupPage() {
     if (error) {
       setError(error.message);
     } else {
-      router.push('/my-loofas');
+      // Only follow same-site paths
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.push(next && next.startsWith('/') && !next.startsWith('//') ? next : '/my-loofas');
     }
   };
 

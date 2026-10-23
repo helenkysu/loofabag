@@ -26,10 +26,12 @@ export async function proxy(request: NextRequest) {
   // Refresh session — do not add logic between createServerClient and getUser
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Protect /my-loofas and /profile routes
+  // Protect /my-loofas and /profile routes. The create page is open to logged-out
+  // users so they can design a bag first; it asks them to sign in before checkout.
   if (
     (request.nextUrl.pathname.startsWith('/my-loofas') ||
       request.nextUrl.pathname.startsWith('/profile')) &&
+    request.nextUrl.pathname !== '/my-loofas/create' &&
     !user
   ) {
     const redirectUrl = request.nextUrl.clone();

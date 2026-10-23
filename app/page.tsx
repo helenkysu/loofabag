@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import NavBar from './components/NavBar';
 import CyclingText from './components/CyclingText';
 import BagTextCycler from './components/BagTextCycler';
@@ -31,13 +32,13 @@ export default function Home() {
               <strong className="loofa-letter">A</strong>...
             </span>
             <p className="loofa-description">
-              Looking for a husband? A girlfriend? Your new bestie? A dream job?
+              Are you looking for a partner? A girlfriend? Your new bestie? A dream job?
               Whatever you're looking for, wear it proudly on your bag and let interested people reach out to you!
             </p>
           </div>
 
           <div className="cta-buttons">
-            <button className="btn btn-primary">Get Your Bag Now</button>
+            <Link href="/my-loofas/create" className="btn btn-primary">Get Your Bag Now</Link>
             <button className="btn btn-secondary">Learn More</button>
           </div>
         </div>
@@ -53,7 +54,7 @@ export default function Home() {
       </section>
 
       <section className="features">
-        <h2 className="section-title lobster-heading">Your Loofa, Your Way</h2>
+        <h2 className="section-title display-heading">Your Loofa, Your Way</h2>
         <div className="features-grid">
           <article className="feature-card">
             <h3>Dating & Romance 💕</h3>
@@ -102,7 +103,7 @@ export default function Home() {
       </section>
 
       <section className="motto-section">
-        <h2 className="lobster-heading">Let what is meant for you<br />find you faster 🚀</h2>
+        <h2 className="display-heading">Let what is meant for you<br />find you faster 🚀</h2>
       </section>
 
       <section className="connection-section">

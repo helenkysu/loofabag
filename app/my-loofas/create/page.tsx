@@ -11,6 +11,8 @@ import type { QRDesignOptions } from '@/app/components/QRDesigner';
 import BagTextSelector from '@/app/components/BagTextSelector';
 import { ALLOWED_REDIRECT_DOMAINS, isAllowedRedirectUrl, normalizeRedirectUrl } from '@/lib/redirect-url';
 import { isReservedSlug, isProfaneSlug } from '@/lib/reserved-slugs';
+import { PENDING_CHECKOUT_PATH, savePendingCheckout, takePendingCheckout } from '@/lib/pending-checkout';
+import { bagTextFont, bagUrlFont, ensureBagFonts } from '@/lib/bag-fonts';
 
 type ProductVariant = { id: string; label: string; image: string };
 type Product = {
@@ -212,16 +214,6 @@ function loadImg(src: string): Promise<HTMLImageElement> {
   });
 }
 
-async function ensureLobster(): Promise<void> {
-  if (typeof document === 'undefined') return;
-  if (document.fonts.check('12px Lobster')) return;
-  try {
-    const f = new FontFace('Lobster', 'url(https://fonts.gstatic.com/s/lobster/v28/neILzCirqoswsqX9zoKmMw.woff2)');
-    await f.load();
-    document.fonts.add(f);
-  } catch { /* fall back to cursive */ }
-}
-
 function getBagImageUrl(productId: string, variantLabel?: string | null): string {
   if (variantLabel) {
     const color = variantLabel.toLowerCase();
@@ -367,6 +359,7 @@ export default function CreateLoofaPage() {
   const [slugTaken, setSlugTaken] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState('eco-tote');
   const [checkingOut, setCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(templateDefs[0]);
   const [customFields, setCustomFields] = useState<FormField[]>(() => toFormFields(templateDefs[0].fields));
   const [profileData, setProfileData] = useState<Record<string, string>>({});
@@ -444,7 +437,23 @@ export default function CreateLoofaPage() {
   // Initialize QR token on mount (fresh session) or restore after Stripe redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const resume = params.get('resume');
+    let resume = params.get('resume');
+
+    // Back from sign-in: move the design saved before sign-in into this tab and
+    // continue at the checkout step. If it expired or is missing, start fresh.
+    if (resume === 'pending') {
+      const pending = takePendingCheckout();
+      if (pending) {
+        sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify(pending));
+        if (typeof pending.qrToken === 'string' && pending.qrToken) {
+          sessionStorage.setItem('loofabag_qr_token', pending.qrToken);
+        }
+        resume = '3';
+      } else {
+        resume = null;
+        window.history.replaceState({}, '', '/my-loofas/create');
+      }
+    }
 
     if (resume) {
       // Post-Stripe restore path — clear any stale print file path for non-reorder flows
@@ -672,7 +681,7 @@ export default function CreateLoofaPage() {
     opts: { qrDataUrl?: string; qrDesign?: QRDesignOptions; includeLogo?: boolean; text?: string } = {},
   ): Promise<HTMLCanvasElement | null> => {
     if (!opts.qrDataUrl && !opts.qrDesign) return null;
-    await ensureLobster();
+    await ensureBagFonts();
 
     const effectiveText = opts.text !== undefined ? opts.text : bagText;
     const textLines = effectiveText ? effectiveText.split('\n') : [];
@@ -703,7 +712,7 @@ export default function CreateLoofaPage() {
     let y = Math.round(W * 0.07);
 
     if (textLines.length) {
-      ctx.font = `900 ${textFS}px "Arial Black", Arial, sans-serif`;
+      ctx.font = bagTextFont(textFS);
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
@@ -729,11 +738,16 @@ export default function CreateLoofaPage() {
     }
     y += qrPx + Math.round(W * 0.04);
 
-    ctx.font = `400 ${urlH}px Lobster, cursive`;
+    // Monospace URLs get wide with long names: shrink the font (not squeeze) to fit
+    const urlText = `loofabag.com/${slug || 'your-name'}`;
+    const maxUrlW = Math.round(W * 0.92);
+    ctx.font = bagUrlFont(urlH);
+    const urlW = ctx.measureText(urlText).width;
+    if (urlW > maxUrlW) ctx.font = bagUrlFont(Math.floor(urlH * maxUrlW / urlW));
     ctx.fillStyle = '#00B5AD';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(`loofabag.com/${slug || 'your-name'}`, cx, y);
+    ctx.fillText(urlText, cx, y);
     y += urlH;
 
     if (tealLogo) {
@@ -771,7 +785,7 @@ export default function CreateLoofaPage() {
   const buildMainBagTemplateCanvas = async (): Promise<HTMLCanvasElement | null> => {
     const design = qrDesignRef.current ?? restoredQrDesign;
     if (!design) return null;
-    await ensureLobster();
+    await ensureBagFonts();
 
     const W = 3150;   // 21" x 150 DPI
     const H = 5550;   // 37" x 150 DPI
@@ -1007,6 +1021,22 @@ export default function CreateLoofaPage() {
     }
   };
 
+  // Restored at checkout (after sign-in or a cancelled payment): the QRDesigners aren't
+  // mounted, so render the saved designs here to get the checkout bag preview back.
+  useEffect(() => {
+    if (step !== 3 || isReorder) return;
+    const qrUrl = qrToken ? `${getSiteUrl()}/q/${qrToken}` : `${getSiteUrl()}/${slug || 'your-name'}`;
+    const render = async (design: QRDesignOptions, set: (url: string) => void) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 280;
+      await renderQRToCanvas(canvas, qrUrl, design);
+      set(canvas.toDataURL('image/png'));
+    };
+    if (restoredQrDesign && !qrRenderedDataUrl) render(restoredQrDesign, setQrRenderedDataUrl).catch(console.error);
+    if (restoredBackQrDesign && !backQrRenderedDataUrl) render(restoredBackQrDesign, setBackQrRenderedDataUrl).catch(console.error);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, restoredQrDesign, restoredBackQrDesign, qrToken, slug]);
+
   // Re-render the bag preview canvas whenever the QR, text or slug changes
   useEffect(() => {
     renderPreviewBlock().then((url) => setPreviewDataUrl(url));
@@ -1103,8 +1133,60 @@ export default function CreateLoofaPage() {
     }
   };
 
+  // Everything needed to restore the order after a redirect (Stripe or sign-in).
+  // When restored at step 3 the QRDesigners aren't mounted, so fall back to the restored designs.
+  const buildCheckoutDraft = (extra: Record<string, unknown> = {}) => {
+    const effectiveDesign = qrDesignRef.current ?? restoredQrDesign;
+    const effectiveBackDesign = backQrDesignRef.current ?? restoredBackQrDesign;
+    return {
+      name,
+      selectedProductId,
+      selectedVariantId,
+      selectedVariantLabel: availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label ?? restoredVariantLabel ?? null,
+      bagText,
+      address,
+      qrToken,
+      backDesign,
+      // --- CUSTOM BACK ---
+      backBagText,
+      backQrDesign: effectiveBackDesign ? { ...effectiveBackDesign, logoFile: null } : null,
+      // --- END CUSTOM BACK ---
+      // logoFile is a File object (not serializable) but logoDataUrl is a base64 string
+      qrDesign: effectiveDesign ? { fgColor: effectiveDesign.fgColor, bgColor: effectiveDesign.bgColor, gradient: effectiveDesign.gradient, shape: effectiveDesign.shape, logoFile: null, logoDataUrl: effectiveDesign.logoDataUrl ?? null } : null,
+      reorder: isReorder,
+      ...extra,
+    };
+  };
+
+  // Design → checkout. Logged-out users save their design and sign in first;
+  // the sign-in link brings them back to the checkout step with it restored.
+  const goToCheckout = async () => {
+    if (!isReorder) {
+      const { data: { user } } = await createClient().auth.getUser();
+      if (!user) {
+        savePendingCheckout(buildCheckoutDraft());
+        router.push(`/auth/sign-in?next=${encodeURIComponent(PENDING_CHECKOUT_PATH)}`);
+        return;
+      }
+    }
+    setStep(3);
+  };
+
   const handleCheckout = async () => {
     setCheckingOut(true);
+    setCheckoutError('');
+
+    // The link name could have been taken while this user was designing or signing in
+    if (!isReorder && slug) {
+      const taken = await fetch(`/api/loofas/by-slug?slug=${encodeURIComponent(slug)}`).then((r) => r.ok).catch(() => false);
+      if (taken) {
+        setSlugTaken(true);
+        setCheckoutError(`Someone just took loofabag.com/${slug}. Go back to step 1 and pick a different name.`);
+        setCheckingOut(false);
+        return;
+      }
+    }
+
     // Save draft so we can restore after redirect
     // In reorder mode qrDesignRef is null (QRDesigner not rendered at step 3), fall back to restoredQrDesign
     const effectiveDesign = qrDesignRef.current ?? restoredQrDesign;
@@ -1138,25 +1220,10 @@ export default function CreateLoofaPage() {
       }
     } catch { /* non-fatal — preview is cosmetic */ }
 
-    sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify({
-      name,
-      selectedProductId,
-      selectedVariantId,
-      selectedVariantLabel,
-      bagText,
-      address,
-      qrToken,
-      backDesign,
-      // --- CUSTOM BACK ---
-      backBagText,
-      backQrDesign: backQrDesignRef.current ? { ...backQrDesignRef.current, logoFile: null } : null,
-      // --- END CUSTOM BACK ---
-      // logoFile is a File object (not serializable) but logoDataUrl is a base64 string
-      qrDesign: effectiveDesign ? { fgColor: effectiveDesign.fgColor, bgColor: effectiveDesign.bgColor, gradient: effectiveDesign.gradient, shape: effectiveDesign.shape, logoFile: null, logoDataUrl: effectiveDesign.logoDataUrl ?? null } : null,
-      reorder: isReorder,
+    sessionStorage.setItem('loofabag_checkout_draft', JSON.stringify(buildCheckoutDraft({
       previewFrontPath: preCheckoutFrontPath,
       previewBackPath: preCheckoutBackPath,
-    }));
+    })));
     const selectedRate = shippingRates.find((r) => r.id === selectedRateId);
     try {
       const res = await fetch('/api/checkout', {
@@ -1189,7 +1256,7 @@ export default function CreateLoofaPage() {
   const handleNext = () => {
     if (step === 2) {
       if (designStep < 4) { setDesignStep(designStep + 1); return; }
-      setStep(3); return;
+      void goToCheckout(); return;
     }
     if (step < 6) setStep(step + 1);
   };
@@ -1733,6 +1800,7 @@ export default function CreateLoofaPage() {
                   >
                     {checkingOut ? 'Redirecting to payment…' : 'Complete Purchase'}
                   </button>
+                  {checkoutError && <p className="shipping-field-error">{checkoutError}</p>}
                     </div>{/* end checkout-form-col */}
 
                     {/* Bag preview */}

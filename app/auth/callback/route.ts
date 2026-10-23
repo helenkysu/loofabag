@@ -45,7 +45,8 @@ export async function GET(request: NextRequest) {
           .single();
 
         if (!profile?.preferred_name) {
-          return NextResponse.redirect(`${origin}/profile/setup`);
+          // Carry `next` through setup so new users still land where they were headed (e.g. checkout)
+          return NextResponse.redirect(`${origin}/profile/setup?next=${encodeURIComponent(next)}`);
         }
       }
 
