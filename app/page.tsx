@@ -13,27 +13,25 @@ export default function Home() {
       </NavBar>
 
       <section className="hero">
+        <p className="hero-banner">✨ Real-world connections, one scan away.</p>
+
         <div className="hero-content">
-          <p className="tagline">Real-world connections, one scan away.</p>
+          <h1 className="bubble-text">Meet your Loofabag</h1>
+          <p className="hero-find">Wear your personal tagline &amp; QR code to find:</p>
           <CyclingText />
-          <h1 className="bubble-text">
-            my loofah bag 👜
-          </h1>
           <p className="hero-note">
-            ✨ Your personal wingman you can wear wherever you go!
+            Turn heads, start conversations, and let people connect with you on your terms.
           </p>
 
           <div className="loofa-definition" id="what">
-            <p>🤔 What's a LOOFA?</p>
-            <span>
-              LOOFA is a short abbreviation for{' '}
-              <strong className="loofa-letter">LOO</strong>king{' '}
-              <strong className="loofa-letter">F</strong>or{' '}
-              <strong className="loofa-letter">A</strong>...
-            </span>
+            <p>💡 What&rsquo;s a LOOFA?</p>
             <p className="loofa-description">
-              Are you looking for a partner? A girlfriend? Your new bestie? A dream job?
-              Whatever you're looking for, wear it proudly on your bag and let interested people reach out to you!
+              <strong>LOOFA</strong> stands for{' '}
+              <strong className="loofa-letter">LO</strong>oking{' '}
+              <strong className="loofa-letter">O</strong>ut{' '}
+              <strong className="loofa-letter">F</strong>or{' '}
+              <strong className="loofa-letter">A</strong>...{' '}
+              Whether you&apos;re looking for a bestie, a partner, or a dream job, wear it proudly and let opportunities find you!
             </p>
           </div>
 

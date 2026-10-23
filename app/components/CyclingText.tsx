@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 
 const phrases = [
+  'friends who say yes to spontaneous sushi 🍣',
   'someone to rot in cafés with ☕',
   'my future husband 🤨',
-  'friends who say yes to spontaneous sushi',
   'a SWE internship before I lose my mind',
 ];
 
@@ -26,7 +26,6 @@ export default function CyclingText() {
 
   return (
     <div className="cycling-block">
-      <p className="cycling-label">peachie is looking for...</p>
       <p
         className="cycling-phrase"
         style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.4s ease' }}
