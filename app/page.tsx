@@ -54,7 +54,7 @@ export default function Home() {
       </section>
 
       <section className="features" id="usecases">
-        <h2 className="section-title display-heading">Your Loofa, Your Way</h2>
+        <h2 className="section-title display-heading">Your personal wingman wherever you go</h2>
         <div className="features-grid">
           <article className="feature-card">
             <h3>Dating & Romance 💕</h3>
@@ -132,7 +132,7 @@ export default function Home() {
           <div className="connection-visual">📷</div>
           <div>
             <h2>Real-world connection,<br />made easier</h2>
-            <p>No more awkward first conversations. Your loofa bag breaks the ice for you, naturally introducing what you're looking for to the world around you.</p>
+            <p>Skip the awkward first step. Your Loofabag displays exactly what you&rsquo;re looking for, giving anyone who can help or connect with you the perfect, natural excuse to walk up and say hi.</p>
           </div>
         </div>
 

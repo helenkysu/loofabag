@@ -32,7 +32,7 @@ export default function NavBar({ children }: { children?: React.ReactNode }) {
 
   return (
     <nav>
-      <Link href="/" className="logo">👜 myloofabag</Link>
+      <Link href="/" className="logo">loofabag</Link>
       <div className="nav-links">
         {children}
         <Link href="/contact">Contact</Link>

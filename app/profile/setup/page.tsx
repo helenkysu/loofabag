@@ -42,7 +42,7 @@ export default function ProfileSetupPage() {
   return (
     <main className="auth-page">
       <div className="auth-card">
-        <Link href="/" className="logo auth-logo">👜 myloofabag</Link>
+        <Link href="/" className="logo auth-logo">loofabag</Link>
         <div className="auth-header">
           <h1 className="auth-heading">What should we call you?</h1>
           <p className="auth-subheading">You can always change this later</p>

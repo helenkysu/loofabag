@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className="site-footer">
       <div className="site-footer-inner">
         <div className="site-footer-brand-col">
-          <Link href="/" className="site-footer-logo">👜 myloofabag</Link>
+          <Link href="/" className="site-footer-logo">loofabag</Link>
           <p className="site-footer-tagline">Real-world connections, one scan away.</p>
           <Link href="/my-loofas/create" className="site-footer-cta">Get your bag →</Link>
         </div>

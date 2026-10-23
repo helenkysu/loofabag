@@ -71,7 +71,7 @@ function SignInContent() {
   return (
     <main className="auth-page">
       <div className="auth-card">
-        <Link href="/" className="logo auth-logo">👜 myloofabag</Link>
+        <Link href="/" className="logo auth-logo">loofabag</Link>
 
         {magicLinkSent ? (
           <div className="magic-link-sent">
