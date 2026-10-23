@@ -103,8 +103,7 @@ nav {
   align-items: center;
   align-content: center;
   justify-content: space-between;
-  padding: 80px 40px;
-  min-height: 100vh;
+  padding: 56px 40px 24px; /* size to content: a full-viewport min-height left big gaps above/below */
   position: relative;
   overflow: hidden;
 }
@@ -202,18 +201,21 @@ nav {
   font-style: normal;
 }
 
-.loofa-definition .loofa-description {
-  margin: 0;
+.loofa-definition span {
   font-size: 16px;
-  font-weight: 400;
-  line-height: 1.6;
+  color: #555;
+  font-style: italic;
+}
+
+.loofa-description {
+  margin-top: 12px;
+  font-size: 16px;
   font-style: normal;
 }
 
 .cta-buttons {
   display: flex;
   gap: 20px;
-  margin-bottom: 60px;
 }
 
 .btn {
@@ -296,10 +298,6 @@ nav {
 .features {
   padding: 100px 40px;
   background: linear-gradient(180deg, #ffffff 0%, #f8f8f8 100%);
-}
-
-.features.alternate {
-  background: linear-gradient(180deg, #f8f8f8 0%, #ffffff 100%);
 }
 
 .section-title {
@@ -401,37 +399,6 @@ nav {
   color: #666;
   font-size: 16px;
   line-height: 1.6;
-}
-
-.usecases-grid {
-  max-width: 1000px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-}
-
-.usecase-card {
-  background: linear-gradient(135deg, #FFE5E5 0%, #FFD4D4 100%);
-  padding: 25px;
-  border-radius: 15px;
-  text-align: center;
-  color: #333;
-  font-weight: 700;
-}
-
-.usecase-card:nth-child(4),
-.usecase-card:nth-child(5) {
-  background: linear-gradient(135deg, #E5F3FF 0%, #D4E8FF 100%);
-}
-
-.usecase-card:nth-child(6) {
-  background: linear-gradient(135deg, #E5F0D4 0%, #D4E5B0 100%);
-}
-
-.usecase-card p {
-  margin-top: 10px;
-  font-size: 18px;
 }
 
 .motto-section {
@@ -606,25 +573,6 @@ nav {
   position: absolute;
   left: 0;
   font-size: 24px;
-}
-
-footer {
-  background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 50%, #6BCB77 100%);
-  color: white;
-  text-align: center;
-  padding: 40px;
-  margin-top: 80px;
-}
-
-footer p {
-  font-size: 16px;
-  margin-bottom: 10px;
-}
-
-.footer-note {
-  margin-top: 20px;
-  font-size: 14px;
-  opacity: 0.9;
 }
 
 /* Auth pages */
@@ -3128,8 +3076,7 @@ footer p {
     width: 100%;
   }
 
-  .features-grid,
-  .usecases-grid {
+  .features-grid {
     grid-template-columns: 1fr;
   }
 
@@ -5369,6 +5316,7 @@ footer p {
 
 .site-footer-links {
   display: flex;
+  flex-wrap: wrap;
   gap: 20px;
 }
 
@@ -5376,6 +5324,9 @@ footer p {
   font-size: 13px;
   color: #999;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .site-footer-links a:hover {

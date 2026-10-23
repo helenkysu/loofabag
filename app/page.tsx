@@ -13,7 +13,7 @@ export default function Home() {
       </NavBar>
 
       <section className="hero">
-        <p className="hero-banner">✨ Real-world connections, one scan away.</p>
+        <p className="hero-banner">✨ Real-world connections, one scan away</p>
 
         <div className="hero-content">
           <h1 className="bubble-text">Meet your Loofabag</h1>
@@ -24,14 +24,16 @@ export default function Home() {
           </p>
 
           <div className="loofa-definition" id="what">
-            <p>💡 What&rsquo;s a LOOFA?</p>
-            <p className="loofa-description">
-              <strong>LOOFA</strong> stands for{' '}
-              <strong className="loofa-letter">LO</strong>oking{' '}
-              <strong className="loofa-letter">O</strong>ut{' '}
+            <p>🤔 What&rsquo;s a LOOFA?</p>
+            <span>
+              LOOFA is a short abbreviation for{' '}
+              <strong className="loofa-letter">LOO</strong>king{' '}
               <strong className="loofa-letter">F</strong>or{' '}
-              <strong className="loofa-letter">A</strong>...{' '}
-              Whether you&apos;re looking for a bestie, a partner, or a dream job, wear it proudly and let opportunities find you!
+              <strong className="loofa-letter">A</strong>...
+            </span>
+            <p className="loofa-description">
+              Are you looking for a partner? A girlfriend? Your new bestie? A dream job?
+              Whatever you're looking for, wear it proudly on your bag and let interested people reach out to you!
             </p>
           </div>
 
@@ -51,7 +53,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="features">
+      <section className="features" id="usecases">
         <h2 className="section-title display-heading">Your Loofa, Your Way</h2>
         <div className="features-grid">
           <article className="feature-card">
@@ -85,18 +87,6 @@ export default function Home() {
               <p><strong>Private Responses:</strong> Review incoming messages privately and decide who gets a reply.</p>
             </div>
           </article>
-        </div>
-      </section>
-
-      <section className="features alternate" id="usecases">
-        <h2 className="section-title">Your Loofa Examples</h2>
-        <div className="usecases-grid">
-          <article className="usecase-card">💕<p>Looking for a husband</p></article>
-          <article className="usecase-card">💕<p>Looking for a wife</p></article>
-          <article className="usecase-card">💕<p>Looking for a bf/gf</p></article>
-          <article className="usecase-card">👯<p>Looking for new bestfriends</p></article>
-          <article className="usecase-card">👯<p>Looking for a community</p></article>
-          <article className="usecase-card">💼<p>Looking for a new job</p></article>
         </div>
       </section>
 
@@ -153,11 +143,6 @@ export default function Home() {
         </div>
       </section>
 
-      <footer>
-        <p><strong>Ready to find your loofa?</strong></p>
-        <p>Whether you're looking for love, friendship, or your next adventure—wear your loofa and let it find you! 🎉</p>
-        <p className="footer-note">© 2026 myloofabag. Find your loofa, today.</p>
-      </footer>
     </main>
   );
 }
