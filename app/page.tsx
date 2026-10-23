@@ -39,7 +39,7 @@ export default function Home() {
 
           <div className="cta-buttons">
             <Link href="/my-loofas/create" className="btn btn-primary">Get Your Bag Now</Link>
-            <button className="btn btn-secondary">Learn More</button>
+            <a href="#how" className="btn btn-secondary">Learn More</a>
           </div>
         </div>
 

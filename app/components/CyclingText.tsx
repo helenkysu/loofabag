@@ -4,29 +4,38 @@ import { useEffect, useState } from 'react';
 
 // Hero rotation picks, one list per category. The hero rotates dating → friends →
 // networking, picking a random phrase from each, starting at a random category.
+// Each phrase completes "Wear your personal tagline & QR code to find: …", so it
+// must name the thing being found (not a slogan like "send help").
 const PHRASES_BY_CATEGORY = [
   // 🩷 Dating & Romance
   [
-    'friends who say yes to spontaneous sushi',
     'my Player 2',
     'someone to survive Costco with',
     'my reason to delete Hinge',
     'someone to steal my fries',
+    "my cat's future mom",
+    'someone to split rent with',
+    'my lobster',
+    'my plus one',
   ],
   // 👯 Friendship & Social
   [
+    'friends who say yes to spontaneous sushi',
     'extroverts to adopt me',
     'someone to rot in cafés with',
-    'new in town... send help',
-    'accepting bestie applications',
     'a concert buddy',
+    'someone to save me from third wheeling',
+    'my gym buddy',
+    'a tour guide (and a bestie)',
   ],
   // 💼 Career & Networking
   [
     'a career plot twist',
-    'corporate baddie for hire',
     'my future co-founder',
     'someone to explain crypto to me',
+    'my next corporate adventure',
+    'a SWE internship before I lose my mind',
+    'my next big break',
   ],
 ];
 
