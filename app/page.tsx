@@ -13,21 +13,26 @@ export default function Home() {
 
       <section className="hero">
         <div className="hero-content">
+          <p className="tagline">Real-world connections, one scan away.</p>
           <CyclingText />
           <h1 className="bubble-text">
             my loofah bag 👜
           </h1>
-          <p className="tagline">Real-world connections, one scan away.</p>
           <p className="hero-note">
             ✨ Your personal wingman you can wear wherever you go!
           </p>
 
           <div className="loofa-definition" id="what">
             <p>🤔 What's a LOOFA?</p>
-            <span>LOOFA = Looking For A...</span>
+            <span>
+              LOOFA is a short abbreviation for{' '}
+              <strong className="loofa-letter">LOO</strong>king{' '}
+              <strong className="loofa-letter">F</strong>or{' '}
+              <strong className="loofa-letter">A</strong>...
+            </span>
             <p className="loofa-description">
               Looking for a husband? A girlfriend? Your new bestie? A dream job?
-              Whatever your loofa is, wear it proudly on your bag and let interested people reach out to you!
+              Whatever you're looking for, wear it proudly on your bag and let interested people reach out to you!
             </p>
           </div>
 
@@ -48,7 +53,7 @@ export default function Home() {
       </section>
 
       <section className="features">
-        <h2 className="section-title">Your Loofa, Your Way</h2>
+        <h2 className="section-title lobster-heading">Your Loofa, Your Way</h2>
         <div className="features-grid">
           <article className="feature-card">
             <h3>Dating & Romance 💕</h3>
@@ -76,8 +81,9 @@ export default function Home() {
           </article>
           <article className="feature-card feature-banner">
             <div>
-              <h3>You Control It ⚡</h3>
-              <p>People scan your code and fill out a form. You review responses and decide who you want to connect with.</p>
+              <h3>Your Loofabag, Your Rules ⚡</h3>
+              <p><strong>Customizable Landing Page:</strong> Control what visitors see and what info they submit.</p>
+              <p><strong>Private Responses:</strong> Review incoming messages privately and decide who gets a reply.</p>
             </div>
           </article>
         </div>
@@ -96,7 +102,7 @@ export default function Home() {
       </section>
 
       <section className="motto-section">
-        <h2>Let what is meant for you<br />find you faster 🚀</h2>
+        <h2 className="lobster-heading">Let what is meant for you<br />find you faster 🚀</h2>
       </section>
 
       <section className="connection-section">

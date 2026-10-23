@@ -182,6 +182,13 @@ nav {
   font-style: italic;
 }
 
+/* Highlighted letters that spell out LOOFA */
+.loofa-letter {
+  color: #FF6B9D;
+  font-weight: 900;
+  font-style: normal;
+}
+
 .loofa-description {
   margin-top: 12px;
   font-size: 16px;
@@ -313,7 +320,7 @@ nav {
 /* Sample bag photo pinned to the bottom of each category tile so they line up */
 .feature-bag {
   position: relative;
-  margin-top: auto;
+  margin: auto -20px 0; /* bleed into the card's side padding so the bag reads larger */
   border-radius: 14px;
   overflow: hidden;
 }
@@ -346,6 +353,14 @@ nav {
 
 .feature-banner h3 {
   margin-bottom: 8px;
+}
+
+.feature-banner p + p {
+  margin-top: 8px;
+}
+
+.feature-banner strong {
+  color: #333;
 }
 
 .feature-card:hover {
@@ -414,6 +429,14 @@ nav {
   font-weight: 900;
   letter-spacing: -1px;
   line-height: 1.3;
+}
+
+/* Lobster only ships in 400 — reset weight so the browser doesn't fake-bold it */
+.section-title.lobster-heading,
+.motto-section h2.lobster-heading {
+  font-family: 'Lobster', cursive;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .connection-section {
