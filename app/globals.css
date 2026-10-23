@@ -312,12 +312,24 @@ nav {
 
 /* Sample bag photo pinned to the bottom of each category tile so they line up */
 .feature-bag {
+  position: relative;
+  margin-top: auto;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.feature-bag-img {
   display: block;
   width: 100%;
   aspect-ratio: 1088 / 1344;
   object-fit: cover;
-  border-radius: 14px;
-  margin-top: auto;
+}
+
+/* Cycling sample text drawn on the blank bag area above the QR (see BagTextCycler) */
+.bag-text-cycler {
+  position: absolute;
+  aspect-ratio: 4 / 1;
+  pointer-events: none;
 }
 
 .feature-card > p {
@@ -330,11 +342,6 @@ nav {
   flex-direction: row;
   align-items: center;
   gap: 28px;
-}
-
-.feature-banner .feature-icon {
-  margin-bottom: 0;
-  flex-shrink: 0;
 }
 
 .feature-banner h3 {
@@ -351,13 +358,9 @@ nav {
 .feature-card:nth-child(3) { border-top-color: #6BCB77; }
 .feature-card:nth-child(4) { border-top-color: #4D96FF; }
 
-.feature-icon {
-  font-size: 48px;
-  margin-bottom: 20px;
-}
-
 .feature-card h3 {
-  font-size: 24px;
+  font-size: 32px;
+  line-height: 1.2;
   margin-bottom: 15px;
   color: #333;
 }
@@ -3087,6 +3090,10 @@ footer p {
   .features-grid,
   .usecases-grid {
     grid-template-columns: 1fr;
+  }
+
+  .feature-card h3 {
+    font-size: 26px;
   }
 }
 

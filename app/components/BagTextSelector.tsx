@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-type Category = 'dating' | 'friends' | 'networking';
+export type Category = 'dating' | 'friends' | 'networking';
 
 interface Phrase {
   id: string;
@@ -131,6 +131,22 @@ function parseSegments(text: string): Segment[] {
     }
     return { type: 'literal', text: part };
   });
+}
+
+// Defaults for the homepage sample bags: male partner, daughter (so son-in-law), bestie
+const SAMPLE_PREFERRED = ['BOYFRIEND', 'HUSBAND', 'HIS', 'SON-IN-LAW', 'DAUGHTER', 'DAD', 'BESTIE', 'BESTIES'];
+
+// Every phrase in a category, with each X/Y choice resolved to a single sample value
+export function sampleBagTexts(category: Category): string[] {
+  return PHRASES[category].map((phrase) =>
+    ([phrase.line1, phrase.line2].filter(Boolean) as string[])
+      .map((line) => parseSegments(line).map((seg) => {
+        if (seg.type === 'literal') return seg.text;
+        const halves = seg.options.slice(0, -1);
+        return halves.find((o) => SAMPLE_PREFERRED.includes(o)) ?? halves[0];
+      }).join(''))
+      .join('\n'),
+  );
 }
 
 function collectSlotKeys(phrase: Phrase): { key: string; options: string[]; defaultValue: string }[] {
