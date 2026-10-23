@@ -180,17 +180,17 @@ nav {
 .loofa-definition {
   background: linear-gradient(135deg, #FFE5E5 0%, #E5F3FF 100%);
   border-left: 6px solid #FF6B9D;
-  padding: 24px;
-  border-radius: 12px;
+  padding: 32px 36px;
+  border-radius: 16px;
   margin-bottom: 40px;
-  max-width: 500px;
+  max-width: 640px;
   backdrop-filter: blur(10px);
 }
 
 .loofa-definition p {
-  font-size: 18px;
+  font-size: 24px;
   color: #333;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   font-weight: 600;
 }
 
@@ -202,14 +202,15 @@ nav {
 }
 
 .loofa-definition span {
-  font-size: 16px;
+  font-size: 20px;
   color: #555;
   font-style: italic;
 }
 
-.loofa-description {
-  margin-top: 12px;
-  font-size: 16px;
+.loofa-definition .loofa-description {
+  margin-top: 14px;
+  font-size: 22px;
+  line-height: 1.45;
   font-style: normal;
 }
 
@@ -553,26 +554,41 @@ nav {
   margin-bottom: 25px;
 }
 
-.feature-list {
+.how-steps {
   list-style: none;
-  margin-bottom: 30px;
   padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }
 
-.feature-list li {
-  font-size: 18px;
-  color: #333;
-  margin-bottom: 15px;
-  padding-left: 35px;
-  position: relative;
-  font-weight: 600;
+.how-steps li {
+  border-left: 4px solid #FF6B9D;
+  padding-left: 18px;
 }
 
-.feature-list li:before {
-  content: "✨";
-  position: absolute;
-  left: 0;
-  font-size: 24px;
+.how-step-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #FF6B9D;
+  margin-bottom: 4px;
+}
+
+.how-steps h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 6px;
+}
+
+.product-content .how-steps p {
+  font-size: 17px;
+  color: #555;
+  line-height: 1.55;
+  margin-bottom: 0;
 }
 
 /* Auth pages */
@@ -3055,6 +3071,22 @@ nav {
 
   .bubble-text {
     font-size: 48px;
+  }
+
+  .loofa-definition {
+    padding: 24px;
+  }
+
+  .loofa-definition p {
+    font-size: 20px;
+  }
+
+  .loofa-definition span {
+    font-size: 17px;
+  }
+
+  .loofa-definition .loofa-description {
+    font-size: 18px;
   }
 
   .hero-visual {

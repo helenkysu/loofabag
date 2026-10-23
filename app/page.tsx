@@ -130,15 +130,28 @@ export default function Home() {
           </div>
           <div className="product-content">
             <h2>How It Works</h2>
-            <p>Your myloofabag comes with a unique QR code that tells the world exactly what you're looking for.</p>
-            <ul className="feature-list">
-              <li>Carry your bag everywhere you go</li>
-              <li>People scan your QR code</li>
-              <li>They fill out a quick form with their info</li>
-              <li>You get notified and review all responses</li>
-              <li>Decide who you want to connect with</li>
-            </ul>
-            <p><strong>It's that simple:</strong> No awkward conversations. No wasted time. Just a fun, organic way to meet your people.</p>
+            <ol className="how-steps">
+              <li>
+                <span className="how-step-label">Step 1</span>
+                <h3>Design Your Bag &amp; Page</h3>
+                <p>Pick your tagline, strap color, and set up your custom QR landing page with your own bio and questions.</p>
+              </li>
+              <li>
+                <span className="how-step-label">Step 2</span>
+                <h3>Wear It Out in the World</h3>
+                <p>Carry your Loofabag to coffee shops, events, parks, or campus, wherever you go!</p>
+              </li>
+              <li>
+                <span className="how-step-label">Step 3</span>
+                <h3>Get Scanned &amp; Receive Forms</h3>
+                <p>New connections scan your QR code and fill out a quick form to introduce themselves.</p>
+              </li>
+              <li>
+                <span className="how-step-label">Step 4</span>
+                <h3>Review &amp; Choose Who to Reply To</h3>
+                <p>Review responses privately, and connect on your terms.</p>
+              </li>
+            </ol>
           </div>
         </div>
       </section>
