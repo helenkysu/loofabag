@@ -63,7 +63,7 @@ export default function Home() {
             <p>Want new bestfriends? Tired of being lonely? Carry your loofa and attract people who are looking for the same connection.</p>
             <div className="feature-bag">
               <img src="/bagimages/qrsamples/yellowbag.jpg" alt="Loofa tote with yellow handles and a QR code" className="feature-bag-img" loading="lazy" />
-              <BagTextCycler category="friends" qrCenterX={0.4985} qrWidth={0.327} qrTop={0.587} photoAspect={1088 / 1344} />
+              <BagTextCycler category="friends" qrCenterX={0.4985} qrWidth={0.327} qrTop={0.587} photoAspect={1088 / 1344} delayMs={1070} />
             </div>
           </article>
           <article className="feature-card">
@@ -71,7 +71,7 @@ export default function Home() {
             <p>Looking for a new job? Share your loofa with the world and let opportunities find you naturally.</p>
             <div className="feature-bag">
               <img src="/bagimages/qrsamples/blackbag.jpg" alt="Loofa tote with black handles and a QR code" className="feature-bag-img" loading="lazy" />
-              <BagTextCycler category="networking" qrCenterX={0.493} qrWidth={0.32} qrTop={0.569} photoAspect={1088 / 1344} />
+              <BagTextCycler category="networking" qrCenterX={0.493} qrWidth={0.32} qrTop={0.569} photoAspect={1088 / 1344} delayMs={2130} />
             </div>
           </article>
           <article className="feature-card feature-banner">

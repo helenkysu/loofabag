@@ -133,12 +133,14 @@ function parseSegments(text: string): Segment[] {
   });
 }
 
-// Defaults for the homepage sample bags: male partner, daughter (so son-in-law), bestie
-const SAMPLE_PREFERRED = ['BOYFRIEND', 'HUSBAND', 'HIS', 'SON-IN-LAW', 'DAUGHTER', 'DAD', 'BESTIE', 'BESTIES'];
+// Defaults for the homepage sample bags: male partner, her (the bestie), daughter (so son-in-law), bestie
+const SAMPLE_PREFERRED = ['BOYFRIEND', 'HUSBAND', 'HER', 'SON-IN-LAW', 'DAUGHTER', 'DAD', 'BESTIE', 'BESTIES'];
+// Phrases left out of the homepage sample rotation (still selectable when ordering)
+const SAMPLE_SKIP = ['d8'];
 
 // Every phrase in a category, with each X/Y choice resolved to a single sample value
 export function sampleBagTexts(category: Category): string[] {
-  return PHRASES[category].map((phrase) =>
+  return PHRASES[category].filter((phrase) => !SAMPLE_SKIP.includes(phrase.id)).map((phrase) =>
     ([phrase.line1, phrase.line2].filter(Boolean) as string[])
       .map((line) => parseSegments(line).map((seg) => {
         if (seg.type === 'literal') return seg.text;

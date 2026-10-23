@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { sampleBagTexts, type Category } from './BagTextSelector';
 
-const INTERVAL_MS = 2600;
-const FADE_MS = 350;
+const INTERVAL_MS = 3200;
+const FADE_MS = 600;
 
 interface Props {
   category: Category;
@@ -13,31 +13,39 @@ interface Props {
   qrWidth: number;
   qrTop: number;
   photoAspect: number; // photo width / height
+  delayMs?: number; // offset so bags side by side don't change in sync
 }
 
 // Overlays cycling bag text above the QR on a sample bag photo. Uses the same
-// ratios as the print renderer in my-loofas/create: the design block is
-// QR / 0.62 wide, text is 8% of it in black Arial Black, lines 1.2× apart,
-// squeezed to at most 92% wide, with a 2% gap above the QR.
-export default function BagTextCycler({ category, qrCenterX, qrWidth, qrTop, photoAspect }: Props) {
+// layout as the print renderer in my-loofas/create: the design block is
+// QR / 0.62 wide, black Arial Black, lines 1.2× apart, squeezed to at most
+// 92% wide, with a 2% gap above the QR.
+export default function BagTextCycler({ category, qrCenterX, qrWidth, qrTop, photoAspect, delayMs = 0 }: Props) {
   const [texts] = useState(() => sampleBagTexts(category));
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Fade out, swap text while invisible, fade back in
   useEffect(() => {
     let fadeTimer: ReturnType<typeof setTimeout>;
-    const timer = setInterval(() => {
+    let interval: ReturnType<typeof setInterval>;
+    const step = () => {
       setVisible(false);
       fadeTimer = setTimeout(() => {
         setIndex((i) => (i + 1) % texts.length);
         setVisible(true);
       }, FADE_MS);
-    }, INTERVAL_MS);
-    return () => { clearInterval(timer); clearTimeout(fadeTimer); };
-  }, [texts.length]);
+    };
+    const start = setTimeout(() => {
+      step();
+      interval = setInterval(step, INTERVAL_MS);
+    }, INTERVAL_MS + delayMs);
+    return () => { clearTimeout(start); clearInterval(interval); clearTimeout(fadeTimer); };
+  }, [texts.length, delayMs]);
 
-  useEffect(() => {
+  // Layout effect so the new text is drawn before the fade-in starts painting
+  useLayoutEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const draw = () => {
@@ -47,7 +55,7 @@ export default function BagTextCycler({ category, qrCenterX, qrWidth, qrTop, pho
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       const W = canvas.width;
-      const fontSize = Math.round(W * 0.08);
+      const fontSize = Math.round(W * 0.095); // a bit larger than print (8%) so it reads at thumbnail size
       const lineH = Math.round(fontSize * 1.2);
       const lines = (texts[index] ?? '').split('\n');
       ctx.clearRect(0, 0, W, canvas.height);
@@ -55,7 +63,8 @@ export default function BagTextCycler({ category, qrCenterX, qrWidth, qrTop, pho
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      let y = canvas.height - lines.length * lineH;
+      // Top-align in a two-line slot so one-line text sits higher on the bag
+      let y = canvas.height - Math.max(2, lines.length) * lineH;
       for (const line of lines) {
         ctx.fillText(line, W / 2, y, Math.round(W * 0.92));
         y += lineH;
@@ -81,7 +90,7 @@ export default function BagTextCycler({ category, qrCenterX, qrWidth, qrTop, pho
         width: `${designWidth * 100}%`,
         bottom: `${(1 - qrTop + gapAbove) * 100}%`,
         opacity: visible ? 1 : 0,
-        transition: `opacity ${FADE_MS}ms ease`,
+        transition: `opacity ${FADE_MS}ms ease-in-out`,
       }}
     />
   );
