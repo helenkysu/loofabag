@@ -557,6 +557,7 @@ nav {
 .how-steps {
   list-style: none;
   padding-left: 0;
+  margin-bottom: 32px;
   display: flex;
   flex-direction: column;
   gap: 22px;

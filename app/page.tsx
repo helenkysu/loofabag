@@ -90,36 +90,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="motto-section">
-        <h2 className="display-heading">Let what is meant for you<br />find you faster 🚀</h2>
-      </section>
-
-      <section className="connection-section">
-        <div className="connection-row">
-          <div className="connection-visual">📷</div>
-          <div>
-            <h2>Real-world connection,<br />made easier</h2>
-            <p>No more awkward first conversations. Your loofa bag breaks the ice for you, naturally introducing what you're looking for to the world around you.</p>
-          </div>
-        </div>
-
-        <div className="connection-row reverse">
-          <div>
-            <h2>Meet people who<br />noticed you first</h2>
-            <p>People come to you because they're intentionally interested in what you're looking for. That's the magic—genuine connections from people who already get it.</p>
-          </div>
-          <div className="connection-visual">📷</div>
-        </div>
-
-        <div className="connection-row">
-          <div className="connection-visual accent">📷</div>
-          <div>
-            <h2>Turn chance encounters<br />into real connections</h2>
-            <p>Every person who scans your QR code could be "the one"—your dream friend, your soulmate, your next colleague. Wear your loofa and let serendipity take the wheel.</p>
-          </div>
-        </div>
-      </section>
-
       <section className="product" id="how">
         <div className="product-container">
           <div className="product-visual">
@@ -152,8 +122,39 @@ export default function Home() {
                 <p>Review responses privately, and connect on your terms.</p>
               </li>
             </ol>
+            <p><strong>It's that simple:</strong> No awkward conversations. No endless social shyness loop. Just a fun, organic way to meet your people.</p>
           </div>
         </div>
+      </section>
+
+      <section className="connection-section">
+        <div className="connection-row">
+          <div className="connection-visual">📷</div>
+          <div>
+            <h2>Real-world connection,<br />made easier</h2>
+            <p>No more awkward first conversations. Your loofa bag breaks the ice for you, naturally introducing what you're looking for to the world around you.</p>
+          </div>
+        </div>
+
+        <div className="connection-row reverse">
+          <div>
+            <h2>Meet people who<br />noticed you first</h2>
+            <p>People come to you because they're intentionally interested in what you're looking for. That's the magic—genuine connections from people who already get it.</p>
+          </div>
+          <div className="connection-visual">📷</div>
+        </div>
+
+        <div className="connection-row">
+          <div className="connection-visual accent">📷</div>
+          <div>
+            <h2>Turn chance encounters<br />into real connections</h2>
+            <p>Every person who scans your QR code could be "the one"—your dream friend, your soulmate, your next colleague. Wear your loofa and let serendipity take the wheel.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="motto-section">
+        <h2 className="display-heading">Let what is meant for you<br />find you faster 🚀</h2>
       </section>
 
     </main>
