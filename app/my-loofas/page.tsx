@@ -128,7 +128,7 @@ export default function MyLoofas() {
               {loofas.map((loofa) => (
                 <article key={loofa.id} className="loofa-card">
                   <Link href={`/my-loofas/${loofa.id}`} className="loofa-card-body">
-                    <div className="loofa-emoji">{loofa.emoji}</div>
+                    <div className="loofa-emoji">👜</div>
                     <h3>{loofa.name}</h3>
                     <p className="loofa-slug">loofabag.com/{loofa.slug}</p>
                     <span className={`loofa-status-dot ${(loofa.isActive ?? true) ? 'status-active' : 'status-off'}`}>
