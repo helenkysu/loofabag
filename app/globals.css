@@ -364,6 +364,13 @@ nav {
   margin-bottom: 24px;
 }
 
+/* "Shop … Bags" button under each category's sample bag */
+.feature-shop-btn {
+  margin-top: 24px;
+  width: 100%;
+  padding: 14px 24px;
+}
+
 /* "You Control It" spans the full row as a banner */
 .feature-banner {
   grid-column: 1 / -1;

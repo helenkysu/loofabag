@@ -63,6 +63,7 @@ export default function Home() {
               <img src="/bagimages/qrsamples/redbag.jpg" alt="Loofa tote with red handles and a QR code" className="feature-bag-img" loading="lazy" />
               <BagTextCycler category="dating" qrCenterX={0.5085} qrWidth={0.333} qrTop={0.574} photoAspect={1088 / 1344} />
             </div>
+            <Link href="/my-loofas/create?category=dating" className="btn btn-primary feature-shop-btn">Shop Dating Bags</Link>
           </article>
           <article className="feature-card">
             <h3>Find Your Tribe 👯</h3>
@@ -71,6 +72,7 @@ export default function Home() {
               <img src="/bagimages/qrsamples/yellowbag.jpg" alt="Loofa tote with yellow handles and a QR code" className="feature-bag-img" loading="lazy" />
               <BagTextCycler category="friends" qrCenterX={0.4985} qrWidth={0.327} qrTop={0.587} photoAspect={1088 / 1344} delayMs={1070} />
             </div>
+            <Link href="/my-loofas/create?category=friends" className="btn btn-primary feature-shop-btn">Shop Friendship Bags</Link>
           </article>
           <article className="feature-card">
             <h3>Land Your Dream Job 💼</h3>
@@ -79,6 +81,7 @@ export default function Home() {
               <img src="/bagimages/qrsamples/blackbag.jpg" alt="Loofa tote with black handles and a QR code" className="feature-bag-img" loading="lazy" />
               <BagTextCycler category="networking" qrCenterX={0.493} qrWidth={0.32} qrTop={0.569} photoAspect={1088 / 1344} delayMs={2130} />
             </div>
+            <Link href="/my-loofas/create?category=networking" className="btn btn-primary feature-shop-btn">Shop Career Bags</Link>
           </article>
           <article className="feature-card feature-banner">
             <div>

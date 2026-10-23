@@ -474,6 +474,8 @@ export default function CreateLoofaPage() {
           if (draft.qrDesign) setRestoredQrDesign(draft.qrDesign);
           if (draft.qrToken) setQrToken(draft.qrToken);
           if (draft.backDesign) setBackDesign(draft.backDesign);
+          const draftTemplate = templateDefs.find((t) => t.id === draft.templateId);
+          if (draftTemplate) selectTemplate(draftTemplate);
           // --- CUSTOM BACK ---
           if (draft.backBagText) setBackBagText(draft.backBagText);
           if (draft.backQrDesign) setRestoredBackQrDesign(draft.backQrDesign);
@@ -484,6 +486,11 @@ export default function CreateLoofaPage() {
       setStep(Number(resume));
       window.history.replaceState({}, '', '/my-loofas/create');
     } else {
+      // Homepage "Shop … Bags" buttons link here with ?category=dating|friends|networking
+      const category = params.get('category');
+      const categoryTemplate = templateDefs.find((t) => t.id === category && t.id !== 'redirect');
+      if (categoryTemplate) selectTemplate(categoryTemplate);
+
       // Fresh session — generate or reuse token
       const savedToken = sessionStorage.getItem('loofabag_qr_token');
       if (savedToken) {
@@ -1154,6 +1161,7 @@ export default function CreateLoofaPage() {
       // logoFile is a File object (not serializable) but logoDataUrl is a base64 string
       qrDesign: effectiveDesign ? { fgColor: effectiveDesign.fgColor, bgColor: effectiveDesign.bgColor, gradient: effectiveDesign.gradient, shape: effectiveDesign.shape, logoFile: null, logoDataUrl: effectiveDesign.logoDataUrl ?? null } : null,
       reorder: isReorder,
+      templateId: selectedTemplate.id,
       ...extra,
     };
   };
