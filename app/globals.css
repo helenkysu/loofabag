@@ -6,7 +6,7 @@
   --brand: #3448E0;
   --brand-violet: #6A4DFF;
   --brand-tint: #EEF1FF;
-  --brand-gradient: linear-gradient(135deg, #1B2A8F 0%, #3448E0 55%, #5B5CFF 100%);
+  --brand-gradient: linear-gradient(180deg, #0A1858 0%, #33478A 50%, #6A80B4 100%); /* top-down, like the logo letters */
 }
 
 * {
@@ -625,7 +625,7 @@ nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #E6EBFF 0%, #F0E8FF 50%, #E3F2FF 100%);
+  background: linear-gradient(135deg, #FFE5E5 0%, #E5F3FF 50%, #E5FFE8 100%);
   padding: 20px;
 }
 
@@ -3473,6 +3473,59 @@ nav {
 }
 
 /* Color pickers */
+/* URL colour picker in the bag designer */
+.url-color-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.url-color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #d6d9e4;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.url-color-swatch:hover {
+  transform: scale(1.08);
+}
+
+.url-color-swatch.selected {
+  box-shadow: 0 0 0 3px var(--brand);
+}
+
+.url-color-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+}
+
+.url-color-custom input[type="color"] {
+  width: 36px;
+  height: 32px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 2px;
+  background: none;
+  cursor: pointer;
+}
+
+.url-color-sample {
+  font-family: 'Space Mono', 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 15px;
+  word-break: break-all;
+}
+
 .qr-color-row {
   display: flex;
   align-items: center;
@@ -3977,6 +4030,113 @@ nav {
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 20px;
+}
+
+/* Bag picker: one product, three handle colours side by side */
+.bag-picker-header {
+  margin-bottom: 24px;
+}
+
+.bag-picker-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 4px;
+}
+
+.bag-picker-meta {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.bag-picker-status {
+  color: #888;
+  font-size: 15px;
+}
+
+.bag-color-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.bag-color-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 16px;
+  background: #fff;
+  border: 2px solid #e6e8f0;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.bag-color-card:hover {
+  border-color: #b9c2f5;
+  transform: translateY(-2px);
+}
+
+.bag-color-card.selected {
+  border-color: var(--brand);
+  box-shadow: 0 8px 24px rgba(52, 72, 224, 0.18);
+}
+
+.bag-color-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #f6f7fb;
+}
+
+.bag-color-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.bag-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.bag-color-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .bag-color-grid {
+    gap: 8px;
+  }
+
+  .bag-color-card {
+    padding: 8px 8px 12px;
+  }
+
+  .bag-color-name {
+    font-size: 14px;
+  }
 }
 
 .handle-color-picker {
@@ -5908,3 +6068,67 @@ nav {
   cursor: not-allowed;
   transform: none;
 }
+
+
+/* ── Homepage keeps its original warm / rainbow colours ─────────
+   The rest of the site uses the navy brand palette (see :root). */
+.home .btn-primary {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
+  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+}
+.home .btn-primary:hover {
+  box-shadow: 0 15px 40px rgba(255, 107, 107, 0.4);
+}
+.home .btn-secondary {
+  color: #FF6B6B;
+  border-color: #FF6B6B;
+}
+.home .btn-secondary:hover {
+  background: #FF6B6B;
+  color: white;
+}
+.home .nav-links a:hover,
+.home .nav-sign-out:hover {
+  color: #FF6B6B;
+}
+/* background-image (not the shorthand) so the text-clip on these headings is kept */
+.home .section-title {
+  background-image: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 50%, #6BCB77 100%);
+}
+.home .cycling-phrase {
+  background-image: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 60%, #FF6B9D 100%);
+}
+.home .connection-row h2 {
+  background-image: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
+}
+.home .product-content h2 {
+  background-image: linear-gradient(135deg, #FF6B9D 0%, #FF6B6B 100%);
+}
+.home .loofa-definition {
+  background: linear-gradient(135deg, #FFE5E5 0%, #E5F3FF 100%);
+  border: none;
+  border-left: 6px solid #FF6B9D;
+  box-shadow: none;
+}
+.home .loofa-letter,
+.home .how-step-label {
+  color: #FF6B9D;
+}
+.home .how-steps li {
+  border-left-color: #FF6B9D;
+}
+.home .bag-mockup {
+  border-color: #FF6B6B;
+}
+.home .motto-section {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 50%, #6BCB77 100%);
+}
+.home .connection-visual {
+  background: linear-gradient(135deg, #FFE5E5 0%, #E5F3FF 100%);
+}
+.home .connection-visual.accent {
+  background: linear-gradient(135deg, #FFD93D 0%, #FF6B9D 100%);
+}
+.home .circle-1 { background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%); }
+.home .circle-2 { background: linear-gradient(135deg, #FFD93D 0%, #FFED4E 100%); }
+.home .circle-5 { background: linear-gradient(135deg, #FF6B9D 0%, #FF99B6 100%); }

@@ -25,6 +25,22 @@ type Product = {
   specs?: string[];
 };
 
+// Only the Premium Large Tote is sold now. The other bags stay defined so older orders
+// (reorders, order history) still resolve their name and image.
+const SELLABLE_PRODUCT_ID = 'premium-large-tote';
+
+// Colour of the loofabag.com/<name> URL printed under the QR (customisable in the designer)
+const DEFAULT_URL_COLOR = '#00B5AD';
+const URL_COLOR_PRESETS = [
+  { label: 'Teal', value: '#00B5AD' },
+  { label: 'Black', value: '#111111' },
+  { label: 'Navy', value: '#1B2A6B' },
+  { label: 'Coral', value: '#FF6B6B' },
+  { label: 'Pink', value: '#FF6B9D' },
+  { label: 'Purple', value: '#7B4DDB' },
+];
+const isHexColor = (v: unknown): v is string => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
+
 const PRODUCTS: Product[] = [
   {
     id: 'eco-tote',
@@ -358,7 +374,7 @@ export default function CreateLoofaPage() {
   const [name, setName] = useState('');
   const [showUrlRequired, setShowUrlRequired] = useState(false);
   const [slugTaken, setSlugTaken] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState('eco-tote');
+  const [selectedProductId, setSelectedProductId] = useState(SELLABLE_PRODUCT_ID);
   const [checkingOut, setCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(templateDefs[0]);
@@ -369,6 +385,7 @@ export default function CreateLoofaPage() {
   const [submissionFields, setSubmissionFields] = useState<FormField[]>(() => toFormFields(submissionTemplateDefs[0].fields));
   const [qrRenderedDataUrl, setQrRenderedDataUrl] = useState('');
   const [bagText, setBagText] = useState('');
+  const [urlColor, setUrlColor] = useState(DEFAULT_URL_COLOR);
   const [address, setAddress] = useState({ customerName: '', country: 'CA', state: '', address1: '', address2: '', city: '', zip: '' });
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
   const [selectedRateId, setSelectedRateId] = useState('');
@@ -471,6 +488,7 @@ export default function CreateLoofaPage() {
           if (draft.selectedVariantId) setSelectedVariantId(draft.selectedVariantId);
           if (draft.selectedVariantLabel != null) setRestoredVariantLabel(draft.selectedVariantLabel);
           if (draft.bagText) setBagText(draft.bagText);
+          if (isHexColor(draft.urlColor)) setUrlColor(draft.urlColor);
           if (draft.address) setAddress(draft.address);
           if (draft.qrDesign) setRestoredQrDesign(draft.qrDesign);
           if (draft.qrToken) setQrToken(draft.qrToken);
@@ -752,7 +770,7 @@ export default function CreateLoofaPage() {
     ctx.font = bagUrlFont(urlH);
     const urlW = ctx.measureText(urlText).width;
     if (urlW > maxUrlW) ctx.font = bagUrlFont(Math.floor(urlH * maxUrlW / urlW));
-    ctx.fillStyle = '#00B5AD';
+    ctx.fillStyle = urlColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(urlText, cx, y);
@@ -1049,7 +1067,7 @@ export default function CreateLoofaPage() {
   useEffect(() => {
     renderPreviewBlock().then((url) => setPreviewDataUrl(url));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qrRenderedDataUrl, bagText, slug]);
+  }, [qrRenderedDataUrl, bagText, slug, urlColor]);
 
   // --- CUSTOM BACK: re-render back preview when back QR / text changes ---
   useEffect(() => {
@@ -1057,7 +1075,7 @@ export default function CreateLoofaPage() {
     renderDesignCanvas(500, { qrDataUrl: backQrRenderedDataUrl, text: backBagText })
       .then((c) => setBackPreviewDataUrl(c?.toDataURL('image/png') ?? ''));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [backQrRenderedDataUrl, backBagText, slug]);
+  }, [backQrRenderedDataUrl, backBagText, slug, urlColor]);
   // --- END CUSTOM BACK ---
 
   // Auto-place order when arriving at step 4 after Stripe payment
@@ -1152,6 +1170,7 @@ export default function CreateLoofaPage() {
       selectedVariantId,
       selectedVariantLabel: availability[selectedProductId]?.variants?.find((v) => v.id === selectedVariantId)?.label ?? restoredVariantLabel ?? null,
       bagText,
+      urlColor,
       address,
       qrToken,
       backDesign,
@@ -1431,87 +1450,60 @@ export default function CreateLoofaPage() {
                       ))}
                     </div>
 
-                    {/* Design step 1: Pick Your Bag */}
-                    {designStep === 1 && (
-                      <div className="design-panel">
-                        <div className="product-selector">
-                          {PRODUCTS.map((product) => {
-                            const avail = availability[product.id];
-                            const oos = avail ? !avail.inStock : false;
-                            return (
-                              <button
-                                key={product.id}
-                                type="button"
-                                disabled={oos}
-                                className={`product-card${selectedProductId === product.id ? ' selected' : ''}${oos ? ' product-card-oos' : ''}`}
-                                onClick={() => {
-                                  if (product.id !== selectedProductId) {
-                                    setSelectedProductId(product.id);
-                                    const def = availability[product.id]?.defaultVariantId ?? null;
-                                    setSelectedVariantId(def);
-                                  }
-                                }}
-                              >
-                                <div className="product-card-img-wrap">
-                                  <img
-                                    src={getBagImageUrl(
-                                      product.id,
-                                      product.id === selectedProductId ? selectedVariantLabel : null,
-                                    )}
-                                    alt={product.name}
-                                    className="product-card-img"
-                                  />
-                                  {oos && <div className="product-card-oos-badge">Out of stock</div>}
-                                </div>
-                                <div className="product-card-info">
-                                  <div className="product-card-title-row">
-                                    <span className="product-card-name">{product.name}</span>
-                                    {product.dimensions && <span className="product-card-dims">{product.dimensions}</span>}
-                                  </div>
-                                  {productPrices[product.id] && (
-                                    <div className="product-card-price">
-                                      {productPrices[product.id].currency}{' '}
-                                      ${(productPrices[product.id].amount / 100).toFixed(2)}
-                                    </div>
-                                  )}
-                                  {product.specs && (
-                                    <div className="product-card-specs">
-                                      {product.specs.map((s) => <span key={s} className="product-card-spec">{s}</span>)}
-                                    </div>
-                                  )}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {(() => {
-                          const variants = availability[selectedProductId]?.variants;
-                          if (!variants?.length) return null;
-                          return (
-                            <div className="handle-color-picker">
-                              <p className="handle-color-label">Handle colour</p>
-                              <div className="handle-color-options">
-                                {variants.map((v) => (
+                    {/* Design step 1: Pick Your Bag — one bag (Premium Large Tote), pick the handle colour */}
+                    {designStep === 1 && (() => {
+                      const product = PRODUCTS.find((p) => p.id === SELLABLE_PRODUCT_ID)!;
+                      const avail = availability[product.id];
+                      const price = productPrices[product.id];
+                      // Printful only lists colours when more than one is in stock; otherwise show the default as a single card
+                      const variants: VariantOption[] = avail?.variants?.length
+                        ? avail.variants
+                        : avail?.defaultVariantId ? [{ id: avail.defaultVariantId, label: 'Standard', colorCode: null }] : [];
+                      return (
+                        <div className="design-panel">
+                          <div className="bag-picker-header">
+                            <h3 className="bag-picker-name">{product.name}</h3>
+                            <p className="bag-picker-meta">
+                              {product.dimensions}
+                              {price && <> · {price.currency} ${(price.amount / 100).toFixed(2)}</>}
+                            </p>
+                            {product.specs && (
+                              <div className="product-card-specs">
+                                {product.specs.map((spec) => <span key={spec} className="product-card-spec">{spec}</span>)}
+                              </div>
+                            )}
+                          </div>
+
+                          <p className="handle-color-label">Pick your handle colour</p>
+                          {!avail ? (
+                            <p className="bag-picker-status">Loading colours…</p>
+                          ) : !avail.inStock ? (
+                            <p className="bag-picker-status">This bag is out of stock right now — please check back soon.</p>
+                          ) : (
+                            <div className="bag-color-grid">
+                              {variants.map((v) => {
+                                const selected = selectedProductId === product.id && selectedVariantId === v.id;
+                                return (
                                   <button
                                     key={v.id}
                                     type="button"
-                                    className={`handle-color-swatch${selectedVariantId === v.id ? ' selected' : ''}`}
-                                    style={{ background: v.colorCode ?? '#ccc' }}
-                                    onClick={() => setSelectedVariantId(v.id)}
-                                    title={v.label}
+                                    className={`bag-color-card${selected ? ' selected' : ''}`}
+                                    onClick={() => { setSelectedProductId(product.id); setSelectedVariantId(v.id); }}
                                   >
-                                    {selectedVariantId === v.id && <span className="handle-color-check">✓</span>}
+                                    <img src={getBagImageUrl(product.id, v.label) || product.image || ''} alt={`${product.name} with ${v.label} handles`} />
+                                    <span className="bag-color-name">
+                                      {v.colorCode && <span className="bag-color-dot" style={{ background: v.colorCode }} />}
+                                      {v.label}
+                                    </span>
+                                    {selected && <span className="bag-color-check">✓</span>}
                                   </button>
-                                ))}
-                                <span className="handle-color-name">
-                                  {variants.find((v) => v.id === selectedVariantId)?.label ?? ''}
-                                </span>
-                              </div>
+                                );
+                              })}
                             </div>
-                          );
-                        })()}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Design step 2: Front Design */}
                     {designStep === 2 && (
@@ -1526,6 +1518,27 @@ export default function CreateLoofaPage() {
                           <div style={{ marginTop: 20 }}>
                             <p className="step-subtitle" style={{ marginBottom: 8 }}>Bag text <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span></p>
                             <BagTextSelector templateId={selectedTemplate.id} onChange={setBagText} />
+                          </div>
+                          <div style={{ marginTop: 20 }}>
+                            <p className="step-subtitle" style={{ marginBottom: 8 }}>URL colour</p>
+                            <div className="url-color-picker">
+                              {URL_COLOR_PRESETS.map((c) => (
+                                <button
+                                  key={c.value}
+                                  type="button"
+                                  className={`url-color-swatch${urlColor.toLowerCase() === c.value.toLowerCase() ? ' selected' : ''}`}
+                                  style={{ background: c.value }}
+                                  onClick={() => setUrlColor(c.value)}
+                                  aria-label={c.label}
+                                  title={c.label}
+                                />
+                              ))}
+                              <label className="url-color-custom" title="Pick any colour">
+                                <input type="color" value={urlColor} onChange={(e) => setUrlColor(e.target.value)} />
+                                <span>Custom</span>
+                              </label>
+                              <span className="url-color-sample" style={{ color: urlColor }}>loofabag.com/{slug || 'your-name'}</span>
+                            </div>
                           </div>
                         </div>
                         {bagImageUrl && (

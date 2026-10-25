@@ -5,7 +5,7 @@ import BagTextCycler from './components/BagTextCycler';
 
 export default function Home() {
   return (
-    <main>
+    <main className="home">
       <NavBar>
         <a href="#what">What is Loofa?</a>
         <a href="#usecases">Use Cases</a>
