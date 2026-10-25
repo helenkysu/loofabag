@@ -13,11 +13,11 @@ export default function TermsPage() {
           <p className="legal-effective">Effective Date: June 2, 2025</p>
 
           <p className="legal-intro">
-            By using Loofa Bag ("Service"), you agree to these Terms &amp; Conditions. If you do not agree, you may not use the Service.
+            By using Loofabag ("Service"), you agree to these Terms &amp; Conditions. If you do not agree, you may not use the Service.
           </p>
 
           <h2>1. Description of Service</h2>
-          <p>Loofa Bag allows users to create public digital profile pages ("Loofas") that may be accessed via QR codes or links.</p>
+          <p>Loofabag allows users to create public digital profile pages ("Loofas") that may be accessed via QR codes or links.</p>
           <p>Users may also send private submissions (such as messages, images, or feedback) to Loofa owners. These submissions are not publicly visible.</p>
           <p>We may modify, suspend, or discontinue features at any time.</p>
 
@@ -30,7 +30,7 @@ export default function TermsPage() {
 
           <h2>4. User Content &amp; License</h2>
           <p>You retain ownership of content you submit or upload.</p>
-          <p>By using the Service, you grant Loofa Bag a worldwide, non-exclusive, royalty-free license to host, store, display, process, and transmit your content solely for operating the Service.</p>
+          <p>By using the Service, you grant Loofabag a worldwide, non-exclusive, royalty-free license to host, store, display, process, and transmit your content solely for operating the Service.</p>
 
           <h2>5. Public Loofas</h2>
           <p>Loofa pages are public by default. You acknowledge that:</p>
@@ -41,7 +41,7 @@ export default function TermsPage() {
           </ul>
 
           <h2>6. Custom URL Redirects</h2>
-          <p>Loofa Bag allows you to configure your Loofa to redirect visitors directly to an external link instead of displaying a profile page. To prevent misuse, redirect URLs are limited to an allowlist of supported platforms (including major social media, video, audio, payment, scheduling, and link-in-bio services). The current list of supported platforms is shown when you set up a redirect.</p>
+          <p>Loofabag allows you to configure your Loofa to redirect visitors directly to an external link instead of displaying a profile page. To prevent misuse, redirect URLs are limited to an allowlist of supported platforms (including major social media, video, audio, payment, scheduling, and link-in-bio services). The current list of supported platforms is shown when you set up a redirect.</p>
           <p>Attempting to circumvent this restriction, or submitting a redirect URL outside the supported platforms, may result in removal of the redirect or suspension of your account.</p>
 
           <h2>7. Private Submissions</h2>
@@ -83,13 +83,13 @@ export default function TermsPage() {
           <p>If your account, content, or Loofa is removed due to a violation of these Terms, no refunds will be issued. Enforcement actions do not entitle you to compensation.</p>
 
           <h2>15. No Responsibility for User Interactions</h2>
-          <p>Loofa Bag is not responsible for interactions between users, messages or responses from Loofa owners, or relationships, disputes, or outcomes resulting from use of the Service. All interactions are at users' own discretion and risk.</p>
+          <p>Loofabag is not responsible for interactions between users, messages or responses from Loofa owners, or relationships, disputes, or outcomes resulting from use of the Service. All interactions are at users' own discretion and risk.</p>
 
           <h2>16. Disclaimer</h2>
           <p>The Service is provided "as is" without warranties of any kind.</p>
 
           <h2>17. Limitation of Liability</h2>
-          <p>Loofa Bag is not liable for user-generated content, data loss, user interactions, or third-party actions.</p>
+          <p>Loofabag is not liable for user-generated content, data loss, user interactions, or third-party actions.</p>
 
           <h2>18. Changes to Terms</h2>
           <p>We may update these Terms at any time. Continued use of the Service constitutes acceptance of changes.</p>

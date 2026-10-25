@@ -61,7 +61,7 @@ export default function PrivacyPage() {
           <p>We use reasonable safeguards, but no system is fully secure.</p>
 
           <h2>9. Children's Privacy</h2>
-          <p>Loofa Bag is not intended for users under 13 (or applicable minimum age). We will remove such accounts if detected.</p>
+          <p>Loofabag is not intended for users under 13 (or applicable minimum age). We will remove such accounts if detected.</p>
 
           <h2>10. International Users</h2>
           <p>Your data may be processed outside your country (e.g., Canada, US).</p>

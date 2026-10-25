@@ -4,7 +4,7 @@ import Footer from '@/app/components/Footer';
 
 export const metadata: Metadata = {
   title: 'loofabag - Finding Made Fun',
-  description: 'Wear your loofa and meet your people with a fun, modern landing page.',
+  description: 'Wear your Loofabag and meet your people with a fun, modern landing page.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

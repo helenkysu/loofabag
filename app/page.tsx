@@ -58,7 +58,7 @@ export default function Home() {
         <div className="features-grid">
           <article className="feature-card">
             <h3>Dating & Romance 💕</h3>
-            <p>Looking for a boyfriend, girlfriend, husband, wife, or partner? Let your loofa bag do the talking.</p>
+            <p>Looking for a boyfriend, girlfriend, husband, wife, or partner? Let your Loofabag do the talking.</p>
             <div className="feature-bag">
               <img src="/bagimages/qrsamples/redbag.jpg" alt="Loofa tote with red handles and a QR code" className="feature-bag-img" loading="lazy" />
               <BagTextCycler category="dating" qrCenterX={0.5085} qrWidth={0.333} qrTop={0.574} photoAspect={1088 / 1344} />
@@ -67,7 +67,7 @@ export default function Home() {
           </article>
           <article className="feature-card">
             <h3>Find Your Tribe 👯</h3>
-            <p>Want new bestfriends? Tired of being lonely? Carry your loofa and attract people who are looking for the same connection.</p>
+            <p>Want new bestfriends? Tired of being lonely? Carry your Loofabag and attract people who are looking for the same connection.</p>
             <div className="feature-bag">
               <img src="/bagimages/qrsamples/yellowbag.jpg" alt="Loofa tote with yellow handles and a QR code" className="feature-bag-img" loading="lazy" />
               <BagTextCycler category="friends" qrCenterX={0.4985} qrWidth={0.327} qrTop={0.587} photoAspect={1088 / 1344} delayMs={1070} />
@@ -76,7 +76,7 @@ export default function Home() {
           </article>
           <article className="feature-card">
             <h3>Land Your Dream Job 💼</h3>
-            <p>Looking for a new job? Share your loofa with the world and let opportunities find you naturally.</p>
+            <p>Looking for a new job? Share your Loofabag with the world and let opportunities find you naturally.</p>
             <div className="feature-bag">
               <img src="/bagimages/qrsamples/blackbag.jpg" alt="Loofa tote with black handles and a QR code" className="feature-bag-img" loading="lazy" />
               <BagTextCycler category="networking" qrCenterX={0.493} qrWidth={0.32} qrTop={0.569} photoAspect={1088 / 1344} delayMs={2130} />
@@ -151,7 +151,7 @@ export default function Home() {
           <div className="connection-visual accent">📷</div>
           <div>
             <h2>Turn chance encounters<br />into real connections</h2>
-            <p>Every person who scans your QR code could be "the one"—your dream friend, your soulmate, your next colleague. Wear your loofa and let serendipity take the wheel.</p>
+            <p>Every person who scans your QR code could be "the one"—your dream friend, your soulmate, your next colleague. Wear your Loofabag and let serendipity take the wheel.</p>
           </div>
         </div>
       </section>
