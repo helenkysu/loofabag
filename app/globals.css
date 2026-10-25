@@ -5125,7 +5125,7 @@ nav {
   white-space: nowrap;
 }
 .design-progress-step.done { cursor: pointer; }
-.design-progress-step.done:hover { background: #f5f0eb; }
+.design-progress-step.done:hover { background: #EEF1F8; }
 
 .design-progress-num {
   width: 28px;
@@ -5137,16 +5137,16 @@ nav {
   font-size: 13px;
   font-weight: 700;
   flex-shrink: 0;
-  background: #e8e0d8;
-  color: #888;
+  background: #E3E7F2;
+  color: #8A93B0;
   transition: background 0.2s, color 0.2s;
 }
 .design-progress-step.active .design-progress-num {
-  background: #c8a97e;
+  background: linear-gradient(180deg, #0A1858 0%, #33478A 50%, #6A80B4 100%); /* logo lettering */
   color: #fff;
 }
 .design-progress-step.done .design-progress-num {
-  background: #7cb9a8;
+  background: #5F78AE;
   color: #fff;
 }
 
@@ -5156,19 +5156,19 @@ nav {
   color: #bbb;
   transition: color 0.2s;
 }
-.design-progress-step.active .design-progress-label { color: #1a1a1a; font-weight: 600; }
-.design-progress-step.done .design-progress-label { color: #7cb9a8; }
+.design-progress-step.active .design-progress-label { color: #0A1858; font-weight: 600; }
+.design-progress-step.done .design-progress-label { color: #5F78AE; }
 
 .design-progress-line {
   width: 28px;
   height: 2px;
-  background: #e8e0d8;
+  background: #E3E7F2;
   flex-shrink: 0;
   margin: 0 2px;
   border-radius: 1px;
   transition: background 0.3s;
 }
-.design-progress-line.done { background: #7cb9a8; }
+.design-progress-line.done { background: #5F78AE; }
 
 /* ── Design panel wrapper ── */
 .design-panel {
@@ -6153,8 +6153,11 @@ nav {
   --brand-tint: #fff5f5;
   --brand-gradient: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
 }
-.create-flow .my-loofas-container h1 {
-  background-image: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 50%, #6BCB77 100%);
+/* Designer headings: coral → yellow → coral, so the gradient starts and ends on the same colour */
+.create-flow .my-loofas-container h1,
+.create-flow .step-content h2,
+.create-flow .section-title {
+  background-image: linear-gradient(90deg, #FF6B6B 0%, #FFD93D 50%, #FF6B6B 100%);
 }
 .create-flow .btn-primary {
   box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
@@ -6167,4 +6170,16 @@ nav {
 }
 .create-flow .bag-color-card.selected {
   box-shadow: 0 8px 24px rgba(255, 107, 107, 0.18);
+}
+
+/* Designer's bottom Back / Next bar uses the logo's navy (top-down, like the lettering) */
+.create-flow .modal-footer {
+  --brand: #1F2F75;
+  --brand-gradient: linear-gradient(180deg, #0A1858 0%, #33478A 50%, #6A80B4 100%);
+}
+.create-flow .modal-footer .btn-primary {
+  box-shadow: 0 10px 30px rgba(20, 26, 92, 0.25);
+}
+.create-flow .modal-footer .btn-primary:hover {
+  box-shadow: 0 15px 40px rgba(20, 26, 92, 0.35);
 }
