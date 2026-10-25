@@ -356,6 +356,7 @@ export default function CreateLoofaPage() {
   // Steps: 1=URL, 2=Design, 3=Checkout, 4=QR Profile, 5=Submission form
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
+  const [showUrlRequired, setShowUrlRequired] = useState(false);
   const [slugTaken, setSlugTaken] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState('eco-tote');
   const [checkingOut, setCheckingOut] = useState(false);
@@ -1262,6 +1263,11 @@ export default function CreateLoofaPage() {
   const step1Valid = !!name && !slugTaken && !slugReserved;
 
   const handleNext = () => {
+    // Step 1: explain what's missing instead of silently doing nothing
+    if (step === 1 && !step1Valid) {
+      if (!name) setShowUrlRequired(true); // taken / reserved already show their own message
+      return;
+    }
     if (step === 2) {
       if (designStep < 4) { setDesignStep(designStep + 1); return; }
       void goToCheckout(); return;
@@ -1269,15 +1275,21 @@ export default function CreateLoofaPage() {
     if (step < 6) setStep(step + 1);
   };
 
+  // Back from the first screen leaves the designer: My Loofas when signed in, else the homepage
+  const exitCreate = async () => {
+    const { data: { user } } = await createClient().auth.getUser();
+    router.push(user ? '/my-loofas' : '/');
+  };
+
   const handlePrev = () => {
+    const minStep = isReorder ? 2 : 1;
     if (step === 2) {
       if (designStep > 1) { setDesignStep(designStep - 1); return; }
-      const minStep = isReorder ? 2 : 1;
-      if (step > minStep) setStep(step - 1); return;
+      if (step > minStep) setStep(step - 1); else void exitCreate();
+      return;
     }
     if (step === 3) { setStep(2); setDesignStep(4); return; }
-    const minStep = isReorder ? 2 : 1;
-    if (step > minStep) setStep(step - 1);
+    if (step > minStep) setStep(step - 1); else void exitCreate();
   };
 
   return (
@@ -1320,11 +1332,14 @@ export default function CreateLoofaPage() {
                       type="text"
                       placeholder="your-name"
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className={`name-input url-suffix-input${(slugTaken || slugReserved) ? ' input-error' : ''}`}
+                      onChange={(e) => { setName(e.target.value); setShowUrlRequired(false); }}
+                      className={`name-input url-suffix-input${(slugTaken || slugReserved || (showUrlRequired && !name)) ? ' input-error' : ''}`}
                       autoFocus
                     />
                   </div>
+                  {showUrlRequired && !name && (
+                    <p className="slug-taken">Please pick a URL first</p>
+                  )}
                   {name && !slugTaken && !slugReserved && (
                     <p className="slug-available">✓ loofabag.com/{slug} is available</p>
                   )}
@@ -2234,7 +2249,7 @@ export default function CreateLoofaPage() {
                   </>
                 ) : (
                   <>
-                    <button className="btn btn-secondary" onClick={handlePrev} disabled={step === (isReorder ? 2 : 1) && designStep === 1}>
+                    <button className="btn btn-secondary" onClick={handlePrev}>
                       Back
                     </button>
                     <div className="step-indicator">
@@ -2252,7 +2267,6 @@ export default function CreateLoofaPage() {
                         className="btn btn-primary"
                         onClick={handleNext}
                         disabled={
-                          (step === 1 && !step1Valid) ||
                           (step === 5 && selectedTemplate.id === 'redirect' && !isAllowedRedirectUrl(customRedirectUrl))
                         }
                       >
