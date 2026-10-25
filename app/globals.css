@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@1&family=Sora:wght@400..800&family=Space+Grotesk:wght@700&family=Space+Mono:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@1&family=Sora:wght@400..800&family=Space+Grotesk:wght@700&family=Lobster&display=swap');
 
 /* Brand palette: navy → cobalt → indigo, taken from the logo */
 :root {
@@ -1082,7 +1082,7 @@ nav {
 }
 
 .step-subtitle {
-  font-size: 16px;
+  font-size: 19px;
   color: #666;
   margin-bottom: 30px;
   font-weight: 500;
@@ -1171,7 +1171,7 @@ nav {
   padding: 14px 12px 14px 16px;
   background: #f4f4f4;
   color: #888;
-  font-size: 15px;
+  font-size: 18px;
   white-space: nowrap;
   border-right: 1px solid #ddd;
   user-select: none;
@@ -1181,7 +1181,7 @@ nav {
   flex: 1;
   padding: 14px 16px;
   border: none;
-  font-size: 15px;
+  font-size: 18px;
   background: transparent;
   outline: none;
   margin-bottom: 0;
@@ -1192,13 +1192,13 @@ nav {
 }
 
 .slug-available {
-  font-size: 13px;
+  font-size: 16px;
   color: #38a169;
   margin: 0 0 16px;
 }
 
 .slug-taken {
-  font-size: 13px;
+  font-size: 16px;
   color: #e53e3e;
   margin: 0 0 16px;
 }
@@ -2236,7 +2236,7 @@ nav {
 }
 
 .step-indicator {
-  font-size: 14px;
+  font-size: 17px;
   color: #999;
   font-weight: 600;
 }
@@ -3519,10 +3519,21 @@ nav {
   cursor: pointer;
 }
 
+.url-color-warning {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #FFF8E6;
+  border: 1px solid #F5D78A;
+  color: #7A5A00;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 .url-color-sample {
-  font-family: 'Space Mono', 'Courier New', monospace;
-  font-weight: 700;
-  font-size: 15px;
+  font-family: 'Lobster', cursive;
+  font-weight: 400;
+  font-size: 18px;
   word-break: break-all;
 }
 
@@ -3884,8 +3895,8 @@ nav {
 }
 
 .bag-preview-url-slug {
-  font-family: 'Space Mono', 'Courier New', monospace;
-  font-weight: 700;
+  font-family: 'Lobster', cursive;
+  font-weight: 400;
   font-size: clamp(4px, 2.8cqw, 15px);
   color: #00B5AD;
   -webkit-text-fill-color: #00B5AD;
@@ -4045,7 +4056,7 @@ nav {
 }
 
 .bag-picker-meta {
-  font-size: 16px;
+  font-size: 18px;
   color: #666;
   margin-bottom: 10px;
 }
@@ -4148,7 +4159,7 @@ nav {
 }
 
 .handle-color-label {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 600;
   color: #555;
   margin: 0 0 10px;
@@ -4237,12 +4248,12 @@ nav {
 }
 
 .product-card-spec {
-  font-size: 11.5px;
+  font-size: 14px;
   color: #555;
   -webkit-text-fill-color: #555;
   background: #f2f0ed;
   border-radius: 20px;
-  padding: 3px 10px;
+  padding: 5px 12px;
   display: inline-block;
   width: fit-content;
 }
@@ -5140,7 +5151,7 @@ nav {
 }
 
 .design-progress-label {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   color: #bbb;
   transition: color 0.2s;
@@ -6132,3 +6143,28 @@ nav {
 .home .circle-1 { background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%); }
 .home .circle-2 { background: linear-gradient(135deg, #FFD93D 0%, #FFED4E 100%); }
 .home .circle-5 { background: linear-gradient(135deg, #FF6B9D 0%, #FF99B6 100%); }
+
+/* ── Create-a-loofa flow keeps its original warm colours ──────
+   Re-point the brand variables inside the designer, so every accent that uses
+   them (buttons, focus rings, selected cards, tabs…) goes back to coral/yellow. */
+.create-flow {
+  --brand: #FF6B6B;
+  --brand-violet: #FF6B9D;
+  --brand-tint: #fff5f5;
+  --brand-gradient: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
+}
+.create-flow .my-loofas-container h1 {
+  background-image: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 50%, #6BCB77 100%);
+}
+.create-flow .btn-primary {
+  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+}
+.create-flow .btn-primary:hover {
+  box-shadow: 0 15px 40px rgba(255, 107, 107, 0.4);
+}
+.create-flow .bag-color-card:hover {
+  border-color: #FFB3B3;
+}
+.create-flow .bag-color-card.selected {
+  box-shadow: 0 8px 24px rgba(255, 107, 107, 0.18);
+}

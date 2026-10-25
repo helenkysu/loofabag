@@ -1,9 +1,9 @@
-// Fonts printed on the bag: Space Grotesk for the phrase above the QR, Space Mono for
+// Fonts printed on the bag: Space Grotesk for the phrase above the QR, Lobster (script) for
 // the loofabag.com/<slug> URL below it. Both are loaded by the Google Fonts @import in
 // globals.css; canvases must wait for them (ensureBagFonts) or they'd draw a fallback.
 
 export const bagTextFont = (px: number) => `700 ${px}px "Space Grotesk", Arial, sans-serif`;
-export const bagUrlFont = (px: number) => `700 ${px}px "Space Mono", "Courier New", monospace`;
+export const bagUrlFont = (px: number) => `400 ${px}px Lobster, cursive`;
 
 export async function ensureBagFonts(): Promise<void> {
   if (typeof document === 'undefined') return;

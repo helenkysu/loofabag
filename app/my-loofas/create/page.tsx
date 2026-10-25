@@ -41,6 +41,17 @@ const URL_COLOR_PRESETS = [
 ];
 const isHexColor = (v: unknown): v is string => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
 
+// WCAG contrast ratio of a hex colour against the white bag. Below 2:1 the URL is hard to read
+// (the default teal is ~2.6:1, yellow ~1.4:1, light grey ~1.6:1).
+function contrastOnWhite(hex: string): number {
+  const channel = (i: number) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance = 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
+  return 1.05 / (luminance + 0.05);
+}
+
 const PRODUCTS: Product[] = [
   {
     id: 'eco-tote',
@@ -764,7 +775,7 @@ export default function CreateLoofaPage() {
     }
     y += qrPx + Math.round(W * 0.04);
 
-    // Monospace URLs get wide with long names: shrink the font (not squeeze) to fit
+    // Long names can make the URL too wide: shrink the font (not squeeze) to fit
     const urlText = `loofabag.com/${slug || 'your-name'}`;
     const maxUrlW = Math.round(W * 0.92);
     ctx.font = bagUrlFont(urlH);
@@ -1312,7 +1323,7 @@ export default function CreateLoofaPage() {
   };
 
   return (
-    <main>
+    <main className="create-flow">
       <NavBar />
 
       <section className="my-loofas-section">
@@ -1539,6 +1550,11 @@ export default function CreateLoofaPage() {
                               </label>
                               <span className="url-color-sample" style={{ color: urlColor }}>loofabag.com/{slug || 'your-name'}</span>
                             </div>
+                            {contrastOnWhite(urlColor) < 2 && (
+                              <p className="url-color-warning">
+                                ⚠️ This colour is very light and may be hard to read on the white bag. Try a darker shade.
+                              </p>
+                            )}
                           </div>
                         </div>
                         {bagImageUrl && (
