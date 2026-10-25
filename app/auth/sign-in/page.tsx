@@ -71,7 +71,7 @@ function SignInContent() {
   return (
     <main className="auth-page">
       <div className="auth-card">
-        <Link href="/" className="logo auth-logo">loofabag</Link>
+        <Link href="/" className="logo-link auth-logo-link" aria-label="loofabag home"><img src="/logos/loofabag-logo.png" alt="loofabag" className="logo-img auth-logo-img" width={600} height={199} /></Link>
 
         {magicLinkSent ? (
           <div className="magic-link-sent">

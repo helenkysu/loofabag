@@ -32,7 +32,7 @@ export default function NavBar({ children }: { children?: React.ReactNode }) {
 
   return (
     <nav>
-      <Link href="/" className="logo">loofabag</Link>
+      <Link href="/" className="logo-link" aria-label="loofabag home"><img src="/logos/loofabag-logo.png" alt="loofabag" className="logo-img" width={600} height={199} /></Link>
       <div className="nav-links">
         {children}
         <Link href="/contact">Contact</Link>

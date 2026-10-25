@@ -633,6 +633,27 @@ nav {
   font-size: 22px;
 }
 
+/* Image logo (public/logos/loofabag-logo.png, cropped tight so height = artwork height) */
+.logo-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.logo-img {
+  display: block;
+  height: 44px;
+  width: auto;
+}
+
+.auth-logo-link {
+  display: flex;
+  justify-content: center;
+}
+
+.auth-logo-img {
+  height: 52px;
+}
+
 .auth-header {
   text-align: center;
 }

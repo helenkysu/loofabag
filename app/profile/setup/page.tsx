@@ -42,7 +42,7 @@ export default function ProfileSetupPage() {
   return (
     <main className="auth-page">
       <div className="auth-card">
-        <Link href="/" className="logo auth-logo">loofabag</Link>
+        <Link href="/" className="logo-link auth-logo-link" aria-label="loofabag home"><img src="/logos/loofabag-logo.png" alt="loofabag" className="logo-img auth-logo-img" width={600} height={199} /></Link>
         <div className="auth-header">
           <h1 className="auth-heading">What should we call you?</h1>
           <p className="auth-subheading">You can always change this later</p>
