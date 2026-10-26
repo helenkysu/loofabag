@@ -6081,73 +6081,28 @@ nav {
 }
 
 
-/* ── Homepage keeps its original warm / rainbow colours ─────────
-   The rest of the site uses the navy brand palette (see :root). */
-.home .btn-primary {
-  background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
-  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
-}
-.home .btn-primary:hover {
-  box-shadow: 0 15px 40px rgba(255, 107, 107, 0.4);
-}
-.home .btn-secondary {
-  color: #FF6B6B;
-  border-color: #FF6B6B;
-}
-.home .btn-secondary:hover {
-  background: #FF6B6B;
-  color: white;
-}
-.home .nav-links a:hover,
-.home .nav-sign-out:hover {
-  color: #FF6B6B;
-}
-/* background-image (not the shorthand) so the text-clip on these headings is kept */
-.home .section-title {
-  background-image: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 50%, #6BCB77 100%);
-}
-.home .cycling-phrase {
-  background-image: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 60%, #FF6B9D 100%);
-}
-.home .connection-row h2 {
-  background-image: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
-}
-.home .product-content h2 {
-  background-image: linear-gradient(135deg, #FF6B9D 0%, #FF6B6B 100%);
+/* ── Homepage uses the same lilac & cyan palette as the designer ──
+   (variables are set together with .create-flow below) */
+.home .connection-row.reverse h2 {
+  background-image: var(--brand-gradient);
 }
 .home .loofa-definition {
-  background: linear-gradient(135deg, #FFE5E5 0%, #E5F3FF 100%);
-  border: none;
-  border-left: 6px solid #FF6B9D;
-  box-shadow: none;
+  background: linear-gradient(135deg, #F3EEFF 0%, #E6F7FB 100%);
 }
 .home .loofa-letter,
 .home .how-step-label {
-  color: #FF6B9D;
+  color: var(--brand);
 }
-.home .how-steps li {
-  border-left-color: #FF6B9D;
-}
-.home .bag-mockup {
-  border-color: #FF6B6B;
-}
-.home .motto-section {
-  background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 50%, #6BCB77 100%);
-}
-.home .connection-visual {
-  background: linear-gradient(135deg, #FFE5E5 0%, #E5F3FF 100%);
-}
-.home .connection-visual.accent {
-  background: linear-gradient(135deg, #FFD93D 0%, #FF6B9D 100%);
-}
-.home .circle-1 { background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%); }
-.home .circle-2 { background: linear-gradient(135deg, #FFD93D 0%, #FFED4E 100%); }
-.home .circle-5 { background: linear-gradient(135deg, #FF6B9D 0%, #FF99B6 100%); }
+.home .circle-1 { background: linear-gradient(135deg, #8B5CF6 0%, #C084FC 100%); }
+.home .circle-2 { background: linear-gradient(135deg, #06B6D4 0%, #67E8F9 100%); }
+.home .circle-3 { background: linear-gradient(135deg, #A5F3FC 0%, #CFFAFE 100%); }
+.home .circle-5 { background: linear-gradient(135deg, #C084FC 0%, #E9D5FF 100%); }
 
 /* ── Create-a-loofa flow: lilac & cyan palette ────────────────
    Re-point the brand variables inside the designer, so every accent that uses
    them (buttons, focus rings, selected cards, tabs…) picks these up. The gradient
-   starts and ends on cyan with purple/lilac in the middle. */
+   starts and ends on cyan with purple/lilac in the middle. The homepage shares it. */
+.home,
 .create-flow {
   --brand: #8B5CF6;
   --brand-violet: #C084FC;
@@ -6160,11 +6115,21 @@ nav {
 .create-flow .section-title {
   background-image: var(--brand-gradient);
 }
+.home .btn-primary,
 .create-flow .btn-primary {
   box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
 }
+.home .btn-primary:hover,
 .create-flow .btn-primary:hover {
   box-shadow: 0 15px 40px rgba(139, 92, 246, 0.4);
+}
+/* Menu link hover: lavender pill + purple text */
+.home .nav-links a:hover,
+.home .nav-sign-out:hover,
+.create-flow .nav-links a:hover,
+.create-flow .nav-sign-out:hover {
+  background-color: var(--brand-tint);
+  color: var(--brand);
 }
 .create-flow .bag-color-card:hover {
   border-color: #D8C4FB;
@@ -6183,4 +6148,20 @@ nav {
 }
 .create-flow .modal-footer .btn-primary:hover {
   box-shadow: 0 15px 40px rgba(20, 26, 92, 0.35);
+}
+
+
+/* Gradient-text headings span only their text, so the gradient's start and end colours both show */
+.section-title,
+.my-loofas-container h1,
+.step-content h2,
+.connection-row h2,
+.product-content h2,
+.cycling-phrase {
+  width: fit-content;
+  max-width: 100%;
+}
+.section-title {
+  margin-left: auto;
+  margin-right: auto;
 }
