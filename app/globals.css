@@ -6144,32 +6144,33 @@ nav {
 .home .circle-2 { background: linear-gradient(135deg, #FFD93D 0%, #FFED4E 100%); }
 .home .circle-5 { background: linear-gradient(135deg, #FF6B9D 0%, #FF99B6 100%); }
 
-/* ── Create-a-loofa flow keeps its original warm colours ──────
+/* ── Create-a-loofa flow: lilac & cyan palette ────────────────
    Re-point the brand variables inside the designer, so every accent that uses
-   them (buttons, focus rings, selected cards, tabs…) goes back to coral/yellow. */
+   them (buttons, focus rings, selected cards, tabs…) picks these up. The gradient
+   starts and ends on cyan with purple/lilac in the middle. */
 .create-flow {
-  --brand: #FF6B6B;
-  --brand-violet: #FF6B9D;
-  --brand-tint: #fff5f5;
-  --brand-gradient: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
+  --brand: #8B5CF6;
+  --brand-violet: #C084FC;
+  --brand-tint: #F5F0FF;
+  --brand-gradient: linear-gradient(90deg, #06B6D4 0%, #8B5CF6 35%, #C084FC 50%, #8B5CF6 65%, #06B6D4 100%);
 }
-/* Designer headings: coral → yellow → coral, so the gradient starts and ends on the same colour */
+/* Designer headings use the same cyan → purple → lilac → purple → cyan gradient */
 .create-flow .my-loofas-container h1,
 .create-flow .step-content h2,
 .create-flow .section-title {
-  background-image: linear-gradient(90deg, #FF6B6B 0%, #FFD93D 50%, #FF6B6B 100%);
+  background-image: var(--brand-gradient);
 }
 .create-flow .btn-primary {
-  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
 }
 .create-flow .btn-primary:hover {
-  box-shadow: 0 15px 40px rgba(255, 107, 107, 0.4);
+  box-shadow: 0 15px 40px rgba(139, 92, 246, 0.4);
 }
 .create-flow .bag-color-card:hover {
-  border-color: #FFB3B3;
+  border-color: #D8C4FB;
 }
 .create-flow .bag-color-card.selected {
-  box-shadow: 0 8px 24px rgba(255, 107, 107, 0.18);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
 }
 
 /* Designer's bottom Back / Next bar uses the logo's navy (top-down, like the lettering) */
