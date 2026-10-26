@@ -6171,3 +6171,18 @@ nav {
 .home {
   --brand-gradient: linear-gradient(135deg, #06B6D4 0%, #C084FC 50%, #06B6D4 100%);
 }
+
+/* Homepage buttons: the gradient slowly drifts back and forth.
+   It's drawn at 2× size and its position slides from one end to the other, then reverses
+   (alternate), so there's never a visible jump. Off for people who prefer reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .home .btn-primary {
+    background-size: 200% 200%;
+    animation: btn-gradient-drift 5s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes btn-gradient-drift {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
