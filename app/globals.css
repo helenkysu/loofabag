@@ -6166,7 +6166,8 @@ nav {
   margin-right: auto;
 }
 
-/* Homepage gradient skips the purple stop (it read as blue): cyan → lilac → cyan */
+/* Homepage gradient skips the purple stop (it read as blue): cyan → lilac → cyan, on a diagonal
+   (buttons, gradient headings, rotating phrase and motto banner all use it) */
 .home {
-  --brand-gradient: linear-gradient(90deg, #06B6D4 0%, #C084FC 50%, #06B6D4 100%);
+  --brand-gradient: linear-gradient(135deg, #06B6D4 0%, #C084FC 50%, #06B6D4 100%);
 }
